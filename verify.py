@@ -30,7 +30,7 @@ TARGET = {"sqlint": 8, "stats": 20, "sqlbasic": 15, "python": 8, "math": 25}
 NAMES = {"sqlint": "SQL (Intermediate)", "stats": "Statistics", "sqlbasic": "SQL (Basic)", "python": "Python (Basic)", "math": "Applied Math"}
 TYPE_FOR = {"sqlint": "sql", "python": "python", "stats": "mcq", "sqlbasic": "mcq", "math": "mcq"}
 PREFIX = "window.BANK = (window.BANK || []).concat("
-BAD_DASHES = {"—": "em dash", "–": "en dash"}
+BAD_DASHES = {"\u2014": "em dash", "\u2013": "en dash"}
 
 problems = []
 
@@ -108,6 +108,15 @@ def datediff(a, b):
     return (date(*x[:3]) - date(*y[:3])).days
 
 
+def substring_index(s, delim, n):
+    if s is None or delim is None or n is None:
+        return None
+    if delim == "" or n == 0:
+        return ""
+    parts = str(s).split(str(delim))
+    return str(delim).join(parts[:n] if n > 0 else parts[n:])
+
+
 def connect(question):
     db = sqlite3.connect(":memory:")
     db.create_function("YEAR", 1, lambda v: (parse_date(v) or [None])[0])
@@ -115,6 +124,7 @@ def connect(question):
     db.create_function("DAY", 1, lambda v: (parse_date(v) or [None, None, None])[2])
     db.create_function("DATE_FORMAT", 2, date_format)
     db.create_function("DATEDIFF", 2, datediff)
+    db.create_function("SUBSTRING_INDEX", 3, substring_index)
     for t in question["tables"]:
         cols = ", ".join(f"{n} {ty}" for n, ty in t["columns"])
         db.execute(f"CREATE TABLE {t['name']} ({cols})")

@@ -412,6 +412,161 @@ window.BANK = (window.BANK || []).concat(
       "Returning 0.30000000000000004 because the total was never rounded.",
       "Returning keys in input order instead of month order."
     ]
+  },
+  {
+    "id": "py-transfer-exceptions",
+    "section": "python",
+    "type": "python",
+    "topic": "Exceptions: custom hierarchy, raising and catching",
+    "title": "Transfers that fail safely",
+    "prompt": [
+      "Define an exception hierarchy:",
+      "- `TransferError`, a subclass of `Exception`",
+      "- `UnknownAccountError` and `InsufficientBalanceError`, both subclasses of `TransferError`",
+      "",
+      "Write `transfer(balances, src, dst, amount)`. `balances` is a dict of account name to balance. Move `amount` from `src` to `dst` by updating the dict. Check in this order and raise the first problem you find, leaving `balances` unchanged:",
+      "1. `amount <= 0`: raise `ValueError`",
+      "2. `src` or `dst` is not in `balances`: raise `UnknownAccountError`",
+      "3. `balances[src] < amount`: raise `InsufficientBalanceError` (moving the entire balance is allowed)",
+      "",
+      "Write `run_batch(balances, transfers)`. `transfers` is a list of `(src, dst, amount)` tuples. Apply them in order. Skip any transfer that raises a `TransferError` and keep going. Return the number of skipped transfers. A `ValueError` means the batch itself is broken: do not catch it."
+    ],
+    "starter": [
+      "class TransferError(Exception):",
+      "    pass",
+      "",
+      "",
+      "class UnknownAccountError(TransferError):",
+      "    pass",
+      "",
+      "",
+      "class InsufficientBalanceError(TransferError):",
+      "    pass",
+      "",
+      "",
+      "def transfer(balances, src, dst, amount):",
+      "    pass",
+      "",
+      "",
+      "def run_batch(balances, transfers):",
+      "    pass",
+      ""
+    ],
+    "solution": [
+      "class TransferError(Exception):",
+      "    pass",
+      "",
+      "",
+      "class UnknownAccountError(TransferError):",
+      "    pass",
+      "",
+      "",
+      "class InsufficientBalanceError(TransferError):",
+      "    pass",
+      "",
+      "",
+      "def transfer(balances, src, dst, amount):",
+      "    if amount <= 0:",
+      "        raise ValueError(f'Amount must be positive, got {amount}')",
+      "    for name in (src, dst):",
+      "        if name not in balances:",
+      "            raise UnknownAccountError(name)",
+      "    if balances[src] < amount:",
+      "        raise InsufficientBalanceError(f'{src} has {balances[src]}, needs {amount}')",
+      "    balances[src] -= amount",
+      "    balances[dst] += amount",
+      "",
+      "",
+      "def run_batch(balances, transfers):",
+      "    skipped = 0",
+      "    for src, dst, amount in transfers:",
+      "        try:",
+      "            transfer(balances, src, dst, amount)",
+      "        except TransferError:",
+      "            skipped += 1",
+      "    return skipped",
+      ""
+    ],
+    "tests": [
+      { "name": "Money moves between accounts", "setup": "b = {'A': 100, 'B': 0}\ntransfer(b, 'A', 'B', 40)", "expr": "b", "expect": "{'A': 60, 'B': 40}" },
+      { "name": "Moving the whole balance is allowed", "setup": "b = {'A': 100, 'B': 0}\ntransfer(b, 'A', 'B', 100)", "expr": "b", "expect": "{'A': 0, 'B': 100}" },
+      { "name": "Unknown account raises UnknownAccountError", "setup": "b = {'A': 100}", "expr": "transfer(b, 'A', 'Z', 10)", "raises": "UnknownAccountError" },
+      { "name": "Insufficient balance raises and changes nothing", "setup": "b = {'A': 50, 'B': 0}\ntry:\n    transfer(b, 'A', 'B', 60)\n    raised = False\nexcept InsufficientBalanceError:\n    raised = True", "expr": "(raised, b)", "expect": "(True, {'A': 50, 'B': 0})" },
+      { "name": "Batch skips failures and applies the rest", "setup": "b = {'A': 100, 'B': 50}\nn = run_batch(b, [('A', 'B', 30), ('B', 'Z', 5), ('B', 'A', 500), ('B', 'A', 80)])", "expr": "(n, b)", "expect": "(2, {'A': 150, 'B': 0})" },
+      { "name": "Batch does not swallow ValueError", "expr": "run_batch({'A': 10, 'B': 0}, [('A', 'B', 0)])", "raises": "ValueError" }
+    ],
+    "approach": [
+      "Build the hierarchy with empty class bodies: class UnknownAccountError(TransferError): pass. Catching TransferError then also catches both subclasses.",
+      "Check every condition before touching the dict, in the order given, so a failed transfer changes nothing.",
+      "In run_batch, catch the narrowest exception that should be skipped (TransferError), never a bare except or Exception, so the ValueError still propagates.",
+      "Walk through the batch test by hand: after the first transfer A=70, B=80; the second fails (unknown Z); the third fails (80 < 500); the fourth leaves B=0, A=150."
+    ],
+    "mistakes": [
+      "except Exception: in run_batch, which also swallows the ValueError the last test expects.",
+      "Checking the balance before the account names, so a transfer to an unknown account can still raise KeyError instead of UnknownAccountError.",
+      "Subtracting from src before checking dst exists, so a failed transfer still changes the balance.",
+      "Using <= in the balance check, which blocks moving the whole balance.",
+      "Making UnknownAccountError subclass Exception directly, so except TransferError doesn't catch it."
+    ]
+  },
+  {
+    "id": "py-normalize-names",
+    "section": "python",
+    "type": "python",
+    "topic": "String manipulation and de-duplication",
+    "title": "Normalize customer names",
+    "prompt": [
+      "Customer names were typed in by hand. Write `normalize_names(names)` that cleans a list of raw names:",
+      "",
+      "- Skip entries that are `None` or contain only whitespace.",
+      "- Split each name on whitespace and join the words with single spaces.",
+      "- In each word, upper-case the first character and lower-case all the others (so `MARY-ANNE` becomes `Mary-anne`).",
+      "- Remove duplicates, keeping the first occurrence, comparing the cleaned names.",
+      "",
+      "Return the cleaned names in their original order. An empty list returns `[]`."
+    ],
+    "starter": [
+      "def normalize_names(names):",
+      "    pass",
+      ""
+    ],
+    "solution": [
+      "def normalize_names(names):",
+      "    seen = set()",
+      "    cleaned = []",
+      "    for raw in names:",
+      "        if raw is None:",
+      "            continue",
+      "        words = raw.split()",
+      "        if not words:",
+      "            continue",
+      "        name = ' '.join(w[:1].upper() + w[1:].lower() for w in words)",
+      "        if name not in seen:",
+      "            seen.add(name)",
+      "            cleaned.append(name)",
+      "    return cleaned",
+      ""
+    ],
+    "tests": [
+      { "name": "Case and extra spaces", "expr": "normalize_names(['  ana   CHEN '])", "expect": "['Ana Chen']" },
+      { "name": "Only the first letter of each word is capitalized", "expr": "normalize_names([\"MARY-ANNE o'brien\"])", "expect": "[\"Mary-anne O'brien\"]" },
+      { "name": "None and blank entries are skipped", "expr": "normalize_names([None, '   ', 'bo li'])", "expect": "['Bo Li']" },
+      { "name": "Duplicates removed, first one kept", "expr": "normalize_names(['bo li', 'Ana Chen', 'BO  LI'])", "expect": "['Bo Li', 'Ana Chen']" },
+      { "name": "Empty list", "expr": "normalize_names([])", "expect": "[]" },
+      { "name": "Order is preserved", "expr": "normalize_names(['zed', 'amy', 'mo'])", "expect": "['Zed', 'Amy', 'Mo']" }
+    ],
+    "approach": [
+      "str.split() with no argument splits on any run of whitespace and drops leading and trailing spaces, so ' '.join(s.split()) collapses spacing in one step.",
+      "Follow the capitalization rule exactly: word[:1].upper() + word[1:].lower(). str.title() and str.capitalize() on the whole string do something different.",
+      "Use a set for what you've already kept, and a list for the output, so order is preserved and lookups are fast.",
+      "Filter None before calling any string method on the value."
+    ],
+    "mistakes": [
+      "Using str.title(), which capitalizes after hyphens and apostrophes too ('Mary-Anne O'Brien'), contradicting the stated rule.",
+      "Calling .split() on None, which raises AttributeError.",
+      "De-duplicating with set(names) or a dict without care, which loses the original order.",
+      "Comparing raw strings for duplicates, so 'bo li' and 'BO  LI' both survive."
+    ]
   }
 ]
 );

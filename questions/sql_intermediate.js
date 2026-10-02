@@ -381,6 +381,113 @@ window.BANK = (window.BANK || []).concat(
       "Filtering rnk = 2 in WHERE after a LEFT JOIN, which drops Cambridge and Providence instead of showing NULL.",
       "Returning duplicate rows when two loans share the second amount."
     ]
+  },
+  {
+    "id": "sqli-contact-list-strings",
+    "section": "sqlint",
+    "type": "sql",
+    "topic": "String manipulation and NULL defaults",
+    "title": "A clean customer contact list",
+    "prompt": [
+      "Marketing wants a tidy contact list. For each customer return:",
+      "",
+      "- `customer_id`",
+      "- `display_name`: the last name in UPPER CASE, then a comma and a space, then the first name. Remove any spaces stored before or after either name. Example: `PARK, Chloe`",
+      "- `email_domain`: the part of the email after the `@`, in lower case. If the email is NULL, show `none`.",
+      "",
+      "**Output columns:** `customer_id`, `display_name`, `email_domain`",
+      "",
+      "**Sort by:** `email_domain` ascending, then `customer_id` ascending."
+    ],
+    "tables": [
+      {
+        "name": "customers",
+        "columns": [["customer_id", "INTEGER"], ["first_name", "TEXT"], ["last_name", "TEXT"], ["email", "TEXT"]],
+        "rows": [
+          [1, " Ana ", "chen", "Ana.Chen@Gmail.com"],
+          [2, "Ben", "Ortiz", null],
+          [3, "Chloe", "park ", "chloe@citizensbank.com"],
+          [4, "Dev", "Patel", "dev.patel@gmail.com"],
+          [5, "Emma", "Ross", "emma@Yahoo.com"]
+        ]
+      }
+    ],
+    "solution": [
+      "SELECT customer_id,",
+      "       UPPER(TRIM(last_name)) || ', ' || TRIM(first_name) AS display_name,",
+      "       COALESCE(LOWER(SUBSTR(email, INSTR(email, '@') + 1)), 'none') AS email_domain",
+      "FROM customers",
+      "ORDER BY email_domain, customer_id;"
+    ],
+    "starter": ["-- Write your query here", ""],
+    "approach": [
+      "Build each output column separately, and test it on the trickiest rows: the spaces around ' Ana ' and 'park ', the mixed-case domains, and the NULL email.",
+      "Trim before you change case or concatenate. In MySQL, write CONCAT(UPPER(TRIM(last_name)), ', ', TRIM(first_name)); in SQLite, || joins strings.",
+      "For the domain, take everything after the @: SUBSTRING_INDEX(email, '@', -1) in MySQL, or SUBSTR(email, INSTR(email, '@') + 1). Both work here.",
+      "Lower-case the domain before sorting, or 'Gmail.com' and 'gmail.com' sort apart (capital letters sort before lower case).",
+      "Wrap the whole domain expression in COALESCE(..., 'none'), since any string function applied to NULL returns NULL."
+    ],
+    "mistakes": [
+      "Forgetting LOWER: 'Gmail.com' and 'Yahoo.com' keep their capitals and sort before 'citizensbank.com'.",
+      "Forgetting TRIM: Ana's name comes out as 'CHEN,  Ana ' with extra spaces.",
+      "Leaving NULL instead of 'none' for Ben, which also sorts him first instead of between gmail.com and yahoo.com.",
+      "Using SUBSTR(email, INSTR(email, '@')), which keeps the '@' in the domain.",
+      "In MySQL, CONCAT returns NULL if any argument is NULL. SQLite's CONCAT and || behave differently with NULLs, so handle NULLs explicitly either way."
+    ]
+  },
+  {
+    "id": "sqli-month-over-month",
+    "section": "sqlint",
+    "type": "sql",
+    "topic": "Window functions: LAG",
+    "title": "Month-over-month change in deposits",
+    "prompt": [
+      "For each branch and month, show the month's deposit total and the change from that branch's previous month. A branch's first month has no previous month, so its change is NULL (not 0).",
+      "",
+      "**Output columns:** `branch_name`, `month`, `total`, `change_from_prev`",
+      "",
+      "**Sort by:** `branch_name` ascending, then `month` ascending."
+    ],
+    "tables": [
+      {
+        "name": "branches",
+        "columns": [["branch_id", "INTEGER"], ["branch_name", "TEXT"]],
+        "rows": [[1, "Back Bay"], [2, "Cambridge"]]
+      },
+      {
+        "name": "monthly_deposits",
+        "columns": [["branch_id", "INTEGER"], ["month", "TEXT"], ["total", "REAL"]],
+        "rows": [
+          [1, "2025-02", 12000],
+          [1, "2025-01", 10000],
+          [2, "2025-01", 5000],
+          [1, "2025-03", 9000],
+          [2, "2025-02", 5000]
+        ]
+      }
+    ],
+    "solution": [
+      "SELECT b.branch_name,",
+      "       m.month,",
+      "       m.total,",
+      "       m.total - LAG(m.total) OVER (PARTITION BY m.branch_id ORDER BY m.month) AS change_from_prev",
+      "FROM monthly_deposits m",
+      "JOIN branches b ON b.branch_id = m.branch_id",
+      "ORDER BY b.branch_name, m.month;"
+    ],
+    "starter": ["-- Write your query here", ""],
+    "approach": [
+      "\"Compared with the previous row\" means LAG (or LEAD for the next row).",
+      "PARTITION BY the group (branch) so each branch's first month has no previous value, and ORDER BY the time column inside OVER. The table's row order means nothing.",
+      "LAG returns NULL when there's no previous row, and anything minus NULL is NULL, which is exactly what the prompt asks for. Don't COALESCE it to 0.",
+      "'YYYY-MM' text sorts in date order, so ordering by month works directly."
+    ],
+    "mistakes": [
+      "No PARTITION BY: Cambridge's January is compared with Back Bay's March (5000 − 9000).",
+      "Relying on insertion order instead of ORDER BY month inside OVER: Back Bay's rows were stored out of order.",
+      "COALESCE(LAG(...), 0), which makes each first month's change equal its whole total.",
+      "Computing LAG(total) − total, which flips the sign."
+    ]
   }
 ]
 );

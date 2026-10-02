@@ -129,12 +129,21 @@ const Runner = (() => {
     return String(format).replace(/%(.)/g, (whole, code) => (code in codes ? String(codes[code]) : whole))
   }
 
-  // MySQL habits on SQLite: YEAR(), MONTH(), DAY(), DATE_FORMAT() and DATEDIFF()
+  // MySQL SUBSTRING_INDEX(s, delim, n): text before the nth delimiter (n > 0) or after the nth from the end (n < 0)
+  function substringIndex(s, delim, n) {
+    if (s === null || delim === null || n === null) return null
+    if (delim === '' || n === 0) return ''
+    const parts = String(s).split(String(delim))
+    return (n > 0 ? parts.slice(0, n) : parts.slice(n)).join(String(delim))
+  }
+
+  // MySQL habits on SQLite: YEAR(), MONTH(), DAY(), DATE_FORMAT(), DATEDIFF() and SUBSTRING_INDEX()
   function addMysqlFunctions(db) {
     db.create_function('YEAR', (v) => parseDate(v)?.y ?? null)
     db.create_function('MONTH', (v) => parseDate(v)?.mo ?? null)
     db.create_function('DAY', (v) => parseDate(v)?.d ?? null)
     db.create_function('DATE_FORMAT', (v, f) => dateFormat(v, f))
+    db.create_function('SUBSTRING_INDEX', (s, d, n) => substringIndex(s, d, n))
     db.create_function('DATEDIFF', (a, b) => {
       const x = parseDate(a)
       const y = parseDate(b)

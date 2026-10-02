@@ -12,7 +12,7 @@ statistics, Python and applied math. It runs entirely in the browser.
 - One 75 minute timer, free navigation, auto-submit at zero. Progress survives a refresh.
 - **Run code** (or Ctrl/Cmd + Enter) on both coding questions:
   - SQL runs on [sql.js](https://github.com/sql-js/sql.js) (SQLite), with MySQL-style `YEAR()`, `MONTH()`, `DAY()`,
-    `DATE_FORMAT()` and `DATEDIFF()` added.
+    `DATE_FORMAT()`, `DATEDIFF()` and `SUBSTRING_INDEX()` added.
   - Python runs on [Pyodide](https://pyodide.org) (real CPython 3.12) in a background worker.
 - Results by section, then a review of every question: the correct answer, how to approach it, and why each wrong
   option is wrong. Coding questions show a reference solution and common mistakes, and you can mark yourself.

@@ -463,6 +463,98 @@ window.BANK = (window.BANK || []).concat(
       "Check with combinations: favorable pairs / all pairs = C(3, 2) / C(10, 2)."
     ],
     "check": { "compute": "Fraction(3, 10) * Fraction(2, 9)", "values": ["1/15", "9/100", "3/5", "2/9"] }
+  },
+  {
+    "id": "math-podium-branches",
+    "section": "math",
+    "type": "mcq",
+    "topic": "Permutations",
+    "title": "First, second and third place",
+    "prompt": "A regional contest awards first, second and third place among 8 branches. How many different results are possible?",
+    "options": ["56", "336", "512", "24"],
+    "answer": 1,
+    "explanations": [
+      "This is C(8, 3), which ignores order. Here first and second place are different outcomes.",
+      "Correct. Order matters and no branch can win twice: 8 × 7 × 6 = 336.",
+      "This is 8^3, which lets one branch take more than one place.",
+      "This is 8 × 3, which doesn't count arrangements."
+    ],
+    "approach": [
+      "Distinct positions (first, second, third) mean order matters: use permutations.",
+      "Count choices position by position: 8 for first, 7 left for second, 6 for third.",
+      "Compare with the committee version: dividing by 3! = 6 gives C(8, 3) = 56."
+    ],
+    "check": { "compute": "perm(8, 3)", "values": ["56", "336", "512", "24"] }
+  },
+  {
+    "id": "math-multiplication-rule",
+    "section": "math",
+    "type": "mcq",
+    "topic": "Conditional probability: multiplication rule",
+    "title": "Checking and savings together",
+    "prompt": "70% of a bank's customers have a checking account. Among customers with a checking account, 40% also have a savings account. What percentage of all customers have both?",
+    "options": ["40%", "28%", "70%", "57%"],
+    "answer": 1,
+    "explanations": [
+      "40% is P(savings | checking), the share among checking customers only, not among all customers.",
+      "Correct. P(checking and savings) = P(checking) × P(savings | checking) = 0.7 × 0.4 = 0.28.",
+      "70% is everyone with checking, whether or not they also have savings.",
+      "This divides 0.4 by 0.7, applying the conditional formula backwards."
+    ],
+    "approach": [
+      "\"Among those with A, x% have B\" is a conditional probability, P(B | A).",
+      "Both: P(A and B) = P(A) × P(B | A).",
+      "Check the size: \"both\" can't be larger than either group on its own."
+    ],
+    "check": { "compute": "0.7 * 0.4", "values": ["0.40", "0.28", "0.70", "0.4/0.7"] }
+  },
+  {
+    "id": "math-compare-z-scores",
+    "section": "math",
+    "type": "mcq",
+    "topic": "Normal distribution: z-scores",
+    "title": "Who stands out more",
+    "prompt": "Ana's credit score is 760 in an applicant pool with mean 700 and standard deviation 40. Bo's score is 690 in a different pool with mean 600 and standard deviation 60. Relative to their own pools, how do they compare?",
+    "options": [
+      "Ana stands out more, because her score is higher",
+      "Bo stands out more, because he is 90 points above his mean",
+      "They stand out equally: both are 1.5 standard deviations above their means",
+      "They can't be compared without knowing the pool sizes"
+    ],
+    "answer": 2,
+    "explanations": [
+      "Raw scores from different distributions aren't comparable. Ana's is higher, but her pool is centered higher too.",
+      "A 90-point gap means less in a pool with a larger standard deviation. Convert to standard deviations first.",
+      "Correct. Ana: (760 − 700) / 40 = 1.5. Bo: (690 − 600) / 60 = 1.5. Same z-score, same relative standing.",
+      "Z-scores need only each pool's mean and standard deviation, not its size."
+    ],
+    "approach": [
+      "Compare across different distributions with z = (x − mean) / SD.",
+      "Compute both z-scores, then compare.",
+      "Ignore raw differences; they depend on each pool's spread."
+    ]
+  },
+  {
+    "id": "math-poisson-at-most-one",
+    "section": "math",
+    "type": "mcq",
+    "topic": "Poisson distribution",
+    "title": "At most one chargeback",
+    "prompt": "A merchant gets chargebacks at an average rate of 1 per day, following a Poisson distribution. What is the probability of at most one chargeback tomorrow?",
+    "options": ["e^−1", "2e^−1", "1 − e^−1", "1 − 2e^−1"],
+    "answer": 1,
+    "explanations": [
+      "This is P(X = 0) only. \"At most one\" also includes exactly one.",
+      "Correct. P(X ≤ 1) = P(0) + P(1) = e^−1 + 1 × e^−1 / 1! = 2e^−1, about 0.74.",
+      "This is P(X ≥ 1), at least one.",
+      "This is P(X ≥ 2), the complement of the correct answer."
+    ],
+    "approach": [
+      "Translate the words: \"at most one\" is 0 or 1; \"at least one\" is 1 or more; \"more than one\" is 2 or more.",
+      "Add the Poisson terms you need: P(k) = λ^k e^−λ / k!, with λ = 1.",
+      "Use complements when the list of terms gets long."
+    ],
+    "check": { "compute": "math.exp(-1) + math.exp(-1)", "values": ["math.exp(-1)", "2*math.exp(-1)", "1 - math.exp(-1)", "1 - 2*math.exp(-1)"] }
   }
 ]
 );
