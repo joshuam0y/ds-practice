@@ -10,6 +10,8 @@
    fields, unique ids. Questions with a "check" block are recomputed independently, and exactly one
    option may match the recomputed answer.
 4. Every section has enough questions to fill a test.
+5. Question generators (generators.js): runs tools/check_generators.mjs with Node, which builds hundreds
+   of questions from every template and re-derives each answer independently.
 It also rejects em dashes and en dashes anywhere in the bank.
 
 Exits with status 1 if anything is wrong.
@@ -17,7 +19,9 @@ Exits with status 1 if anything is wrong.
 import json
 import math
 import re
+import shutil
 import sqlite3
+import subprocess
 import sys
 from datetime import date
 from fractions import Fraction
@@ -327,6 +331,18 @@ def main():
             problem(NAMES[s], f"has {have} questions but a test needs {need}")
         print(f"  {NAMES[s]:<20} {have:>3} in bank  (test uses {need}, target {TARGET[s]}){flag}")
     print(f"  {'Total':<20} {len(bank):>3}")
+
+    print("\n" + "=" * 70)
+    print("5. Question generators")
+    print("=" * 70)
+    node = shutil.which("node")
+    if not node:
+        print("  Node.js not found, so the generators were not checked. Install Node to check them.")
+    else:
+        run = subprocess.run([node, str(ROOT / "tools" / "check_generators.mjs")], capture_output=True, text=True)
+        print("  " + (run.stdout + run.stderr).strip().replace("\n", "\n  "))
+        if run.returncode != 0:
+            problem("generators.js", "the generator check failed (see above)")
 
     print()
     if problems:

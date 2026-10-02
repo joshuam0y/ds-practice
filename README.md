@@ -7,6 +7,11 @@ statistics, Python and applied math. It runs entirely in the browser.
 
 ## What it does
 
+- **Unlimited multiple choice:** besides the written bank, `generators.js` has 22 templates that build a fresh question
+  with new numbers every time (combinations, Bayes, Poisson, normal, expected value, standard error, box plots, COUNT
+  and NULLs, joins and more). `tools/check_generators.mjs` builds thousands and re-derives every answer independently.
+- Python questions include line-by-line walkthroughs of the reference solution, and coding questions are labeled Easy or
+  Medium to match the real test's range.
 - Draws 14 questions per attempt (1 SQL query, 4 statistics, 3 SQL basics, 1 Python, 5 applied math), preferring
   questions you've seen least.
 - One 75 minute timer, free navigation, auto-submit at zero. Progress survives a refresh.
@@ -31,6 +36,8 @@ statistics, Python and applied math. It runs entirely in the browser.
 | `index.html`, `styles.css`, `app.js` | The app |
 | `runner.js` | Runs SQL and Python; holds the Python test harness |
 | `questions/*.js` | The question bank, one file per section (JSON inside a one-line wrapper) |
+| `generators.js` | Templates for endless generated multiple choice questions |
+| `tools/check_generators.mjs` | Independent check of the generators (run by verify.py) |
 | `verify.py` | Checks the whole bank |
 
 ## Running locally

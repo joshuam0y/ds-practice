@@ -343,3 +343,10 @@ body:has(.review-bar) .hr-shell { height: calc(100vh - 64px - 58px); }
   .keys-hint { display: none; }
   .hr-top .btn-quiet { display: none; }
 }
+
+.walkthrough { border-left-color: var(--blue); background: var(--panel-2); }
+.walkthrough code { white-space: pre-wrap; }
+.diff { font-weight: 700; }
+.diff-easy { color: var(--green); }
+.diff-medium { color: var(--amber); }
+.diff-hard { color: var(--red); }

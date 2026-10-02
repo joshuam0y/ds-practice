@@ -18,6 +18,13 @@ const HISTORY_LIMIT = 30
 
 const BANK = window.BANK || []
 const QUESTIONS = new Map(BANK.map((q) => [q.id, q]))
+// Templates that generate fresh multiple choice questions (generators.js)
+const TEMPLATES = window.GENERATORS?.templates || []
+
+// Generated questions live inside the attempt that used them; make them findable like bank questions
+function registerExtras(attempt) {
+  for (const q of Object.values(attempt?.extra || {})) QUESTIONS.set(q.id, q)
+}
 
 const app = document.getElementById('app')
 const dialog = document.getElementById('dialog')
@@ -177,16 +184,31 @@ const DRILL_MCQ = 10
 const isTimed = (a) => (a?.mode ?? 'test') === 'test'
 
 // Prefer the questions seen least; break ties randomly. plan is a list of {key, count}.
+// Each template counts as one item in the pool; when it's picked it makes a brand new question.
 function draw(plan) {
   const seen = load(KEYS.seen, {})
   const ids = []
+  const extra = {}
   for (const sec of plan) {
-    const pool = shuffle(BANK.filter((q) => q.section === sec.key)).sort((a, b) => (seen[a.id] || 0) - (seen[b.id] || 0))
-    ids.push(...pool.slice(0, sec.count).map((q) => q.id))
+    const pool = [
+      ...BANK.filter((q) => q.section === sec.key).map((q) => ({ key: q.id })),
+      ...TEMPLATES.filter((t) => t.section === sec.key).map((t) => ({ key: `tpl:${t.key}`, template: t })),
+    ]
+    const picked = shuffle(pool).sort((a, b) => (seen[a.key] || 0) - (seen[b.key] || 0)).slice(0, sec.count)
+    for (const item of shuffle(picked)) {
+      seen[item.key] = (seen[item.key] || 0) + 1
+      if (!item.template) {
+        ids.push(item.key)
+        continue
+      }
+      const q = GENERATORS.build(item.template)
+      extra[q.id] = q
+      QUESTIONS.set(q.id, q)
+      ids.push(q.id)
+    }
   }
-  for (const id of ids) seen[id] = (seen[id] || 0) + 1
   save(KEYS.seen, seen)
-  return ids
+  return { ids, extra }
 }
 
 // Questions whose most recent result, in any past attempt, was not full marks
@@ -203,12 +225,14 @@ function missedIds() {
 }
 
 function startAttempt(mode = 'test', section = null) {
-  let ids
-  if (mode === 'drill') ids = draw([{ key: section, count: SECTION[section].kind === 'Multiple choice' ? DRILL_MCQ : 1 }])
-  else if (mode === 'missed') ids = missedIds().slice(0, 14)
-  else ids = draw(SECTIONS)
-  if (!ids.length) return
-  state.attempt = { id: Date.now().toString(36), mode, section, startedAt: Date.now(), questionIds: ids, answers: {}, selfMarks: {} }
+  let drawn
+  if (mode === 'drill') drawn = draw([{ key: section, count: SECTION[section].kind === 'Multiple choice' ? DRILL_MCQ : 1 }])
+  else if (mode === 'missed') {
+    const ids = missedIds().slice(0, 14)
+    drawn = { ids, extra: Object.fromEntries(ids.filter((id) => QUESTIONS.get(id)?.generated).map((id) => [id, QUESTIONS.get(id)])) }
+  } else drawn = draw(SECTIONS)
+  if (!drawn.ids.length) return
+  state.attempt = { id: Date.now().toString(36), mode, section, startedAt: Date.now(), questionIds: drawn.ids, extra: drawn.extra, answers: {}, selfMarks: {} }
   state.index = 0
   state.runs = {}
   state.view = 'test'
@@ -342,7 +366,11 @@ function render() {
 function renderStart() {
   const past = history()
   const missed = missedIds()
-  const bankCounts = Object.fromEntries(SECTIONS.map((s) => [s.key, BANK.filter((q) => q.section === s.key).length]))
+  const bankCounts = Object.fromEntries(SECTIONS.map((s) => {
+    const written = BANK.filter((q) => q.section === s.key).length
+    const templates = TEMPLATES.filter((t) => t.section === s.key).length
+    return [s.key, templates ? `${written} + ${templates} generators` : String(written)]
+  }))
   app.innerHTML = `
     <header class="topbar"><div class="brand">DS <span>Practice</span> <small>· Data Science Intern assessment</small></div><div class="spacer"></div>${themeButton()}</header>
     <main class="page">
@@ -359,6 +387,7 @@ function renderStart() {
           <li>Move between questions freely with the numbers on the left. Answers save as you go, so a refresh won't lose them.</li>
           <li>Coding questions have <strong>Run code</strong> (or Ctrl/Cmd + Enter) to check your answer against the sample data.</li>
           <li>Total: 22 points. Each coding question is worth 5, each multiple choice 1.</li>
+          <li>Multiple choice sections mix written questions with generators that make a fresh question with new numbers every time, so practice never runs out.</li>
         </ul>
         <div class="actions"><button class="btn btn-primary btn-lg" id="start">Start test</button></div>
       </section>
@@ -502,13 +531,14 @@ function problemHtml(q, reviewing) {
     review += `<div class="approach"><h4>How to approach it</h4><ol>${(q.approach || []).map((x) => `<li>${inline(x)}</li>`).join('')}</ol></div>`
     if (isCode(q)) {
       review += `<h4>Reference solution</h4><pre class="solution">${esc(text(q.solution))}</pre>`
+      if (q.walkthrough?.length) review += `<div class="approach walkthrough"><h4>Line by line</h4><ol>${q.walkthrough.map((w) => `<li>${inline(w)}</li>`).join('')}</ol></div>`
       if (q.mistakes?.length) review += `<div class="approach mistakes"><h4>Common mistakes</h4><ul>${q.mistakes.map((m) => `<li>${inline(m)}</li>`).join('')}</ul></div>`
     }
   }
   return `<div class="q-title">
       ${reviewing ? '' : `<button class="bookmark${flagged ? ' on' : ''}" id="flag" aria-pressed="${flagged ? 'true' : 'false'}" title="Bookmark this question to come back to">${flagged ? '★' : '☆'}</button>`}
       <h1>${esc(q.title)}</h1></div>
-    <p class="q-meta">${esc(sec.name)} · ${plural(maxPoints(q), 'point')}${reviewing ? '' : ` · Question ${state.index + 1} of ${state.attempt.questionIds.length}`}</p>
+    <p class="q-meta">${esc(sec.name)} · ${plural(maxPoints(q), 'point')}${q.difficulty ? ` · <span class="diff diff-${q.difficulty.toLowerCase()}">${esc(q.difficulty)}</span>` : ''}${reviewing ? '' : ` · Question ${state.index + 1} of ${state.attempt.questionIds.length}`}</p>
     <div class="problem">${md(q.prompt)}${extra}${review}</div>`
 }
 
@@ -892,7 +922,9 @@ document.addEventListener('keydown', (e) => {
 // ---------- Start ----------
 
 function boot() {
+  for (const a of history()) registerExtras(a)
   const saved = load(KEYS.attempt, null)
+  registerExtras(saved)
   if (saved && !saved.submittedAt && saved.questionIds?.every((id) => QUESTIONS.has(id))) {
     state.attempt = saved
     state.attempt.selfMarks ??= {}
