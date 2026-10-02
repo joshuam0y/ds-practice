@@ -185,6 +185,7 @@ function sectionOf(q) {
 // Full tests are timed; drills and missed-question retries are untimed practice
 const MODES = { test: 'Full test', drill: 'Section drill', missed: 'Missed questions' }
 const DRILL_MCQ = 10
+const DRILL_CODE = 3
 const isTimed = (a) => (a?.mode ?? 'test') === 'test'
 
 // Prefer the questions seen least; break ties randomly. plan is a list of {key, count}.
@@ -230,7 +231,7 @@ function missedIds() {
 
 function startAttempt(mode = 'test', section = null) {
   let drawn
-  if (mode === 'drill') drawn = draw([{ key: section, count: SECTION[section].kind === 'Multiple choice' ? DRILL_MCQ : 1 }])
+  if (mode === 'drill') drawn = draw([{ key: section, count: SECTION[section].kind === 'Multiple choice' ? DRILL_MCQ : DRILL_CODE }])
   else if (mode === 'missed') {
     const ids = missedIds().slice(0, 14)
     drawn = { ids, extra: Object.fromEntries(ids.filter((id) => QUESTIONS.get(id)?.generated).map((id) => [id, QUESTIONS.get(id)])) }
@@ -403,7 +404,7 @@ function renderStart() {
       </section>
       <section class="card">
         <h2>Untimed practice</h2>
-        <p class="lede">Drill one section (${DRILL_MCQ} multiple choice questions, or one coding question), or retry every question you've missed before.</p>
+        <p class="lede">Drill one section (${DRILL_MCQ} multiple choice questions, or ${DRILL_CODE} coding questions) with hints available, or retry every question you've missed before.</p>
         <div class="actions">${SECTIONS.map((s) => `<button class="btn" data-drill="${s.key}">${esc(s.name)}</button>`).join('')}</div>
         <div class="actions" style="margin-top:0.75rem"><button class="btn" id="missed"${missed.length ? '' : ' disabled'}>Retry missed questions (${missed.length})</button></div>
       </section>
@@ -545,11 +546,17 @@ function problemHtml(q, reviewing) {
       if (q.mistakes?.length) review += `<div class="approach mistakes"><h4>Common mistakes</h4><ul>${q.mistakes.map((m) => `<li>${inline(m)}</li>`).join('')}</ul></div>`
     }
   }
+  const hintsShown = state.attempt.hints?.[q.id] || 0
+  const steps = q.approach || []
+  const hints = !reviewing && !isTimed(state.attempt) && steps.length
+    ? `<div class="hint-box">${steps.slice(0, hintsShown).map((h, i) => `<p><strong>Hint ${i + 1}.</strong> ${inline(h)}</p>`).join('')}
+        ${hintsShown < steps.length ? `<button class="btn btn-quiet hint-btn" id="hint">${hintsShown ? 'Next hint' : 'Show a hint'} (${hintsShown + 1} of ${steps.length})</button>` : ''}</div>`
+    : ''
   return `<div class="q-title">
       ${reviewing ? '' : `<button class="bookmark${flagged ? ' on' : ''}" id="flag" aria-pressed="${flagged ? 'true' : 'false'}" title="Bookmark this question to come back to">${flagged ? '★' : '☆'}</button>`}
       <h1>${esc(q.title)}</h1></div>
     <p class="q-meta">${esc(sec.name)} · ${plural(maxPoints(q), 'point')}${q.difficulty ? ` · <span class="diff diff-${q.difficulty.toLowerCase()}">${esc(q.difficulty)}</span>` : ''}${reviewing ? '' : ` · Question ${state.index + 1} of ${state.attempt.questionIds.length}`}</p>
-    <div class="problem">${md(q.prompt)}${extra}${review}</div>`
+    <div class="problem">${md(q.prompt)}${hints}${extra}${review}</div>`
 }
 
 function multiHtml(q, reviewing) {
@@ -626,6 +633,57 @@ function codeHtml(q, reviewing) {
         <button class="btn btn-run" id="run">▷ ${sql ? 'Run Query' : 'Run Code'}</button></div></div>`
 }
 
+// Turn a failed Python test into a pointer at the likely mistake
+function pyCoach(t) {
+  const msg = t.message || ''
+  if (/IndentationError/.test(msg)) return "Python found a block with no code in it. Replace the stub's \"# Write your code here\" comment with your code, indented under the def line."
+  if (/NameError/.test(msg)) return "A name isn't defined: check spelling and capitalization, and that it's defined before it's used."
+  if (/AttributeError/.test(msg) && /NoneType/.test(msg)) return 'Something is None where an object was expected. Check that your functions return a value.'
+  if (/AttributeError/.test(msg)) return 'An attribute is missing. Set it in __init__ (self.x = ...), and call super().__init__(...) in subclasses that define their own __init__.'
+  if (/TypeError/.test(msg) && /NoneType/.test(msg)) return 'A None reached an operation that needs a value. Filter out None first, or make sure your function returns something.'
+  if (/nothing was raised/.test(msg)) return 'The test expects an exception. Use raise SomeError(...); returning or printing an error message does not count.'
+  if (/got None$/.test(msg)) return "Your function returned None. Add a return statement: printing a value isn't returning it."
+  if (!('stdin' in t)) {
+    const m = msg.match(/^Expected (.+), got (.+)$/)
+    if (m && /^-?\d+\.\d+$/.test(m[1]) && /^-?\d+(\.\d+)?$/.test(m[2]) && Math.abs(+m[1] - +m[2]) < 0.011) return 'Close, but not equal: round the result to 2 decimals with round(x, 2), once, at the end.'
+    return ''
+  }
+  const norm = (x) => (x || '').replace(/\r/g, '').split('\n').map((l) => l.trimEnd()).join('\n').replace(/\n+$/, '')
+  const got = norm(t.output)
+  const exp = norm(t.expected)
+  if (got === exp || /Error/.test(msg)) return ''
+  const gl = got ? got.split('\n') : []
+  const el = exp ? exp.split('\n') : []
+  if (gl.includes('None') && !el.includes('None')) return 'There is an extra None line. That happens when you print() the result of a function that already prints (or returns nothing).'
+  if (!got && exp) return "Nothing was output. If the starter writes your function's return value, return it; if it only calls your function, print inside it."
+  if (got.toLowerCase() === exp.toLowerCase()) return 'Only the capitalization differs. Print the words exactly as the prompt writes them.'
+  if (got.replace(/\s+/g, ' ').trim() === exp.replace(/\s+/g, ' ').trim()) return 'Only the spacing or line breaks differ. Check single spaces between values and one result per line.'
+  if ([...gl].sort().join('\n') === [...el].sort().join('\n')) return 'You have the right lines in the wrong order. Check the sort keys and the tie-breaks.'
+  const twoDp = (x) => x.replace(/-?\d+(\.\d+)?/g, (n) => (+n).toFixed(2))
+  if (twoDp(got) === twoDp(exp)) return "The numbers are right but formatted differently. Use exactly 2 decimals, for example f'{x:.2f}'."
+  if (gl.length !== el.length) return `Expected ${el.length} line${el.length === 1 ? '' : 's'} of output, you produced ${gl.length}. Check that you output once per input item, and handle the empty case.`
+  return ''
+}
+
+// Point at the usual cause of a wrong SQL result
+function sqlCoach(r) {
+  if (r.pass) return ''
+  const err = r.error || ''
+  if (/misuse of aggregate|aggregate functions are not allowed/i.test(err)) return 'An aggregate (SUM, COUNT, AVG) is in WHERE. Conditions on aggregates go in HAVING, after GROUP BY.'
+  if (/misuse of window function/i.test(err)) return 'Window functions run after WHERE. Compute them in a CTE or subquery, then filter outside it.'
+  if (/no such function/i.test(err)) return 'This runs on SQLite. Supported MySQL functions include YEAR, MONTH, DAY, DATE_FORMAT, DATEDIFF, SUBSTRING_INDEX, CONCAT, IFNULL and COALESCE; for others, use CASE or SUBSTR.'
+  if (/no such column/i.test(err)) return 'A column name is wrong. Check the spelling, the table alias (c.name vs a.name), and that aliases from SELECT are only used where allowed.'
+  if (/ambiguous column/i.test(err)) return 'Two joined tables share that column name. Prefix it with a table alias, like c.customer_id.'
+  if (/syntax error/i.test(err)) return 'Check commas between columns, clause order (SELECT, FROM, WHERE, GROUP BY, HAVING, ORDER BY), and the semicolon at the end.'
+  if (!r.got || !r.expected) return ''
+  if (/wrong order/i.test(r.reason)) return 'Add every sort key the prompt lists, including the last tie-breaker, with ASC or DESC on each.'
+  if (r.got.rows.length > r.expected.rows.length) return 'Too many rows: a JOIN may be duplicating rows, a filter (WHERE or HAVING) may be missing, or you need RANK = 1 instead of every row.'
+  if (r.got.rows.length < r.expected.rows.length) return 'Too few rows: a filter may be too strict (> vs >=), an INNER JOIN may need to be a LEFT JOIN, ROW_NUMBER may be dropping ties, or a NULL comparison may be removing rows.'
+  if (/Wrong values/i.test(r.reason)) return 'Check integer division (multiply by 1.0), ROUND to 2 decimals, COALESCE for NULLs, and that filters ran before aggregating.'
+  return ''
+}
+const coach = (text) => (text ? `<p class="coach"><strong>Tip:</strong> ${esc(text)}</p>` : '')
+
 function outputHtml(q) {
   const run = state.runs[q.id]
   if (!run) return '<p class="null">Run your code to see results here.</p>'
@@ -640,6 +698,7 @@ function outputHtml(q) {
   if (q.type === 'sql') {
     return `<div class="verdict"><span class="badge ${r.pass ? 'pass' : 'fail'}">${r.pass ? 'Accepted' : r.error ? 'Error' : 'Wrong Answer'}</span><span>${esc(r.reason)}</span></div>
       ${r.error ? `<div class="errbox">${esc(r.error)}</div>` : ''}
+      ${coach(sqlCoach(r))}
       ${r.got ? `<h4>Your Output (stdout)</h4><pre class="sample-out">${esc(rowsText(r.got)) || '(no rows)'}</pre>` : ''}
       ${r.expected ? `<h4>Expected Output</h4><pre class="sample-out">${esc(rowsText(r.expected))}</pre>` : ''}
       ${r.got ? `<details class="as-table"><summary>Show as tables with column names</summary><h4>Your output</h4>${dataTable(r.got.columns, r.got.rows)}<h4>Expected</h4>${dataTable(r.expected.columns, r.expected.rows)}</details>` : ''}`
@@ -647,12 +706,13 @@ function outputHtml(q) {
   const passed = r.tests.filter((t) => t.pass).length
   const all = passed === r.tests.length
   const head = `<div class="verdict"><span class="badge ${all ? 'pass' : 'fail'}">${all ? 'Accepted' : 'Wrong Answer'}</span><span>${passed}/${r.tests.length} test cases passed.</span></div>
-    ${r.error ? `<div class="errbox">Your code has an error:\n${esc(r.error)}</div>` : ''}`
+    ${r.error ? `<div class="errbox">Your code has an error:\n${esc(r.error)}</div>${coach(pyCoach({ message: r.error }))}` : ''}`
   if (r.tests.some((t) => 'stdin' in t)) {
     const firstFail = r.tests.findIndex((t) => !t.pass)
     return `${head}${r.tests.map((t, i) => `<details class="case ${t.pass ? 'ok' : 'bad'}"${i === firstFail ? ' open' : ''}>
         <summary><span class="mark">${t.pass ? '✓' : '✗'}</span> Test case ${i}: ${esc(t.name)}</summary>
         ${t.message ? `<p class="t-msg">${esc(t.message)}</p>` : ''}
+        ${t.pass ? '' : coach(pyCoach(t))}
         ${'stdin' in t ? `<h4>Input (stdin)</h4><pre class="sample-out">${esc(t.stdin.replace(/\n$/, '')) || ' '}</pre>
           <h4>Your Output (stdout)</h4><pre class="sample-out">${esc((t.output || '').replace(/\n$/, '')) || '(no output)'}</pre>
           <h4>Expected Output</h4><pre class="sample-out">${esc(t.expected.replace(/\n$/, '')) || '(no output)'}</pre>
@@ -660,7 +720,7 @@ function outputHtml(q) {
       </details>`).join('')}`
   }
   return `${head}<ul class="tests">${r.tests.map((t) => `<li class="${t.pass ? 'ok' : 'bad'}"><span class="mark">${t.pass ? '✓' : '✗'}</span><span class="t-name">${esc(t.name)}</span>
-      ${t.pass ? '' : `<span class="t-msg">${esc(t.message)}</span>`}</li>`).join('')}</ul>
+      ${t.pass ? '' : `<span class="t-msg">${esc(t.message)}</span>${coach(pyCoach(t))}`}</li>`).join('')}</ul>
     ${r.stdout ? `<h4>What you printed</h4><pre class="stdout">${esc(r.stdout)}</pre>` : ''}`
 }
 
@@ -705,6 +765,15 @@ function renderTest() {
   $('#proceed')?.addEventListener('click', () => (last ? confirmSubmit() : go(state.index + 1)))
   $('#submit')?.addEventListener('click', confirmSubmit)
   for (const id of ['#to-results', '#to-results-2']) $(id)?.addEventListener('click', () => { state.view = 'results'; render() })
+  $('#hint')?.addEventListener('click', () => {
+    a.hints = a.hints || {}
+    a.hints[q.id] = (a.hints[q.id] || 0) + 1
+    saveAttempt()
+    const keep = $('.hr-problem')?.scrollTop
+    render()
+    const pane = $('.hr-problem')
+    if (pane && keep !== undefined) pane.scrollTop = keep
+  })
   $('#flag')?.addEventListener('click', () => {
     a.flags = a.flags || {}
     if (a.flags[q.id]) delete a.flags[q.id]

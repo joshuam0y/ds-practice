@@ -359,3 +359,10 @@ body:has(.review-bar) .hr-shell { height: calc(100vh - 64px - 58px); }
 /* Tables written inside question text wrap like prose; data tables stay compact and monospaced */
 table.data.md { font-family: var(--font); font-size: 0.88rem; }
 table.data.md td { white-space: normal; }
+
+/* Coaching on failed runs, and hints in untimed practice */
+.coach { margin: 0.4rem 0 0.2rem; padding: 0.45rem 0.7rem; border-radius: 4px; background: var(--amber-soft); color: var(--heading); font-size: 0.84rem; font-family: var(--font); white-space: normal; }
+.tests .coach { margin-left: 1.5rem; }
+.hint-box { border: 1px dashed var(--line); border-radius: 6px; padding: 0.6rem 0.9rem; margin: 0.4rem 0 1rem; }
+.hint-box p { margin: 0 0 0.5rem; }
+.hint-btn { padding-left: 0; color: var(--blue); }

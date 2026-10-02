@@ -7,13 +7,15 @@ statistics, Python and applied math. It runs entirely in the browser.
 
 ## What it does
 
-- **Unlimited questions in every section:** besides the written bank, 38 generators build a fresh question every time.
+- **Unlimited questions in every section:** besides the written bank, 52 generators build a fresh question every time.
   - `generators.js`: 22 single-answer and 4 multi-select templates for statistics, applied math and SQL basics.
     `tools/check_generators.mjs` builds 10,400 and re-derives every answer independently (brute force where possible).
-  - `generators_code.js`: 6 Python and 6 SQL coding templates with new rules, tables and test cases each time. Each
-    computes expected output in JavaScript and ships a separate Python or SQL reference solution; verify.py runs 720
+  - `generators_code.js` and `generators_more.js`: 14 Python and 12 SQL coding templates with new rules, tables and test cases each time. Each
+    computes expected output in JavaScript and ships a separate Python or SQL reference solution; verify.py runs 1,560
     of them through real Python and SQLite and requires the two to agree.
 - **Multi-select** ("Pick ONE or MORE options") questions, scored all or nothing.
+- **Coaching on failed runs:** tips that name the likely mistake (an extra None line, print vs return, spacing,
+  2-decimal formatting, aggregates in WHERE, an INNER JOIN that should be LEFT, and more).
 - Python questions include line-by-line walkthroughs of the reference solution, and coding questions are labeled Easy or
   Medium to match the real test's range.
 - Draws 14 questions per attempt (1 SQL query, 4 statistics, 3 SQL basics, 1 Python, 5 applied math), preferring
@@ -27,7 +29,7 @@ statistics, Python and applied math. It runs entirely in the browser.
     (or the `OUTPUT_PATH` file) line by line.
 - The test screen follows HackerRank's layout: timer pill, Save & Proceed, numbered sidebar by section, bookmarks,
   Input Format and Sample Input/Output for SQL, and a Test Results drawer under the editor.
-- Untimed practice: drill a single section, or retry every question you've missed before. The start page tracks
+- Untimed practice: drill a single section (with step-by-step hints), or retry every question you've missed before. The start page tracks
   weak areas by section and topic across attempts.
 - Keyboard: 1 to 4 picks an option, Enter goes to the next question.
 - Results by section, then a review of every question: the correct answer, how to approach it, and why each wrong
