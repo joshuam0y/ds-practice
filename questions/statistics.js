@@ -484,6 +484,129 @@ window.BANK = (window.BANK || []).concat(
       "CLT: for large n (a common rule of thumb is 30 or more), sample means are approximately normal.",
       "The sample means center on the population mean, with standard error σ/√n."
     ]
+  },
+  {
+    "id": "stat-multi-hypothesis-facts",
+    "section": "stats",
+    "type": "multi",
+    "topic": "Hypothesis testing: errors and power",
+    "title": "True statements about a significance test",
+    "prompt": "A bank tests H0: \"the new fraud rule does not change the false-alarm rate\" at α = 0.05. Which statements are true?",
+    "options": [
+      "α is the probability of rejecting H0 when H0 is true",
+      "Lowering α to 0.01 reduces the chance of a Type I error",
+      "Lowering α to 0.01, with everything else fixed, also reduces the chance of a Type II error",
+      "Power is 1 − β",
+      "A p-value of 0.03 means there is a 3% chance H0 is true",
+      "With α fixed, a larger sample increases power"
+    ],
+    "answers": [0, 1, 3, 5],
+    "explanations": [
+      "Correct. That is the definition of the Type I error rate.",
+      "Correct. Type I error probability is α itself.",
+      "Not true. A stricter α makes rejecting harder, so real effects are missed more often: β goes up.",
+      "Correct. Power is the probability of correctly rejecting a false H0, the complement of a Type II error.",
+      "Not true. The p-value assumes H0 is true; it is P(data this extreme | H0), not P(H0 | data).",
+      "Correct. More data shrinks the standard error, so real effects are easier to detect."
+    ],
+    "approach": [
+      "Check each statement against the definitions: α = P(Type I), β = P(Type II), power = 1 − β.",
+      "Remember the trade-off: with the same data, lowering α raises β.",
+      "Reject any reading of a p-value as the probability that a hypothesis is true."
+    ]
+  },
+  {
+    "id": "stat-multi-boxplot-facts",
+    "section": "stats",
+    "type": "multi",
+    "topic": "Box plots and the 1.5 IQR rule",
+    "title": "Reading a box plot's numbers",
+    "prompt": "A box plot of loan amounts (in $ thousands) shows: minimum 5, Q1 20, median 35, Q3 50, maximum 120. Which statements are true?",
+    "options": [
+      "The IQR is 30",
+      "The upper fence is 95",
+      "The maximum, 120, is plotted as an outlier",
+      "About half of the loans are between 20 and 50",
+      "The mean must be 35",
+      "The distribution is most likely left-skewed",
+      "The range is 115"
+    ],
+    "answers": [0, 1, 2, 3, 6],
+    "explanations": [
+      "Correct. IQR = Q3 − Q1 = 50 − 20 = 30.",
+      "Correct. Q3 + 1.5 × IQR = 50 + 45 = 95.",
+      "Correct. 120 is beyond the upper fence of 95.",
+      "Correct. Q1 to Q3 holds the middle 50% of the data.",
+      "Not true. 35 is the median. A box plot doesn't show the mean, and with a long upper tail the mean is likely above 35.",
+      "Not true. The long upper whisker and high outlier point to a right skew.",
+      "Correct. Range = max − min = 120 − 5 = 115."
+    ],
+    "approach": [
+      "Compute IQR, the fences and the range first.",
+      "Then test each statement against those numbers.",
+      "Box plots show the median, never the mean; skew is named after the long tail."
+    ]
+  },
+  {
+    "id": "stat-multi-probability-sampling",
+    "section": "stats",
+    "type": "multi",
+    "topic": "Sampling methods",
+    "title": "Which methods are random sampling",
+    "prompt": "A bank wants a sample of customers that supports valid statistical inference. Which of these are probability (random) sampling methods?",
+    "options": [
+      "Simple random sampling from the full customer list",
+      "Stratified sampling: random samples from each region",
+      "Cluster sampling: randomly choose branches and survey everyone there",
+      "Systematic sampling: every 50th customer after a random start",
+      "Convenience sampling: customers who visit the flagship branch this week",
+      "Voluntary response: an optional survey link on the website",
+      "Quota sampling: interviewers fill age quotas with whoever they find"
+    ],
+    "answers": [0, 1, 2, 3],
+    "explanations": [
+      "Correct. Every customer has the same known chance of selection.",
+      "Correct. Randomness within each stratum makes it a probability method.",
+      "Correct. The clusters are chosen at random, so selection probabilities are known.",
+      "Correct. With a random start, each customer's chance of selection is known.",
+      "Not true. Selection depends on who is easy to reach, not on chance.",
+      "Not true. People choose themselves, which usually over-represents strong opinions.",
+      "Not true. Quotas fix the mix, but the people within each quota aren't chosen at random."
+    ],
+    "approach": [
+      "Ask: does chance decide who is selected, with a known probability for each person?",
+      "If people choose themselves, or the researcher chooses whoever is handy, it isn't a probability method."
+    ]
+  },
+  {
+    "id": "stat-multi-correlation-facts",
+    "section": "stats",
+    "type": "multi",
+    "topic": "Correlation and covariance",
+    "title": "What r = 0.6 does and doesn't mean",
+    "prompt": "Across a bank's customers, the correlation between age and account balance is r = 0.6. Which statements are true?",
+    "options": [
+      "About 36% of the variation in balance is explained by a linear relationship with age",
+      "Older customers tend to have higher balances",
+      "Getting older causes balances to rise",
+      "Re-expressing balance in cents instead of dollars would change r",
+      "The covariance between age and balance is positive",
+      "r = 0.6 means 60% of customers follow the pattern"
+    ],
+    "answers": [0, 1, 4],
+    "explanations": [
+      "Correct. r² = 0.6² = 0.36.",
+      "Correct. A positive r means the variables tend to rise together.",
+      "Not true. Correlation alone never establishes causation.",
+      "Not true. Correlation has no units, so rescaling a variable leaves it unchanged.",
+      "Correct. Covariance always has the same sign as the correlation.",
+      "Not true. r measures the strength of a linear relationship, not a share of people."
+    ],
+    "approach": [
+      "Sign gives direction, size gives strength, r² gives the share of variation explained.",
+      "Correlation is unit-free and says nothing about cause."
+    ],
+    "check": {"truth": ["abs(0.6**2 - 0.36) < 1e-12", "0.6 > 0", "False", "False", "0.6 > 0", "False"]}
   }
 ]
 );

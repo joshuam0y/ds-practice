@@ -87,7 +87,7 @@ function inline(s) {
 function tableHtml(ls) {
   const cells = (l) => l.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim())
   const [head, ...rows] = ls.filter((l) => !/^\s*\|[\s:|-]+\|\s*$/.test(l))
-  return `<div class="table-wrap"><table class="data"><thead><tr>${cells(head).map((c) => `<th>${inline(c)}</th>`).join('')}</tr></thead><tbody>${
+  return `<div class="table-wrap"><table class="data md"><thead><tr>${cells(head).map((c) => `<th>${inline(c)}</th>`).join('')}</tr></thead><tbody>${
     rows.map((r) => `<tr>${cells(r).map((c) => (c === 'NULL' ? '<td class="null">NULL</td>' : `<td>${inline(c)}</td>`)).join('')}</tr>`).join('')}</tbody></table></div>`
 }
 // Within a block, runs of "- " lines become a list, runs of "|" lines a table, and other lines a paragraph
@@ -169,7 +169,11 @@ function saveAttempt() {
 const current = () => QUESTIONS.get(state.attempt.questionIds[state.index])
 const answerOf = (q) => state.attempt.answers[q.id]
 
+const isMulti = (q) => q.type === 'multi'
+const sameSet = (a, b) => Array.isArray(a) && a.length === b.length && [...a].sort().every((x, i) => x === [...b].sort()[i])
+
 function isAnswered(q, a = answerOf(q)) {
+  if (isMulti(q)) return Array.isArray(a) && a.length > 0
   if (!isCode(q)) return Number.isInteger(a)
   return typeof a === 'string' && a.trim() !== '' && a.trim() !== text(q.starter).trim()
 }
@@ -279,6 +283,11 @@ async function grade(attempt) {
   for (const id of attempt.questionIds) {
     const q = QUESTIONS.get(id)
     const a = attempt.answers[id]
+    if (isMulti(q)) {
+      const right = isAnswered(q, a) && sameSet(a, q.answers)
+      results[id] = !isAnswered(q, a) ? { points: 0, status: 'unanswered' } : { points: right ? MCQ_POINTS : 0, status: right ? 'correct' : 'wrong' }
+      continue
+    }
     if (!isCode(q)) {
       results[id] = !Number.isInteger(a)
         ? { points: 0, status: 'unanswered' }
@@ -387,7 +396,8 @@ function renderStart() {
           <li>Move between questions freely with the numbers on the left. Answers save as you go, so a refresh won't lose them.</li>
           <li>Coding questions have <strong>Run code</strong> (or Ctrl/Cmd + Enter) to check your answer against the sample data.</li>
           <li>Total: 22 points. Each coding question is worth 5, each multiple choice 1.</li>
-          <li>Multiple choice sections mix written questions with generators that make a fresh question with new numbers every time, so practice never runs out.</li>
+          <li>Every section mixes written questions with generators that build a fresh question (new numbers, new tables, new test cases) every time, so practice never runs out.</li>
+          <li>Some multiple choice questions say <strong>Pick ONE or MORE options</strong>. Those are all or nothing: you need exactly the right set.</li>
         </ul>
         <div class="actions"><button class="btn btn-primary btn-lg" id="start">Start test</button></div>
       </section>
@@ -542,7 +552,30 @@ function problemHtml(q, reviewing) {
     <div class="problem">${md(q.prompt)}${extra}${review}</div>`
 }
 
+function multiHtml(q, reviewing) {
+  const picked = Array.isArray(answerOf(q)) ? answerOf(q) : []
+  if (!reviewing) {
+    return `<h2 class="pick">Pick ONE or MORE options</h2>
+      <div class="options" role="group" aria-label="Answer choices">${q.options.map((o, i) => `
+      <label class="option multi${picked.includes(i) ? ' selected' : ''}"><input type="checkbox" name="multi" value="${i}"${picked.includes(i) ? ' checked' : ''}>
+      <span class="opt-text">${inline(o)}</span></label>`).join('')}</div>
+      <button class="btn-link clear-choice" id="clear"${picked.length ? '' : ' hidden'}>Clear Selection</button>`
+  }
+  const right = picked.length && sameSet(picked, q.answers)
+  const status = !picked.length ? '<span class="tag soft">Not answered</span>' : right ? '<span class="tag ok">You got it</span>' : '<span class="tag bad">Incorrect</span>'
+  return `<p class="your-answer">Your answer ${status}<br><small>Multi-select is all or nothing: you need exactly the right set of options.</small></p>
+    <div class="options">${q.options.map((o, i) => {
+      const should = q.answers.includes(i)
+      const chose = picked.includes(i)
+      const cls = should ? ' is-correct' : chose ? ' is-wrong-pick' : ''
+      const tags = `${should ? '<span class="tag ok">Should be selected</span>' : ''}${chose ? `<span class="tag ${should ? 'soft' : 'bad'}">You selected</span>` : should ? '<span class="tag bad">You missed this</span>' : ''}`
+      return `<div class="option multi review${cls}"><input type="checkbox" disabled${chose ? ' checked' : ''}><span class="opt-text">${inline(o)}${tags}</span>
+        <div class="why">${inline(q.explanations[i])}</div></div>`
+    }).join('')}</div>`
+}
+
 function optionsHtml(q, reviewing) {
+  if (isMulti(q)) return multiHtml(q, reviewing)
   const picked = answerOf(q)
   if (!reviewing) {
     return `<h2 class="pick">Pick ONE option</h2>
@@ -664,7 +697,7 @@ function renderTest() {
         <button class="btn" id="prev"${state.index === 0 ? ' disabled' : ''}>← Previous</button>
         <span class="progress">Question ${state.index + 1} of ${a.questionIds.length}</span><span class="spacer"></span>
         ${last ? '<button class="btn btn-primary" id="to-results-2">Back to results</button>' : '<button class="btn btn-primary" id="next">Next →</button>'}
-      </footer>` : '<p class="keys-hint">Keys: 1 to 4 picks an option, Enter saves and goes to the next question.</p>'}`
+      </footer>` : '<p class="keys-hint">Keys: number keys pick (or toggle) an option, Enter saves and goes to the next question.</p>'}`
 
   app.querySelectorAll('[data-go]').forEach((b) => b.addEventListener('click', () => go(+b.dataset.go)))
   $('#prev')?.addEventListener('click', () => go(state.index - 1))
@@ -682,6 +715,7 @@ function renderTest() {
 
   if (!isCode(q) && !reviewing) {
     app.querySelectorAll('input[name="opt"]').forEach((input) => input.addEventListener('change', () => choose(q, +input.value)))
+    app.querySelectorAll('input[name="multi"]').forEach((input) => input.addEventListener('change', () => toggle(q, +input.value)))
     $('#clear')?.addEventListener('click', () => {
       delete a.answers[q.id]
       saveAttempt()
@@ -717,6 +751,19 @@ function go(i) {
   state.index = i
   render()
   window.scrollTo(0, 0)
+}
+
+function toggle(q, i) {
+  const now = Array.isArray(answerOf(q)) ? [...answerOf(q)] : []
+  const next = now.includes(i) ? now.filter((x) => x !== i) : [...now, i].sort((x, y) => x - y)
+  if (next.length) state.attempt.answers[q.id] = next
+  else delete state.attempt.answers[q.id]
+  saveAttempt()
+  app.querySelectorAll('.option').forEach((el, k) => el.classList.toggle('selected', next.includes(k)))
+  app.querySelectorAll('input[name="multi"]').forEach((el, k) => { el.checked = next.includes(k) })
+  app.querySelector(`.qnum[data-go="${state.index}"]`)?.classList.toggle('answered', next.length > 0)
+  const clear = $('#clear')
+  if (clear) clear.hidden = !next.length
 }
 
 function choose(q, i) {
@@ -908,10 +955,13 @@ document.addEventListener('keydown', (e) => {
   }
   // Plain-key shortcuts only when focus isn't in an editor or on a control that uses the key itself
   if (state.view !== 'test' || e.ctrlKey || e.metaKey || e.altKey || e.target.closest?.('textarea, input:not([type="radio"]), select, button')) return
-  if (!isCode(q) && /^[1-4]$/.test(e.key) && +e.key <= q.options.length) {
+  if (!isCode(q) && /^[1-9]$/.test(e.key) && +e.key <= q.options.length) {
     e.preventDefault()
-    choose(q, +e.key - 1)
-    app.querySelectorAll('input[name="opt"]')[+e.key - 1].checked = true
+    if (isMulti(q)) toggle(q, +e.key - 1)
+    else {
+      choose(q, +e.key - 1)
+      app.querySelectorAll('input[name="opt"]')[+e.key - 1].checked = true
+    }
   } else if (e.key === 'Enter') {
     e.preventDefault()
     if (state.index < state.attempt.questionIds.length - 1) go(state.index + 1)

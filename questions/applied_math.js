@@ -567,6 +567,144 @@ window.BANK = (window.BANK || []).concat(
       "compute": "math.exp(-1) + math.exp(-1)",
       "values": ["math.exp(-1)", "2*math.exp(-1)", "1 - math.exp(-1)", "1 - 2*math.exp(-1)"]
     }
+  },
+  {
+    "id": "math-multi-combination-identities",
+    "section": "math",
+    "type": "multi",
+    "topic": "Combinations",
+    "title": "Expressions equal to C(8, 3)",
+    "prompt": "Which of these are equal to C(8, 3), the number of ways to choose 3 of 8 items?",
+    "options": ["C(8, 5)", "8! / (3! × 5!)", "P(8, 3) / 3!", "8 × 7 × 6", "56", "8³ / 3!", "C(7, 2) + C(7, 3)"],
+    "answers": [0, 1, 2, 4, 6],
+    "explanations": [
+      "Correct. Choosing 3 to include is the same as choosing 5 to leave out: C(n, k) = C(n, n − k).",
+      "Correct. This is the definition of C(8, 3).",
+      "Correct. Ordered selections divided by the 3! orders of each group: 336 / 6 = 56.",
+      "Not true. That is P(8, 3) = 336, which counts ordered selections.",
+      "Correct. C(8, 3) = 56.",
+      "Not true. 8³ allows repeats; 512 / 6 isn't even a whole number.",
+      "Correct. Pascal's rule: 21 + 35 = 56. Either a given item is in the group (choose 2 more from 7) or it isn't (choose 3 from 7)."
+    ],
+    "approach": [
+      "Compute C(8, 3) = 56 once, then evaluate each option.",
+      "Know the identities: C(n, k) = C(n, n − k), C(n, k) = P(n, k) / k!, and Pascal's rule C(n, k) = C(n − 1, k − 1) + C(n − 1, k)."
+    ],
+    "check": {
+      "truth": [
+        "comb(8, 5) == 56",
+        "factorial(8) // (factorial(3) * factorial(5)) == 56",
+        "perm(8, 3) // factorial(3) == 56",
+        "8 * 7 * 6 == 56",
+        "56 == comb(8, 3)",
+        "8**3 / factorial(3) == 56",
+        "comb(7, 2) + comb(7, 3) == 56"
+      ]
+    }
+  },
+  {
+    "id": "math-multi-independence",
+    "section": "math",
+    "type": "multi",
+    "topic": "Independence and the addition rule",
+    "title": "Card used abroad and flagged",
+    "prompt": "For a card transaction, let A = \"used abroad\" and B = \"flagged for review\". P(A) = 0.5, P(B) = 0.2 and P(A and B) = 0.1. Which statements are true?",
+    "options": [
+      "A and B are independent",
+      "P(B | A) = 0.2",
+      "P(A or B) = 0.7",
+      "P(A or B) = 0.6",
+      "A and B are mutually exclusive",
+      "P(A | B) = 0.1"
+    ],
+    "answers": [0, 1, 3],
+    "explanations": [
+      "Correct. P(A) × P(B) = 0.5 × 0.2 = 0.1 = P(A and B).",
+      "Correct. P(A and B) / P(A) = 0.1 / 0.5 = 0.2, the same as P(B), as expected for independent events.",
+      "Not true. That just adds P(A) + P(B) and forgets to subtract the overlap.",
+      "Correct. 0.5 + 0.2 − 0.1 = 0.6.",
+      "Not true. Mutually exclusive events can't happen together, but P(A and B) = 0.1 > 0.",
+      "Not true. P(A | B) = 0.1 / 0.2 = 0.5. 0.1 is the joint probability."
+    ],
+    "approach": [
+      "Test independence with P(A and B) = P(A) × P(B).",
+      "Conditional: P(B | A) = P(A and B) / P(A). Union: P(A) + P(B) − P(A and B).",
+      "Independent and mutually exclusive are different ideas; non-zero events can't be both."
+    ],
+    "check": {
+      "truth": [
+        "abs(0.5 * 0.2 - 0.1) < 1e-12",
+        "abs(0.1 / 0.5 - 0.2) < 1e-12",
+        "abs(0.5 + 0.2 - 0.1 - 0.7) < 1e-12",
+        "abs(0.5 + 0.2 - 0.1 - 0.6) < 1e-12",
+        "0.1 == 0",
+        "abs(0.1 / 0.2 - 0.1) < 1e-12"
+      ]
+    }
+  },
+  {
+    "id": "math-multi-poisson-facts",
+    "section": "math",
+    "type": "multi",
+    "topic": "Poisson distribution",
+    "title": "Facts about a Poisson count",
+    "prompt": "Chargebacks per day follow a Poisson distribution with λ = 4. Let X be tomorrow's count. Which statements are true?",
+    "options": [
+      "The mean of X is 4",
+      "The variance of X is 4",
+      "The standard deviation of X is 4",
+      "P(X = 0) = e^−4",
+      "P(X ≥ 1) = 1 − e^−4",
+      "X can equal 2.5",
+      "The count over two days is Poisson with λ = 8"
+    ],
+    "answers": [0, 1, 3, 4, 6],
+    "explanations": [
+      "Correct. For a Poisson distribution, the mean is λ.",
+      "Correct. For a Poisson distribution, the variance also equals λ.",
+      "Not true. The SD is √λ = 2.",
+      "Correct. λ^0 e^−λ / 0! = e^−4.",
+      "Correct. The complement of no chargebacks.",
+      "Not true. A Poisson variable is a count: 0, 1, 2, ...",
+      "Correct. For a Poisson process, rates add over time: 4 per day × 2 days."
+    ],
+    "approach": [
+      "Poisson facts: mean = variance = λ, SD = √λ, values are whole counts.",
+      "P(0) = e^−λ, and \"at least one\" = 1 − e^−λ.",
+      "Rescale λ when the interval changes."
+    ]
+  },
+  {
+    "id": "math-multi-normal-facts",
+    "section": "math",
+    "type": "multi",
+    "topic": "Normal distribution",
+    "title": "Facts about a normal distribution",
+    "prompt": "Scores on a bank's financial literacy quiz are normal with mean 100 and standard deviation 15. Which statements are true?",
+    "options": [
+      "About 68% of scores are between 85 and 115",
+      "About 95% of scores are between 70 and 130",
+      "A score of 130 has z = 2",
+      "About 5% of scores are above 130",
+      "The median score is 100",
+      "Half of the scores are above 100",
+      "About 2.5% of scores are below 55"
+    ],
+    "answers": [0, 1, 2, 4, 5],
+    "explanations": [
+      "Correct. That's ±1 SD.",
+      "Correct. That's ±2 SD.",
+      "Correct. (130 − 100) / 15 = 2.",
+      "Not true. About 5% are outside ±2 SD in total; only half of that, 2.5%, is above 130.",
+      "Correct. A normal distribution is symmetric, so mean = median.",
+      "Correct. By symmetry, P(X > mean) = 0.5.",
+      "Not true. 55 is 3 SD below the mean, so only about 0.15% are below it."
+    ],
+    "approach": [
+      "Turn each value into a z-score, then use 68-95-99.7.",
+      "One tail is half of what's outside the interval.",
+      "Symmetry gives mean = median and P(X > mean) = 0.5."
+    ]
   }
 ]
 );

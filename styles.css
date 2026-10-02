@@ -350,3 +350,12 @@ body:has(.review-bar) .hr-shell { height: calc(100vh - 64px - 58px); }
 .diff-easy { color: var(--green); }
 .diff-medium { color: var(--amber); }
 .diff-hard { color: var(--red); }
+
+/* Multi-select: square checkboxes like HackerRank's "Pick ONE or MORE options" */
+.option.multi input { border-radius: 4px; }
+.option.multi input:checked { background: var(--green); border-color: var(--green); box-shadow: inset 0 0 0 3px var(--panel); }
+.your-answer small { color: var(--text-soft); }
+
+/* Tables written inside question text wrap like prose; data tables stay compact and monospaced */
+table.data.md { font-family: var(--font); font-size: 0.88rem; }
+table.data.md td { white-space: normal; }

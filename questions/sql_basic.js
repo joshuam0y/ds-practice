@@ -427,6 +427,122 @@ window.BANK = (window.BANK || []).concat(
       "Common uses: default values for display, and turning NULL into 0 before arithmetic.",
       "IFNULL(a, b) in MySQL is the two-argument version."
     ]
+  },
+  {
+    "id": "sqlb-multi-customers-without-accounts",
+    "section": "sqlbasic",
+    "type": "multi",
+    "topic": "Joins, NOT IN and NULLs",
+    "title": "Queries that find customers with no accounts",
+    "prompt": [
+      "Some rows in `accounts` have `customer_id` NULL. Which queries correctly return the customers who have no accounts?"
+    ],
+    "options": [
+      "`SELECT c.* FROM customers c LEFT JOIN accounts a ON a.customer_id = c.customer_id WHERE a.customer_id IS NULL;`",
+      "`SELECT * FROM customers WHERE customer_id NOT IN (SELECT customer_id FROM accounts);`",
+      "`SELECT * FROM customers c WHERE NOT EXISTS (SELECT 1 FROM accounts a WHERE a.customer_id = c.customer_id);`",
+      "`SELECT c.* FROM customers c JOIN accounts a ON a.customer_id = c.customer_id WHERE a.customer_id IS NULL;`",
+      "`SELECT c.* FROM customers c LEFT JOIN accounts a ON a.customer_id = c.customer_id WHERE a.customer_id = NULL;`"
+    ],
+    "answers": [0, 2],
+    "explanations": [
+      "Correct. The anti-join pattern: unmatched customers get NULLs from the LEFT JOIN, and IS NULL keeps exactly those.",
+      "Not true. Because the subquery contains a NULL, x NOT IN (..., NULL) is never true, so this returns no rows at all.",
+      "Correct. NOT EXISTS is safe with NULLs: a NULL account simply never matches.",
+      "Not true. An inner join keeps only matches, and a matched row never has a NULL customer_id, so this is always empty.",
+      "Not true. = NULL is never true; you need IS NULL."
+    ],
+    "approach": [
+      "Know the three anti-join patterns: LEFT JOIN ... IS NULL, NOT EXISTS, and NOT IN.",
+      "NOT IN breaks when the subquery can return NULL. Prefer NOT EXISTS or the LEFT JOIN pattern.",
+      "= NULL and <> NULL never match anything."
+    ]
+  },
+  {
+    "id": "sqlb-multi-null-facts",
+    "section": "sqlbasic",
+    "type": "multi",
+    "topic": "NULL handling",
+    "title": "True statements about NULL",
+    "prompt": "Which statements about NULL in SQL are true?",
+    "options": [
+      "`NULL = NULL` evaluates to unknown, not true",
+      "`COUNT(*)` counts a row even if every column in it is NULL",
+      "`SUM(col)` returns 0 when every value of col is NULL",
+      "`COALESCE(NULL, NULL, 5)` returns 5",
+      "`WHERE col <> 'x'` also returns rows where col is NULL",
+      "`GROUP BY col` puts all NULL values of col into a single group"
+    ],
+    "answers": [0, 1, 3, 5],
+    "explanations": [
+      "Correct. Any comparison with NULL is unknown, even with another NULL.",
+      "Correct. COUNT(*) counts rows, not values.",
+      "Not true. With no non-NULL values, SUM returns NULL. Wrap it in COALESCE(SUM(col), 0) for 0.",
+      "Correct. COALESCE returns the first non-NULL argument.",
+      "Not true. NULL <> 'x' is unknown, so those rows are filtered out. Add OR col IS NULL to keep them.",
+      "Correct. For grouping, NULLs are treated as equal and form one group."
+    ],
+    "approach": [
+      "Separate comparisons (NULL gives unknown) from aggregates (NULLs are skipped) and grouping (NULLs form one group).",
+      "Watch for claims that an aggregate over only NULLs returns 0: it returns NULL (COUNT is the exception, returning 0)."
+    ]
+  },
+  {
+    "id": "sqlb-multi-ranking-facts",
+    "section": "sqlbasic",
+    "type": "multi",
+    "topic": "Window functions: ROW_NUMBER, RANK, DENSE_RANK",
+    "title": "Ranking four balances",
+    "prompt": "Four accounts have balances 900, 800, 800 and 700, ranked with `ORDER BY balance DESC`. Which statements are true?",
+    "options": [
+      "`ROW_NUMBER()` gives the 700 row the number 4",
+      "`RANK()` gives the 700 row rank 4",
+      "`DENSE_RANK()` gives the 700 row rank 3",
+      "`RANK()` gives both 800 rows rank 2",
+      "`ROW_NUMBER()` gives both 800 rows the number 2",
+      "`DENSE_RANK()` gives the 700 row rank 4"
+    ],
+    "answers": [0, 1, 2, 3],
+    "explanations": [
+      "Correct. ROW_NUMBER numbers rows 1, 2, 3, 4 with no ties.",
+      "Correct. RANK gives both 800s rank 2 and then skips to 4.",
+      "Correct. DENSE_RANK doesn't leave gaps: 1, 2, 2, 3.",
+      "Correct. Tied rows share a rank.",
+      "Not true. ROW_NUMBER never repeats a number; the two 800s get 2 and 3 in an unspecified order.",
+      "Not true. That's RANK. DENSE_RANK gives 3."
+    ],
+    "approach": [
+      "Write out the three sequences for the same data: ROW_NUMBER 1,2,3,4; RANK 1,2,2,4; DENSE_RANK 1,2,2,3.",
+      "Then check each statement against them."
+    ]
+  },
+  {
+    "id": "sqlb-multi-having-queries",
+    "section": "sqlbasic",
+    "type": "multi",
+    "topic": "GROUP BY, HAVING and ORDER BY (MySQL)",
+    "title": "Branches over a million, largest first",
+    "prompt": "Using MySQL, which queries list branches whose total balance is over 1,000,000, largest total first?",
+    "options": [
+      "`SELECT branch_id, SUM(balance) AS total FROM accounts GROUP BY branch_id HAVING SUM(balance) > 1000000 ORDER BY total DESC;`",
+      "`SELECT branch_id, SUM(balance) AS total FROM accounts WHERE SUM(balance) > 1000000 GROUP BY branch_id ORDER BY total DESC;`",
+      "`SELECT branch_id, SUM(balance) AS total FROM accounts GROUP BY branch_id HAVING total > 1000000 ORDER BY total DESC;`",
+      "`SELECT branch_id, SUM(balance) AS total FROM accounts GROUP BY branch_id HAVING SUM(balance) > 1000000 ORDER BY total;`",
+      "`SELECT * FROM (SELECT branch_id, SUM(balance) AS total FROM accounts GROUP BY branch_id) t WHERE total > 1000000 ORDER BY total DESC;`"
+    ],
+    "answers": [0, 2, 4],
+    "explanations": [
+      "Correct. The standard pattern: aggregate per branch, filter groups with HAVING, then sort.",
+      "Not true. WHERE runs before grouping and can't use aggregates. This is an error.",
+      "Correct. MySQL (and SQLite) allow a select alias in HAVING. Some other databases don't, so the SUM form is the portable choice.",
+      "Not true. ORDER BY defaults to ascending, so the largest total comes last.",
+      "Correct. Filtering the grouped result in an outer query works too: there, total is an ordinary column."
+    ],
+    "approach": [
+      "Conditions on aggregates go in HAVING, or in an outer query's WHERE.",
+      "Check the sort direction: \"largest first\" needs DESC.",
+      "Know which shortcuts MySQL allows (aliases in HAVING) and which are errors everywhere (aggregates in WHERE)."
+    ]
   }
 ]
 );

@@ -4,7 +4,9 @@
 import { createRequire } from 'node:module'
 
 const require = createRequire(import.meta.url)
-const { templates, build } = require('../generators.js')
+const api = require('../generators.js')
+require('../generators_code.js')
+const { templates, build } = api
 
 const PER_TEMPLATE = 400
 const problems = []
@@ -137,7 +139,66 @@ const DASHES = /[–—]/
 let built = 0
 const positions = [0, 0, 0, 0]
 
+// Multi-select: decide each option's truth from its displayed text, independently of the template
+function evalExpr(text) {
+  const js = text
+    .replace(/(\d),(?=\d{3})/g, '$1')
+    .replace(/C\((\d+), (\d+)\)/g, (_, a, b) => subsets(+a, +b))
+    .replace(/P\((\d+), (\d+)\)/g, (_, a, b) => { let p = 1; for (let i = 0; i < +b; i++) p *= +a - i; return p })
+    .replace(/(\d+)!/g, (_, a) => { let f = 1; for (let i = 2; i <= +a; i++) f *= i; return f })
+    .replace(/×/g, '*').replace(/\^/g, '**')
+  return Function(`return (${js})`)()
+}
+const truthOf = {
+  'multi-combo-identities': (q) => q.options.map((o) => close(evalExpr(o), subsets(q.check.params.n, q.check.params.k))),
+  'multi-independence': (q) => {
+    const { a, b, ab } = q.check.params // tenths, tenths, hundredths
+    const val = (o) => Math.round(parseFloat(o.split('= ')[1]) * 100)
+    return q.options.map((o) => {
+      if (o === 'A and B are independent') return ab === a * b
+      if (o === 'A and B are mutually exclusive') return ab === 0
+      if (o.startsWith('P(A or B)')) return val(o) === 10 * a + 10 * b - ab
+      if (o.startsWith('P(B | A)')) return val(o) * a === 10 * ab
+      if (o.startsWith('P(A | B)')) return val(o) * b === 10 * ab
+      throw new Error(`unknown statement ${o}`)
+    })
+  },
+  'multi-outliers': (q) => {
+    const { q1, q3 } = q.check.params
+    return q.options.map((o) => { const v = parseFloat(o.replace(/,/g, '')); return v > q3 + 1.5 * (q3 - q1) || v < q1 - 1.5 * (q3 - q1) })
+  },
+  'multi-sql-aggregates': (q) => {
+    const vals = q.check.params.vals
+    const nn = vals.filter((v) => v !== null)
+    const facts = { 'COUNT(*)': vals.length, 'COUNT(balance)': nn.length, 'SUM(balance)': nn.reduce((s, v) => s + v, 0), 'MAX(balance)': Math.max(...nn) }
+    facts['AVG(balance)'] = facts['SUM(balance)'] / nn.length
+    return q.options.map((o) => {
+      if (o.includes('NULL because')) return nn.length === 0
+      const [fn, value] = o.split(' returns ')
+      return close(facts[fn], parseFloat(value.replace(/,/g, '')))
+    })
+  },
+}
+
 for (const t of templates) {
+  if (t.kind === 'code') continue
+  if (t.kind === 'multi') {
+    if (!(t.key in truthOf)) { problems.push(`${t.key}: no independent check written`); continue }
+    const rand = seeded(t.key.length * 104729 + 3)
+    for (let i = 0; i < PER_TEMPLATE; i++) {
+      const q = build(t, rand)
+      built++
+      const truths = truthOf[t.key](q)
+      const expected = truths.map((x, k) => (x ? k : -1)).filter((k) => k >= 0)
+      const where = `${t.key} #${i}`
+      if (JSON.stringify(expected) !== JSON.stringify(q.answers)) problems.push(`${where}: options judged true independently ${expected}, answers ${q.answers}\n    ${JSON.stringify({ prompt: q.prompt, options: q.options })}`)
+      if (q.options.length < 4 || q.options.length > 7 || new Set(q.options).size !== q.options.length) problems.push(`${where}: needs 4 to 7 distinct options`)
+      if (q.explanations.some((e, k) => e.startsWith('Correct') !== q.answers.includes(k))) problems.push(`${where}: explanations misaligned`)
+      if (DASHES.test(JSON.stringify([q.prompt, q.options, q.explanations, q.approach]))) problems.push(`${where}: contains an em or en dash`)
+      if (/NaN|undefined|Infinity/.test(JSON.stringify([q.prompt, q.options]))) problems.push(`${where}: rendered NaN, undefined or Infinity`)
+    }
+    continue
+  }
   if (!(t.key in solve)) problems.push(`${t.key}: no independent check written`)
   const rand = seeded(t.key.length * 7919 + 17)
   for (let i = 0; i < PER_TEMPLATE; i++) {
@@ -175,7 +236,8 @@ for (const t of templates) {
   }
 }
 
-const share = positions.map((p) => Math.round((100 * p) / built))
+const single = positions.reduce((x, y) => x + y, 0)
+const share = positions.map((p) => Math.round((100 * p) / single))
 console.log(`Built ${built} questions from ${templates.length} templates. Correct answer positions A-D: ${share.join('% ')}%`)
 if (share.some((x) => x < 20 || x > 30)) problems.push(`correct answers are unevenly spread across positions: ${share.join('% ')}%`)
 if (problems.length) {

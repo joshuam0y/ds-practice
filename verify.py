@@ -32,7 +32,7 @@ FILES = ["sql_intermediate", "statistics", "sql_basic", "python", "applied_math"
 PER_TEST = {"sqlint": 1, "stats": 4, "sqlbasic": 3, "python": 1, "math": 5}
 TARGET = {"sqlint": 8, "stats": 20, "sqlbasic": 15, "python": 8, "math": 25}
 NAMES = {"sqlint": "SQL (Intermediate)", "stats": "Statistics", "sqlbasic": "SQL (Basic)", "python": "Python (Basic)", "math": "Applied Math"}
-TYPE_FOR = {"sqlint": "sql", "python": "python", "stats": "mcq", "sqlbasic": "mcq", "math": "mcq"}
+TYPE_FOR = {"sqlint": {"sql"}, "python": {"python"}, "stats": {"mcq", "multi"}, "sqlbasic": {"mcq", "multi"}, "math": {"mcq", "multi"}}
 PREFIX = "window.BANK = (window.BANK || []).concat("
 BAD_DASHES = {"\u2014": "em dash", "\u2013": "en dash"}
 
@@ -155,6 +155,7 @@ def show_table(columns, rows):
 COMMON = ["id", "section", "type", "topic", "title", "prompt", "approach"]
 NEEDS = {
     "mcq": ["options", "answer", "explanations"],
+    "multi": ["options", "answers", "explanations"],
     "sql": ["tables", "solution", "starter", "mistakes"],
     "python": ["tests", "solution", "starter", "mistakes"],
 }
@@ -173,8 +174,22 @@ def check_structure(bank):
         sec = q.get("section")
         if sec not in PER_TEST:
             problem(where, f"unknown section '{sec}'")
-        elif q.get("type") != TYPE_FOR[sec]:
-            problem(where, f"type '{q.get('type')}' does not fit section '{sec}' (expected '{TYPE_FOR[sec]}')")
+        elif q.get("type") not in TYPE_FOR[sec]:
+            problem(where, f"type '{q.get('type')}' does not fit section '{sec}' (expected one of {sorted(TYPE_FOR[sec])})")
+        if q.get("type") == "multi":
+            opts = q.get("options", [])
+            if not 4 <= len(opts) <= 7 or len(set(map(str.strip, opts))) != len(opts):
+                problem(where, f"multi-select needs 4 to 7 distinct options, has {len(opts)}")
+            answers = q.get("answers", [])
+            if not answers or len(set(answers)) != len(answers) or not all(isinstance(a, int) and 0 <= a < len(opts) for a in answers):
+                problem(where, f"answers {answers!r} must be distinct valid option indexes, at least one")
+            exps = q.get("explanations", [])
+            if len(exps) != len(opts):
+                problem(where, "needs one explanation per option")
+            else:
+                for i, e in enumerate(exps):
+                    if (i in answers) != e.startswith("Correct"):
+                        problem(where, f"option {i + 1}: explanations must start with 'Correct' exactly for the options that should be selected")
         if q.get("type") == "mcq":
             opts = q.get("options", [])
             if len(opts) != 4:
@@ -251,6 +266,20 @@ SAFE = {"math": math, "Fraction": Fraction, "comb": math.comb, "perm": math.perm
         "sqrt": math.sqrt, "exp": math.exp, "e": math.e, "__builtins__": {"abs": abs, "round": round, "sum": sum, "min": min, "max": max, "float": float, "int": int, "len": len}}
 
 
+def check_truth(q):
+    """Multi-select: each option's claim is evaluated independently and must match the answer set."""
+    where = q["id"]
+    try:
+        truths = [bool(eval(expr, dict(SAFE))) for expr in q["check"]["truth"]]
+    except Exception as e:
+        problem(where, f"truth check does not evaluate: {e}")
+        return None
+    expected = [i for i, t in enumerate(truths) if t]
+    if sorted(q["answers"]) != expected:
+        problem(where, f"truth check says options {expected} are true, but the answers are {sorted(q['answers'])}")
+    return expected
+
+
 def check_numeric(q):
     c = q["check"]
     where = q["id"]
@@ -278,6 +307,58 @@ def check_numeric(q):
     return float(target)
 
 
+def normalize_row(row):
+    return [round(v, 2) if isinstance(v, (int, float)) and not isinstance(v, bool) else v for v in row]
+
+
+def check_generated_code(node, run_tests, per_template=60):
+    """Each generated coding question has expected output computed in JavaScript and a reference solution in
+    Python or SQL. Run the reference here and require it to match, for many instances of every template."""
+    run = subprocess.run([node, str(ROOT / "tools" / "dump_code.mjs"), str(per_template)], capture_output=True, text=True)
+    if run.returncode != 0:
+        problem("generators_code.js", f"could not build coding questions: {run.stderr.strip()[:300]}")
+        return
+    questions = json.loads(run.stdout)
+    counts = {}
+    for q in questions:
+        key = q["generated"]
+        where = f"{key} ({q['id']})"
+        counts[key] = counts.get(key, 0) + 1
+        for ch, label in BAD_DASHES.items():
+            if ch in json.dumps(q, ensure_ascii=False):
+                problem(where, f"contains an {label}")
+        if q["type"] == "python":
+            if len(q["tests"]) not in (5, 6):
+                problem(where, f"has {len(q['tests'])} tests")
+            ref = json.loads(run_tests(text(q["solution"]), json.dumps(q["tests"])))
+            bad = [t for t in ref["tests"] if not t["pass"]]
+            if ref["error"] or bad:
+                problem(where, f"reference solution fails: {ref['error'] or bad[0]['name'] + ': ' + bad[0]['message']}")
+            stub = json.loads(run_tests(text(q["starter"]), json.dumps(q["tests"])))
+            if any(t["pass"] for t in stub["tests"]):
+                problem(where, "starter stub passes a test")
+        else:
+            try:
+                db = connect(q)
+                cur = db.execute(text(q["solution"]))
+                columns = [d[0] for d in cur.description]
+                rows = [normalize_row(list(r)) for r in cur.fetchall()]
+            except sqlite3.Error as e:
+                problem(where, f"reference SQL fails: {e}")
+                continue
+            want = [normalize_row(r) for r in q["expected"]["rows"]]
+            if columns != q["expected"]["columns"]:
+                problem(where, f"columns {columns} differ from expected {q['expected']['columns']}")
+            if rows != want:
+                problem(where, f"reference SQL returned {rows[:4]}... but the generator expected {want[:4]}...")
+            prompt = text(q["prompt"])
+            for c in columns:
+                if f"`{c}`" not in prompt:
+                    problem(where, f"output column '{c}' is not named in the prompt")
+    for key, n in sorted(counts.items()):
+        print(f"  {key:<28} {n} generated, reference solution checked against independent expected output")
+
+
 def main():
     bank = load_bank()
     check_structure(bank)
@@ -302,6 +383,13 @@ def main():
     print("3. Multiple choice: structure and recomputed numeric answers")
     print("=" * 70)
     mcqs = [q for q in bank if q.get("type") == "mcq"]
+    multis = [q for q in bank if q.get("type") == "multi"]
+    for q in multis:
+        if "check" in q and "truth" in q["check"]:
+            got = check_truth(q)
+            if got is not None:
+                print(f"  {q['id']}: truth check -> options {[i + 1 for i in got]} are true")
+    print(f"  {len(multis)} multi-select questions, {sum('check' in q for q in multis)} with every option checked")
     checked = 0
     for q in mcqs:
         if "check" in q:
@@ -343,6 +431,12 @@ def main():
         print("  " + (run.stdout + run.stderr).strip().replace("\n", "\n  "))
         if run.returncode != 0:
             problem("generators.js", "the generator check failed (see above)")
+
+    print("\n" + "=" * 70)
+    print("6. Generated coding questions (Python and SQL)")
+    print("=" * 70)
+    if node:
+        check_generated_code(node, run_tests)
 
     print()
     if problems:

@@ -7,9 +7,13 @@ statistics, Python and applied math. It runs entirely in the browser.
 
 ## What it does
 
-- **Unlimited multiple choice:** besides the written bank, `generators.js` has 22 templates that build a fresh question
-  with new numbers every time (combinations, Bayes, Poisson, normal, expected value, standard error, box plots, COUNT
-  and NULLs, joins and more). `tools/check_generators.mjs` builds thousands and re-derives every answer independently.
+- **Unlimited questions in every section:** besides the written bank, 38 generators build a fresh question every time.
+  - `generators.js`: 22 single-answer and 4 multi-select templates for statistics, applied math and SQL basics.
+    `tools/check_generators.mjs` builds 10,400 and re-derives every answer independently (brute force where possible).
+  - `generators_code.js`: 6 Python and 6 SQL coding templates with new rules, tables and test cases each time. Each
+    computes expected output in JavaScript and ships a separate Python or SQL reference solution; verify.py runs 720
+    of them through real Python and SQLite and requires the two to agree.
+- **Multi-select** ("Pick ONE or MORE options") questions, scored all or nothing.
 - Python questions include line-by-line walkthroughs of the reference solution, and coding questions are labeled Easy or
   Medium to match the real test's range.
 - Draws 14 questions per attempt (1 SQL query, 4 statistics, 3 SQL basics, 1 Python, 5 applied math), preferring
@@ -36,7 +40,9 @@ statistics, Python and applied math. It runs entirely in the browser.
 | `index.html`, `styles.css`, `app.js` | The app |
 | `runner.js` | Runs SQL and Python; holds the Python test harness |
 | `questions/*.js` | The question bank, one file per section (JSON inside a one-line wrapper) |
-| `generators.js` | Templates for endless generated multiple choice questions |
+| `generators.js` | Templates for endless multiple choice and multi-select questions |
+| `generators_code.js` | Templates for endless SQL and Python coding questions |
+| `tools/dump_code.mjs` | Builds coding questions for verify.py to run in Python and SQLite |
 | `tools/check_generators.mjs` | Independent check of the generators (run by verify.py) |
 | `verify.py` | Checks the whole bank |
 

@@ -701,8 +701,132 @@
     },
   })
 
+  // ---------------- Multi-select ("Pick ONE or MORE options") ----------------
+  // make() returns options as {text, truth, why}; truth says whether the option should be selected.
+
+  T.push({
+    key: 'multi-combo-identities', section: 'math', kind: 'multi', topic: 'Combinations',
+    make(rand) {
+      const n = between(rand, 6, 10)
+      const k = between(rand, 2, 4)
+      const target = comb(n, k)
+      const pool = [
+        { text: `C(${n}, ${n - k})`, value: comb(n, n - k), why: `Choosing ${k} to include is the same as choosing ${n - k} to leave out.` },
+        { text: `${n}! / (${k}! × ${n - k}!)`, value: fact(n) / (fact(k) * fact(n - k)), why: 'This is the definition of the combination.' },
+        { text: `P(${n}, ${k}) / ${k}!`, value: perm(n, k) / fact(k), why: `Ordered selections divided by the ${k}! orders of each group: ${perm(n, k)} / ${fact(k)}.` },
+        { text: `C(${n - 1}, ${k - 1}) + C(${n - 1}, ${k})`, value: comb(n - 1, k - 1) + comb(n - 1, k), why: `Pascal's rule: ${comb(n - 1, k - 1)} + ${comb(n - 1, k)}.` },
+        { text: num(target), value: target, why: `C(${n}, ${k}) = ${num(target)}.` },
+        { text: `P(${n}, ${k})`, value: perm(n, k), why: `That counts ordered selections: ${num(perm(n, k))}.` },
+        { text: `${n}^${k}`, value: n ** k, why: `That allows repeats: ${num(n ** k)}.` },
+        { text: `C(${n}, ${k - 1})`, value: comb(n, k - 1), why: `That chooses one fewer: ${num(comb(n, k - 1))}.` },
+        { text: `${k} × C(${n - 1}, ${k - 1})`, value: k * comb(n - 1, k - 1), why: `That equals ${num(k * comb(n - 1, k - 1))}, not ${num(target)}.` },
+      ].filter((o, i, all) => all.findIndex((x) => x.text === o.text) === i)
+      const options = shuffle(rand, pool).slice(0, between(rand, 5, 6)).map((o) => ({ text: o.text, truth: o.value === target, why: o.why }))
+      return {
+        title: `Expressions equal to C(${n}, ${k})`,
+        prompt: `Which of these are equal to C(${n}, ${k}), the number of ways to choose ${k} of ${n} items?`,
+        approach: [`Compute C(${n}, ${k}) = ${num(target)} once, then evaluate each option.`, 'Know the identities: C(n, k) = C(n, n − k), C(n, k) = P(n, k) / k!, and Pascal\'s rule.'],
+        options,
+        params: { n, k, texts: options.map((o) => o.text) },
+      }
+    },
+  })
+
+  T.push({
+    key: 'multi-independence', section: 'math', kind: 'multi', topic: 'Independence and the addition rule',
+    make(rand) {
+      // Keep every conditional probability exact to 2 decimals, so it all works on paper
+      let a, b, ab
+      for (;;) {
+        a = between(rand, 2, 8) // tenths
+        b = between(rand, 2, 8)
+        ab = a * b // hundredths
+        if (rand() >= 0.5) {
+          const choices = [5, 10, 15, 20, 25, 30, 40].filter((x) => x !== ab && x <= 10 * Math.min(a, b))
+          ab = pick(rand, choices)
+        }
+        if ((10 * ab) % a === 0 && (10 * ab) % b === 0) break
+      }
+      const h = (x) => (x / 100).toFixed(2)
+      const t = (x) => (x / 10).toFixed(1)
+      const union = 10 * a + 10 * b - ab
+      const options = [
+        { text: 'A and B are independent', truth: ab === a * b, why: `Compare P(A) × P(B) = ${h(a * b)} with P(A and B) = ${h(ab)}.` },
+        { text: `P(A or B) = ${h(union)}`, truth: true, why: `P(A) + P(B) − P(A and B) = ${t(a)} + ${t(b)} − ${h(ab)} = ${h(union)}.` },
+        { text: `P(A or B) = ${h(10 * a + 10 * b)}`, truth: ab === 0, why: 'This adds P(A) and P(B) without subtracting the overlap.' },
+        { text: `P(B | A) = ${h((100 * ab) / (10 * a))}`, truth: true, why: `P(A and B) / P(A) = ${h(ab)} / ${t(a)}.` },
+        { text: `P(A | B) = ${h(ab)}`, truth: false, why: `P(A | B) = P(A and B) / P(B) = ${h(ab)} / ${t(b)}, not the joint probability itself.` },
+        { text: 'A and B are mutually exclusive', truth: ab === 0, why: `Mutually exclusive means P(A and B) = 0, but here it is ${h(ab)}.` },
+      ].filter((o) => !/NaN/.test(o.text))
+      return {
+        title: 'Two events at once',
+        prompt: `For a card transaction, A = "made online" and B = "flagged for review". P(A) = ${t(a)}, P(B) = ${t(b)} and P(A and B) = ${h(ab)}. Which statements are true?`,
+        approach: ['Independence test: P(A and B) = P(A) × P(B).', 'P(A or B) = P(A) + P(B) − P(A and B); P(B | A) = P(A and B) / P(A).', 'Mutually exclusive means P(A and B) = 0.'],
+        options: shuffle(rand, options).slice(0, between(rand, 5, 6)),
+        params: { a, b, ab },
+      }
+    },
+  })
+
+  T.push({
+    key: 'multi-outliers', section: 'stats', kind: 'multi', topic: 'Box plots and the 1.5 IQR rule',
+    make(rand) {
+      const q1 = pick(rand, [20, 30, 40])
+      const iqr = pick(rand, [10, 20, 30])
+      const q3 = q1 + iqr
+      const lo = q1 - 1.5 * iqr
+      const hi = q3 + 1.5 * iqr
+      const candidates = [hi + pick(rand, [1, 3, 10]), hi, q3 + iqr, lo, lo - pick(rand, [1, 2, 5]), q1 - iqr / 2, (q1 + q3) / 2, hi + 20]
+      const vals = [...new Set(candidates)].filter((v) => v >= 0)
+      const chosen = shuffle(rand, vals).slice(0, 6)
+      if (!chosen.some((v) => v > hi || v < lo)) chosen[0] = hi + 5
+      if (chosen.every((v) => v > hi || v < lo)) chosen[1] = (q1 + q3) / 2
+      const unique = [...new Set(chosen)]
+      return {
+        title: 'Select every outlier',
+        prompt: `A box plot of loan amounts (in $ thousands) has Q1 = ${q1} and Q3 = ${q3}. Using the 1.5 × IQR rule, which of these loans are plotted as outliers?`,
+        approach: [`IQR = ${iqr}. Fences: ${q1} − ${1.5 * iqr} = ${lo} and ${q3} + ${1.5 * iqr} = ${hi}.`, 'Outliers are strictly beyond a fence; values on a fence are not.', 'Check both sides: low values can be outliers too.'],
+        options: unique.map((v) => ({ text: num(v), truth: v > hi || v < lo, why: v > hi ? `${num(v)} is above the upper fence ${hi}.` : v < lo ? `${num(v)} is below the lower fence ${lo}.` : v === hi || v === lo ? `${num(v)} sits exactly on a fence, which does not count.` : `${num(v)} is inside the fences (${lo} to ${hi}).` })),
+        params: { q1, q3, values: unique },
+      }
+    },
+  })
+
+  T.push({
+    key: 'multi-sql-aggregates', section: 'sqlbasic', kind: 'multi', topic: 'Aggregations and NULLs',
+    make(rand) {
+      for (;;) {
+        const n = between(rand, 5, 7)
+        const vals = Array.from({ length: n }, () => (rand() < 0.3 ? null : pick(rand, [100, 200, 300, 400])))
+        const nn = vals.filter((v) => v !== null)
+        if (nn.length < 2 || nn.length === n) continue
+        const sum = nn.reduce((s, v) => s + v, 0)
+        if (sum % nn.length) continue
+        const avg = sum / nn.length
+        const statements = [
+          { text: `COUNT(*) returns ${n}`, truth: true, why: 'COUNT(*) counts every row.' },
+          { text: `COUNT(balance) returns ${n}`, truth: false, why: `COUNT(balance) skips NULLs: it returns ${nn.length}.` },
+          { text: `COUNT(balance) returns ${nn.length}`, truth: true, why: 'COUNT(col) counts the non-NULL values.' },
+          { text: `SUM(balance) returns ${sum}`, truth: true, why: 'SUM skips NULLs.' },
+          { text: `AVG(balance) returns ${num(avg)}`, truth: true, why: `AVG = SUM / COUNT(balance) = ${sum} / ${nn.length}.` },
+          { text: `AVG(balance) returns ${num(+(sum / n).toFixed(2))}`, truth: sum / n === avg, why: `That divides by all ${n} rows, treating NULL as 0.` },
+          { text: `MAX(balance) returns ${Math.max(...nn)}`, truth: true, why: 'MAX ignores NULLs.' },
+          { text: 'SUM(balance) returns NULL because some values are NULL', truth: false, why: 'Aggregates skip NULLs; SUM is NULL only if every value is NULL.' },
+        ]
+        return {
+          title: 'Aggregates over a column with NULLs',
+          prompt: `The \`accounts\` table has ${n} rows, and its \`balance\` values are ${vals.map((v) => (v === null ? 'NULL' : v)).join(', ')}. Which statements are true?`,
+          approach: ['COUNT(*) counts rows; every other aggregate skips NULLs.', 'AVG(col) = SUM(col) / COUNT(col).', 'An aggregate returns NULL only when every value is NULL (COUNT returns 0).'],
+          options: shuffle(rand, statements).slice(0, between(rand, 5, 6)),
+          params: { vals },
+        }
+      }
+    },
+  })
+
   // Builds a full question object from a template: options shuffled so the right one lands anywhere
   function build(template, rand = Math.random) {
+    if (template.kind === 'multi') return buildMulti(template, rand)
     for (let attempt = 0; attempt < 50; attempt++) {
       const g = template.make(rand)
       const options = [g.right, ...g.wrong]
@@ -722,6 +846,31 @@
         explanations: order.map((i) => options[i].why),
         approach: g.approach,
         check: { values: order.map((i) => options[i].value), rule: g.rule || 'equal', threshold: g.threshold, params: g.params },
+      }
+    }
+    throw new Error(`Template ${template.key} could not build a valid question`)
+  }
+
+  function buildMulti(template, rand) {
+    for (let attempt = 0; attempt < 50; attempt++) {
+      const g = template.make(rand)
+      const options = shuffle(rand, g.options)
+      const texts = options.map((o) => o.text)
+      const answers = options.map((o, i) => (o.truth ? i : -1)).filter((i) => i >= 0)
+      if (new Set(texts).size !== texts.length || options.length < 4 || options.length > 7 || !answers.length || answers.length === options.length) continue
+      return {
+        id: `gen-${template.key}-${Math.floor(rand() * 1e9).toString(36)}`,
+        section: template.section,
+        type: 'multi',
+        generated: template.key,
+        topic: g.topic || template.topic,
+        title: g.title,
+        prompt: g.prompt,
+        options: texts,
+        answers,
+        explanations: options.map((o) => `${o.truth ? 'Correct.' : 'Not true.'} ${o.why}`),
+        approach: g.approach,
+        check: { params: g.params, truths: options.map((o) => o.truth) },
       }
     }
     throw new Error(`Template ${template.key} could not build a valid question`)
