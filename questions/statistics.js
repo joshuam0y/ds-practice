@@ -237,6 +237,127 @@ window.BANK = (window.BANK || []).concat(
       "If an option mentions \"variation explained,\" square r.",
       "Reject any option that turns correlation into causation."
     ]
+  },
+  {
+    "id": "stat-p-value-meaning",
+    "section": "stats",
+    "type": "mcq",
+    "topic": "Hypothesis testing: p-values",
+    "title": "What p = 0.03 means",
+    "prompt": "A test of whether a new overdraft notice reduces overdraft fees gives p = 0.03. Which statement correctly interprets this p-value?",
+    "options": [
+      "There is a 3% chance that the null hypothesis is true",
+      "If the null hypothesis were true, results at least this extreme would happen about 3% of the time",
+      "There is a 97% chance that the notice reduces fees",
+      "The notice reduces fees by 3%"
+    ],
+    "answer": 1,
+    "explanations": [
+      "This is the most common misreading. The p-value is computed assuming H0 is true, so it can't be the probability that H0 is true.",
+      "Correct. A p-value is P(data at least this extreme | H0 true). Small values mean the data would be surprising if H0 held.",
+      "The same mistake in reverse. A p-value is not the probability that the alternative is true.",
+      "A p-value measures surprise under H0, not the size of the effect. A tiny effect can have a small p-value with enough data."
+    ],
+    "approach": [
+      "Say the definition out loud: \"assuming H0 is true, the chance of results at least this extreme.\"",
+      "Eliminate any option that gives the probability that a hypothesis is true.",
+      "Eliminate any option that reads the p-value as an effect size."
+    ]
+  },
+  {
+    "id": "stat-two-sided-decision",
+    "section": "stats",
+    "type": "mcq",
+    "topic": "Hypothesis testing: one- and two-sided tests",
+    "title": "z = 1.8 in a two-sided test",
+    "prompt": "An analyst runs a two-sided z-test at α = 0.05 and gets z = 1.8. The critical values are ±1.96 for a two-sided test and 1.645 for a one-sided test. What should she conclude?",
+    "options": [
+      "Reject H0, because 1.8 is greater than 1.645",
+      "Fail to reject H0, because |1.8| is less than 1.96",
+      "Reject H0, because the test statistic is positive",
+      "Accept H0 and conclude the two means are equal"
+    ],
+    "answer": 1,
+    "explanations": [
+      "1.645 is the one-sided cutoff. Using it on a two-sided test doubles the real chance of a Type I error in that direction.",
+      "Correct. A two-sided test at 0.05 puts 2.5% in each tail, so the cutoff is 1.96. Since |1.8| < 1.96, the result is not significant.",
+      "The sign shows the direction of the difference, not whether it's significant.",
+      "Failing to reject is not proof that H0 is true. The right wording is \"not enough evidence to reject H0.\""
+    ],
+    "approach": [
+      "Check whether the test is one- or two-sided before picking a cutoff.",
+      "Two-sided at α = 0.05: compare |z| with 1.96. One-sided: compare z with 1.645 in the stated direction.",
+      "Phrase the conclusion as \"reject\" or \"fail to reject,\" never \"accept\" or \"prove.\""
+    ]
+  },
+  {
+    "id": "stat-boxplot-five-numbers",
+    "section": "stats",
+    "type": "mcq",
+    "topic": "Box plots: the five-number summary",
+    "title": "Reading a box plot's numbers",
+    "prompt": "A box plot of daily ATM withdrawals at one machine (in $ hundreds) shows: minimum 2, Q1 5, median 7, Q3 12, maximum 20. Which statement is true?",
+    "options": [
+      "The mean is 7",
+      "About half of the days fall between 5 and 12",
+      "The interquartile range is 18",
+      "About 25% of the days are above 7"
+    ],
+    "answer": 1,
+    "explanations": [
+      "The line in the box is the median, not the mean. A box plot doesn't show the mean at all.",
+      "Correct. Q1 to Q3 spans the middle 50% of the data, and the box runs from 5 to 12.",
+      "18 is the range (20 − 2). The IQR is Q3 − Q1 = 12 − 5 = 7.",
+      "7 is the median, so about 50% of days are above it, not 25%. About 25% are above Q3 = 12."
+    ],
+    "approach": [
+      "Map each number to its meaning: min, Q1 (25th percentile), median (50th), Q3 (75th), max.",
+      "Each of the four pieces (lower whisker, two halves of the box, upper whisker) holds about 25% of the data.",
+      "Range = max − min. IQR = Q3 − Q1."
+    ]
+  },
+  {
+    "id": "stat-undercoverage-bias",
+    "section": "stats",
+    "type": "mcq",
+    "topic": "Sampling methods and bias",
+    "title": "A survey only in the mobile app",
+    "prompt": "To measure satisfaction among all customers, a bank shows a survey only inside its mobile app. Many older customers bank only at branches. What is the main problem with this sample?",
+    "options": ["Nonresponse bias", "Undercoverage (selection) bias", "Response bias", "Random sampling error"],
+    "answer": 1,
+    "explanations": [
+      "Nonresponse bias happens when people who are invited don't answer. Here, branch-only customers are never invited at all.",
+      "Correct. Part of the population (branch-only customers) has no chance of being selected, so the sample can't represent them.",
+      "Response bias is about inaccurate answers, for example from leading questions or social pressure. Nothing here affects how people answer.",
+      "Random sampling error shrinks with a bigger sample. This bias doesn't: a larger app-only sample is just as unrepresentative."
+    ],
+    "approach": [
+      "Ask who could possibly end up in the sample. If a group can't be selected, that's undercoverage.",
+      "Invited but didn't answer: nonresponse. Answered inaccurately: response bias.",
+      "Bias is systematic and doesn't shrink with sample size; random error does."
+    ]
+  },
+  {
+    "id": "stat-standard-error",
+    "section": "stats",
+    "type": "mcq",
+    "topic": "Standard deviation and standard error",
+    "title": "Standard error of a sample mean",
+    "prompt": "Card transaction amounts have a standard deviation of $60. An analyst takes a random sample of 36 transactions. What is the standard error of the sample mean?",
+    "options": ["$10", "about $1.67", "$60", "$100"],
+    "answer": 0,
+    "explanations": [
+      "Correct. SE = σ / √n = 60 / √36 = 60 / 6 = 10.",
+      "This divides by n instead of √n: 60 / 36. Forgetting the square root is the classic mistake.",
+      "This is the spread of individual transactions. Averages of 36 transactions vary much less than single transactions.",
+      "This is the variance of the mean, σ² / n = 3,600 / 36. The standard error is its square root."
+    ],
+    "approach": [
+      "Standard deviation describes individual values; standard error describes how much a sample mean varies.",
+      "SE = σ / √n. Variance of the mean = σ² / n.",
+      "Pick n values with clean square roots (36, 49, 100) and check that you took the root."
+    ],
+    "check": { "compute": "60 / sqrt(36)", "values": ["10", "60/36", "60", "100"] }
   }
 ]
 );

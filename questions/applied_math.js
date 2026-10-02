@@ -243,6 +243,117 @@ window.BANK = (window.BANK || []).concat(
       "Double-check the repeats by writing out the letters; it's easy to imagine a repeat that isn't there."
     ],
     "check": { "compute": "factorial(7) // factorial(2)", "values": ["5040", "2520", "1260", "720"] }
+  },
+  {
+    "id": "math-poisson-exactly-three",
+    "section": "math",
+    "type": "mcq",
+    "topic": "Poisson distribution",
+    "title": "Exactly three applications in an hour",
+    "prompt": "Loan applications arrive at an average rate of 2 per hour, following a Poisson distribution. What is the probability of exactly 3 applications in a given hour?",
+    "options": ["(4/3)e^−2", "8e^−2", "(9/2)e^−3", "1 − e^−2"],
+    "answer": 0,
+    "explanations": [
+      "Correct. P(X = 3) = λ³ e^−λ / 3! = 8e^−2 / 6 = (4/3)e^−2, about 0.18.",
+      "This forgets to divide by 3!. It's also about 1.08, more than 1, so it can't be a probability.",
+      "This swaps λ and k: 3² e^−3 / 2!.",
+      "This is P(at least one), not P(exactly three)."
+    ],
+    "approach": [
+      "Write the formula with the numbers in place: P(X = k) = λ^k e^−λ / k!, with λ = 2 and k = 3.",
+      "Simplify the fraction: 2³ / 3! = 8/6 = 4/3.",
+      "Sanity check: any answer above 1 is wrong."
+    ],
+    "check": { "compute": "2**3 * math.exp(-2) / factorial(3)", "values": ["Fraction(4,3)*math.exp(-2)", "8*math.exp(-2)", "4.5*math.exp(-3)", "1 - math.exp(-2)"] }
+  },
+  {
+    "id": "math-poisson-rescale",
+    "section": "math",
+    "type": "mcq",
+    "topic": "Poisson distribution: changing the interval",
+    "title": "No disputes in five minutes",
+    "prompt": "A call center receives card disputes at an average of 12 per hour, following a Poisson distribution. What is the probability of receiving no disputes in a 5-minute window?",
+    "options": ["e^−12", "e^−1", "1 − e^−1", "e^−5"],
+    "answer": 1,
+    "explanations": [
+      "This uses the hourly rate for a 5-minute window. The rate must be rescaled to the interval.",
+      "Correct. 5 minutes is 1/12 of an hour, so λ = 12 × 1/12 = 1. P(X = 0) = e^−λ = e^−1, about 0.37.",
+      "This is P(at least one dispute), the complement of what's asked.",
+      "This uses the number of minutes as λ instead of the expected count in 5 minutes."
+    ],
+    "approach": [
+      "λ is the expected count for the exact interval in the question. Scale it: rate × interval length.",
+      "P(X = 0) = e^−λ.",
+      "Before plugging in, ask whether the question wants none, exactly k, or at least one."
+    ],
+    "check": { "compute": "math.exp(-12 * 5 / 60)", "values": ["math.exp(-12)", "math.exp(-1)", "1 - math.exp(-1)", "math.exp(-5)"] }
+  },
+  {
+    "id": "math-normal-between",
+    "section": "math",
+    "type": "mcq",
+    "topic": "Normal distribution: empirical rule",
+    "title": "Processing times between two values",
+    "prompt": "Loan processing times are approximately normal with mean 40 minutes and standard deviation 8 minutes. Using the 68-95-99.7 rule, about what percentage of loans take between 32 and 56 minutes?",
+    "options": ["68%", "81.5%", "95%", "47.5%"],
+    "answer": 1,
+    "explanations": [
+      "68% covers ±1 SD, from 32 to 48. The interval here reaches 56, which is +2 SD.",
+      "Correct. 32 is 1 SD below (z = −1) and 56 is 2 SD above (z = 2). The mean to −1 SD holds 68/2 = 34%, and the mean to +2 SD holds 95/2 = 47.5%. Total 81.5%.",
+      "95% covers ±2 SD, from 24 to 56. The lower end here is 32, only 1 SD below.",
+      "This counts only the part from the mean up to 56 and forgets the part from 32 up to the mean."
+    ],
+    "approach": [
+      "Turn each endpoint into a z-score: (32 − 40)/8 = −1 and (56 − 40)/8 = 2.",
+      "Split the interval at the mean and use half of each empirical-rule percentage on each side.",
+      "Add the pieces: 34% + 47.5%."
+    ],
+    "check": { "compute": "0.68/2 + 0.95/2", "values": ["0.68", "0.815", "0.95", "0.475"] }
+  },
+  {
+    "id": "math-bayes-not-flagged",
+    "section": "math",
+    "type": "mcq",
+    "topic": "Conditional probability and Bayes",
+    "title": "High risk even though not flagged",
+    "prompt": "20% of loan applicants are high risk. A screening model flags 80% of high-risk applicants and 10% of low-risk applicants. An applicant is **not** flagged. What is the probability that they are high risk?",
+    "options": ["1/5", "1/19", "1/25", "2/3"],
+    "answer": 1,
+    "explanations": [
+      "This is the base rate. Not being flagged is evidence of lower risk, so the probability should drop below 1/5.",
+      "Correct. P(high and not flagged) = 0.2 × 0.2 = 0.04. P(low and not flagged) = 0.8 × 0.9 = 0.72. So P(high | not flagged) = 0.04 / 0.76 = 1/19.",
+      "This is P(high and not flagged) = 0.04, a joint probability. You still need to divide by P(not flagged) = 0.76.",
+      "This is P(high | flagged) = 0.16 / 0.24. The question is about applicants who were not flagged."
+    ],
+    "approach": [
+      "Use 100 applicants: 20 high risk, 80 low risk.",
+      "Not flagged: high-risk 20 × 20% = 4, low-risk 80 × 90% = 72.",
+      "P(high | not flagged) = 4 / (4 + 72) = 4/76 = 1/19.",
+      "Read carefully whether the condition is \"flagged\" or \"not flagged.\""
+    ],
+    "check": { "compute": "(0.2*0.2) / (0.2*0.2 + 0.8*0.9)", "values": ["1/5", "1/19", "1/25", "2/3"] }
+  },
+  {
+    "id": "math-tellers-not-adjacent",
+    "section": "math",
+    "type": "mcq",
+    "topic": "Counting with a restriction",
+    "title": "Two tellers who can't sit together",
+    "prompt": "Five tellers are assigned to five windows in a row, one teller per window. Two particular tellers must not be at neighboring windows. How many assignments are possible?",
+    "options": ["120", "96", "72", "48"],
+    "answer": 2,
+    "explanations": [
+      "This is 5!, every assignment, ignoring the restriction.",
+      "This subtracts only 24 adjacent arrangements, forgetting that the pair can sit in either order (×2).",
+      "Correct. Total 5! = 120. For adjacent arrangements, glue the pair into one block: 4! = 24 orders of 4 units, times 2 orders inside the block, gives 48. Not adjacent: 120 − 48 = 72.",
+      "This is the number of arrangements where they are adjacent, the opposite of what's asked."
+    ],
+    "approach": [
+      "\"Must not\" problems are usually easiest as total minus the forbidden cases.",
+      "Count \"together\" cases by treating the pair as one block, then multiply by the ways to order inside the block.",
+      "Subtract from the total, and check which of the two counts the question actually wants."
+    ],
+    "check": { "compute": "factorial(5) - factorial(4)*2", "values": ["120", "96", "72", "48"] }
   }
 ]
 );
