@@ -133,6 +133,116 @@ window.BANK = (window.BANK || []).concat(
       "Re-read the constraints (repeats allowed? leading zero allowed?) before multiplying."
     ],
     "check": { "compute": "10*9*8*7", "values": ["10000", "5040", "4536", "210"] }
+  },
+  {
+    "id": "math-audit-includes-flagged",
+    "section": "math",
+    "type": "mcq",
+    "topic": "Combinations with a constraint",
+    "title": "An audit sample that must include one file",
+    "prompt": "An auditor picks 4 of 10 loan files to review. One specific file has been flagged and must be included. How many different samples are possible?",
+    "options": ["210", "126", "84", "36"],
+    "answer": 2,
+    "explanations": [
+      "This is C(10, 4), all 4-file samples, ignoring the requirement to include the flagged file.",
+      "This is C(9, 4), the samples that leave the flagged file out: the complement of what's asked.",
+      "Correct. Put the flagged file in first. That leaves 3 more to choose from the other 9: C(9, 3) = 9 × 8 × 7 / 6 = 84.",
+      "This is C(9, 2), choosing one file too few after including the flagged one."
+    ],
+    "approach": [
+      "Handle the forced item first: place it, then count the free choices that remain.",
+      "Here: 1 fixed, choose 3 of the remaining 9.",
+      "Check with complements: C(10, 4) − C(9, 4) = 210 − 126 = 84, the samples that do include it."
+    ],
+    "check": { "compute": "comb(9, 3)", "values": ["210", "126", "84", "36"] }
+  },
+  {
+    "id": "math-conditional-two-way",
+    "section": "math",
+    "type": "mcq",
+    "topic": "Conditional probability",
+    "title": "Mortgage holders with a credit card",
+    "prompt": "Of 200 customers, 120 have a credit card, 80 have a mortgage, and 50 have both. A customer is chosen at random and turns out to have a mortgage. What is the probability that they also have a credit card?",
+    "options": ["5/12", "5/8", "1/4", "3/5"],
+    "answer": 1,
+    "explanations": [
+      "This is 50/120, P(mortgage | credit card). The condition is reversed: we know they have a mortgage.",
+      "Correct. Given a mortgage, the sample space shrinks to the 80 mortgage holders, and 50 of them have a card: 50/80 = 5/8.",
+      "This is 50/200, P(both). It forgets that we already know the customer has a mortgage.",
+      "This is 120/200, P(credit card) overall, which ignores the information given."
+    ],
+    "approach": [
+      "\"Given B\" means divide by the count of B: P(A | B) = count(A and B) / count(B).",
+      "Identify which event is known (here, the mortgage) and put it in the denominator.",
+      "Watch for the reversed option, P(B | A), which divides by the wrong group."
+    ],
+    "check": { "compute": "50/80", "values": ["50/120", "50/80", "50/200", "120/200"] }
+  },
+  {
+    "id": "math-independent-at-least-one",
+    "section": "math",
+    "type": "mcq",
+    "topic": "Independent events",
+    "title": "Flagged by at least one rule",
+    "prompt": "Two independent fraud rules check every transaction. Rule A flags 10% of transactions and rule B flags 20%. What is the probability that a transaction is flagged by at least one rule?",
+    "options": ["0.30", "0.28", "0.02", "0.26"],
+    "answer": 1,
+    "explanations": [
+      "This adds the probabilities and forgets that some transactions are flagged by both, which are then counted twice.",
+      "Correct. P(neither) = 0.9 × 0.8 = 0.72, so P(at least one) = 1 − 0.72 = 0.28. Equivalently 0.1 + 0.2 − 0.1 × 0.2 = 0.28.",
+      "This is P(both) = 0.1 × 0.2, not P(at least one).",
+      "This subtracts the overlap twice: 0.3 − 2 × 0.02."
+    ],
+    "approach": [
+      "\"At least one\" is easiest as 1 − P(none).",
+      "For independent events, multiply: P(neither) = P(not A) × P(not B).",
+      "Or use inclusion-exclusion: P(A or B) = P(A) + P(B) − P(A and B)."
+    ],
+    "check": { "compute": "1 - 0.9*0.8", "values": ["0.30", "0.28", "0.02", "0.26"] }
+  },
+  {
+    "id": "math-expected-bonus",
+    "section": "math",
+    "type": "mcq",
+    "topic": "Expected value",
+    "title": "Expected sign-up bonus",
+    "prompt": "A promotion gives each new customer a $50 bonus with probability 1/10, a $10 bonus with probability 3/10, and nothing otherwise. What is the expected bonus per new customer?",
+    "options": ["$8", "$20", "$30", "$60"],
+    "answer": 0,
+    "explanations": [
+      "Correct. E = 50 × 1/10 + 10 × 3/10 + 0 × 6/10 = 5 + 3 + 0 = $8.",
+      "This averages the three amounts (50 + 10 + 0) / 3 as if they were equally likely. They aren't.",
+      "This averages only the two nonzero amounts and ignores the probabilities.",
+      "This adds the amounts without weighting them by probability."
+    ],
+    "approach": [
+      "Expected value is a probability-weighted average: multiply each outcome by its probability and add.",
+      "Include the zero outcome so the probabilities add to 1 (1/10 + 3/10 + 6/10).",
+      "A plain average is only right when every outcome is equally likely."
+    ],
+    "check": { "compute": "50*Fraction(1,10) + 10*Fraction(3,10)", "values": ["8", "20", "30", "60"] }
+  },
+  {
+    "id": "math-arrange-balance",
+    "section": "math",
+    "type": "mcq",
+    "topic": "Permutations with repeated items",
+    "title": "Rearranging the letters of BALANCE",
+    "prompt": "How many distinct arrangements are there of the letters in the word BALANCE?",
+    "options": ["5,040", "2,520", "1,260", "720"],
+    "answer": 1,
+    "explanations": [
+      "This is 7!, which treats the two A's as different letters and so counts every arrangement twice.",
+      "Correct. BALANCE has 7 letters with A appearing twice. Divide 7! by 2! for the repeated A's: 5,040 / 2 = 2,520.",
+      "This divides by 2! twice, as if another letter also repeated. Only A repeats (B, L, N, C, E appear once each).",
+      "This is 6!, which drops a letter."
+    ],
+    "approach": [
+      "Count the letters and how often each repeats: here 7 letters, A twice, all others once.",
+      "Arrangements = n! / (k1! × k2! × ...), one factorial for each repeated letter.",
+      "Double-check the repeats by writing out the letters; it's easy to imagine a repeat that isn't there."
+    ],
+    "check": { "compute": "factorial(7) // factorial(2)", "values": ["5040", "2520", "1260", "720"] }
   }
 ]
 );

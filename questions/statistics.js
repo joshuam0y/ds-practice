@@ -116,6 +116,127 @@ window.BANK = (window.BANK || []).concat(
       "All groups sampled, randomly within each: stratified. Some whole groups chosen at random: cluster.",
       "Every kth item from a list: systematic. Whoever is easy to reach: convenience (biased)."
     ]
+  },
+  {
+    "id": "stat-type2-ab-test",
+    "section": "stats",
+    "type": "mcq",
+    "topic": "Type I and Type II errors",
+    "title": "A real effect the test missed",
+    "prompt": "A bank tests H0: \"the new mobile app design does not change average monthly deposits.\" In reality the design does raise deposits, but the test fails to reject H0. What happened?",
+    "options": [
+      "A Type I error",
+      "A Type II error",
+      "No error, because failing to reject H0 is not the same as accepting it",
+      "Both a Type I and a Type II error"
+    ],
+    "answer": 1,
+    "explanations": [
+      "A Type I error needs H0 to be true and rejected. Here H0 is false and was not rejected.",
+      "Correct. H0 is false (the design does change deposits) but the test kept it. That is a Type II error, a false negative, with probability beta.",
+      "It's true that failing to reject is not proof that H0 holds, but the decision still missed a real effect. Error types are defined by the decision versus the truth, so this is a Type II error.",
+      "Only one decision was made, and it can be wrong in only one way. Type I needs a rejection; there wasn't one."
+    ],
+    "approach": [
+      "Make a 2 × 2 grid: truth (H0 true or false) against decision (reject or not).",
+      "Find the cell: H0 false, not rejected. That cell is Type II.",
+      "Shortcut: Type I is a false alarm, Type II is a miss."
+    ]
+  },
+  {
+    "id": "stat-boxplot-skew",
+    "section": "stats",
+    "type": "mcq",
+    "topic": "Box plots and skewness",
+    "title": "Reading skew from a box plot",
+    "prompt": "In a box plot of checking account balances, the median line sits close to the bottom of the box, and the upper whisker is much longer than the lower whisker. What is the shape of the distribution most likely to be?",
+    "options": ["Right-skewed (long tail of high balances)", "Left-skewed (long tail of low balances)", "Symmetric", "Bimodal"],
+    "answer": 0,
+    "explanations": [
+      "Correct. The data are bunched at the low end (median near Q1) and stretch far to the high end (long upper whisker). That long right tail also pulls the mean above the median.",
+      "This reverses the direction. Skew is named for the side of the long tail, and here the long tail is on the high side.",
+      "A symmetric distribution has the median near the middle of the box and whiskers of similar length.",
+      "A box plot can't show two peaks: it only shows five summary numbers. Nothing here points to bimodality."
+    ],
+    "approach": [
+      "Skew is named after the long tail, not where most of the data sit.",
+      "Look for two clues: where the median sits inside the box, and which whisker is longer.",
+      "Median near the bottom plus a long upper whisker means right skew, and mean > median. Income and balances are the classic right-skewed examples."
+    ]
+  },
+  {
+    "id": "stat-mean-median-outlier",
+    "section": "stats",
+    "type": "mcq",
+    "topic": "Mean, median and outliers",
+    "title": "One very large balance",
+    "prompt": "Five savings accounts have balances of $200, $300, $300, $400 and $10,000. What are the mean and the median?",
+    "options": [
+      "Mean $2,240, median $300",
+      "Mean $300, median $2,240",
+      "Mean $2,240, median $400",
+      "Mean $2,800, median $300"
+    ],
+    "answer": 0,
+    "explanations": [
+      "Correct. The total is 11,200, and 11,200 / 5 = 2,240. Sorted, the middle (3rd) value is 300. The one large balance drags the mean far above the median.",
+      "These are swapped. The median is the middle value of the sorted list, which can't be larger than four of the five values here.",
+      "400 is the 4th value, not the middle one. With 5 values the median is the 3rd.",
+      "This divides the total by 4 instead of 5."
+    ],
+    "approach": [
+      "Mean: add everything and divide by the count. Median: sort, then take the middle value (or the average of the two middle values for an even count).",
+      "An outlier moves the mean a lot and the median barely at all, which is why medians are used for skewed data like balances and income.",
+      "Sanity check: here the mean is bigger than four of the five values, a sign of a right-skewed outlier."
+    ]
+  },
+  {
+    "id": "stat-sd-linear-transform",
+    "section": "stats",
+    "type": "mcq",
+    "topic": "Standard deviation under a linear change",
+    "title": "Add, then double",
+    "prompt": "Account balances have mean $500 and standard deviation $50. The bank adds $100 to every account and then doubles every balance. What is the new standard deviation?",
+    "options": ["$100", "$300", "$50", "$200"],
+    "answer": 0,
+    "explanations": [
+      "Correct. Adding a constant shifts every value equally, so spread doesn't change. Multiplying by 2 doubles every distance from the mean, so the SD doubles: 2 × 50 = 100.",
+      "This adds the $100 to the SD before doubling: (50 + 100) × 2. Adding a constant moves the mean, not the spread.",
+      "Doubling does change the spread. Only the added constant leaves it alone.",
+      "This multiplies the SD by 4, which is what happens to the variance. Variance scales by 2² = 4; the SD scales by 2."
+    ],
+    "approach": [
+      "For Y = aX + b: mean(Y) = a × mean(X) + b, SD(Y) = |a| × SD(X), Var(Y) = a² × Var(X).",
+      "Shifts (adding b) change only the mean. Scaling (multiplying by a) changes both.",
+      "Check whether the question asks for the SD or the variance before squaring anything."
+    ],
+    "check": { "compute": "abs(2) * 50", "values": ["100", "300", "50", "200"] }
+  },
+  {
+    "id": "stat-correlation-meaning",
+    "section": "stats",
+    "type": "mcq",
+    "topic": "Correlation",
+    "title": "What r = −0.8 tells you",
+    "prompt": "Across a bank's loan portfolio, the correlation between borrowers' credit scores and their default rates is r = −0.8. Which statement is correct?",
+    "options": [
+      "Borrowers with higher credit scores tend to have lower default rates",
+      "Low credit scores cause 80% of defaults",
+      "Credit score explains 80% of the variation in default rates",
+      "The relationship is weak because the correlation is negative"
+    ],
+    "answer": 0,
+    "explanations": [
+      "Correct. A negative correlation means that as one variable goes up, the other tends to go down, and 0.8 in size is a strong linear relationship.",
+      "Correlation says nothing about causation, and r is not a percentage of cases.",
+      "The share of variation explained is r², not r: (−0.8)² = 0.64, so about 64%.",
+      "The sign gives the direction; the size gives the strength. |r| = 0.8 is strong."
+    ],
+    "approach": [
+      "Read the sign for direction and the absolute value for strength (around 0.7 or more is strong).",
+      "If an option mentions \"variation explained,\" square r.",
+      "Reject any option that turns correlation into causation."
+    ]
   }
 ]
 );
