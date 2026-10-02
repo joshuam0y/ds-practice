@@ -143,6 +143,7 @@ const state = {
   index: 0, // question shown in test or review
   runs: {}, // latest Run code output per question (not saved)
   grading: false,
+  drawerOpen: false, // whether the Test Results drawer is open under the code editor
 }
 
 const history = () => load(KEYS.history, [])
@@ -311,7 +312,7 @@ setInterval(() => {
   const left = remaining()
   const el = document.getElementById('timer')
   if (el) {
-    el.querySelector('.time').textContent = clock(left)
+    el.querySelector('.time').textContent = hrClock(left)
     el.classList.toggle('low', left < 5 * 60 * 1000)
   }
   if (left <= 0) submit(true)
@@ -426,55 +427,99 @@ function renderGrading() {
     <div class="status"><div><h2>Grading your test…</h2><p>Running your code against the sample data. Python can take a few seconds the first time.</p></div></div>`
 }
 
+// HackerRank shows time as "59 min 51 sec"
+function hrClock(ms) {
+  const total = Math.max(0, Math.ceil(ms / 1000))
+  return `${Math.floor(total / 60)} min ${total % 60} sec`
+}
+
+const SQL_TYPES = { INTEGER: 'Integer', TEXT: 'String', REAL: 'Float' }
+
+// Question numbers grouped by section (S1, S2, ...), like the HackerRank sidebar
 function sidebarHtml(reviewing) {
   let html = ''
   let last = null
+  let sectionNo = 0
+  const flags = state.attempt.flags || {}
   state.attempt.questionIds.forEach((id, i) => {
     const q = QUESTIONS.get(id)
-    if (last && q.section !== last) html += '<span class="sec-gap"></span>'
-    last = q.section
+    if (q.section !== last) {
+      sectionNo++
+      html += `<span class="sec-label" title="${esc(sectionOf(q).name)}">S${sectionNo}</span>`
+      last = q.section
+    }
     let cls = ''
     if (reviewing) {
       const p = pointsFor(state.attempt, q)
-      cls = p >= maxPoints(q) ? 'right' : p > 0 ? 'partial' : 'wrong'
-    } else if (isAnswered(q)) cls = 'answered'
-    html += `<button class="qdot ${cls}${i === state.index ? ' current' : ''}" data-go="${i}" title="Question ${i + 1}: ${esc(sectionOf(q).name)}" aria-label="Question ${i + 1}">${i + 1}</button>`
+      cls = p >= maxPoints(q) ? ' right' : p > 0 ? ' partial' : ' wrong'
+    } else if (isAnswered(q)) cls = ' answered'
+    html += `<button class="qnum${cls}${i === state.index ? ' current' : ''}${flags[id] ? ' flagged' : ''}" data-go="${i}"
+      title="Question ${i + 1}: ${esc(sectionOf(q).name)}${flags[id] ? ' (bookmarked)' : ''}" aria-label="Question ${i + 1}">${i + 1}</button>`
   })
   return html
 }
 
+function sqlInputFormat(q) {
+  return q.tables.map((t) => `<div class="table-wrap"><table class="data hr-format">
+      <thead><tr><th colspan="2" class="caption">${esc(t.name.toUpperCase())}</th></tr><tr><th>Name</th><th>Type</th></tr></thead>
+      <tbody>${t.columns.map(([name, type]) => `<tr><td>${esc(name)}</td><td>${esc(SQL_TYPES[type] || type)}</td></tr>`).join('')}</tbody></table></div>`).join('')
+}
+
+function sqlSampleInput(q) {
+  return q.tables.map((t) => `<div class="table-wrap"><table class="data">
+      <thead><tr><th colspan="${t.columns.length}" class="caption">${esc(t.name.toUpperCase())}</th></tr>
+      <tr>${t.columns.map(([name]) => `<th>${esc(name)}</th>`).join('')}</tr></thead>
+      <tbody>${t.rows.map((r) => `<tr>${r.map((v) => (v === null ? '<td class="null">NULL</td>' : `<td>${esc(v)}</td>`)).join('')}</tr>`).join('')}</tbody></table></div>`).join('')
+}
+
+// Query output as HackerRank prints it: one row per line, values separated by spaces
+function rowsText(result) {
+  if (!result || !result.rows.length) return ''
+  return result.rows.map((r) => r.map((v) => (v === null ? 'NULL' : String(v))).join(' ')).join('\n')
+}
+
 function problemHtml(q, reviewing) {
   const sec = sectionOf(q)
+  const flagged = state.attempt.flags?.[q.id]
   let extra = ''
   if (q.type === 'sql') {
-    extra += q.tables.map((t) => `<h4>Table: <code>${esc(t.name)}</code></h4>${dataTable(t.columns.map((c) => c[0]), t.rows, t.columns.map((c) => c[1]))}`).join('')
-    extra += '<h4>Expected output for this sample data</h4><div id="expected-sample"><p class="null">Loading…</p></div>'
+    extra += `<h4>Input Format</h4>${sqlInputFormat(q)}<h4>Sample Input</h4>${sqlSampleInput(q)}
+      <h4>Sample Output</h4><pre class="sample-out" id="expected-sample">Loading…</pre>`
   }
   if (q.type === 'python') {
-    extra += `<h4>Sample tests</h4><ul class="sample-tests">${q.tests.map((t) => `<li><strong>${esc(t.name)}</strong>: ${
-      t.setup ? `<code>${esc(text(t.setup)).replace(/\n/g, '; ')}</code>, then ` : ''}<code>${esc(t.expr)}</code> ${
-      t.raises ? `raises <code>${esc(t.raises)}</code>` : `returns <code>${esc(t.expect)}</code>`}</li>`).join('')}</ul>`
+    const program = q.tests.filter((t) => 'stdin' in t)
+    if (program.length) {
+      extra += program.slice(0, 2).map((t, i) => `<h4>Sample Input ${i}</h4><pre class="sample-out">${esc(t.stdin.replace(/\n$/, '')) || ' '}</pre>
+        <h4>Sample Output ${i}</h4><pre class="sample-out">${esc(t.stdout.replace(/\n$/, '')) || '(no output)'}</pre>`).join('')
+    } else {
+      extra += `<h4>Sample tests</h4><ul class="sample-tests">${q.tests.map((t) => `<li><strong>${esc(t.name)}</strong>: ${
+        t.setup ? `<code>${esc(text(t.setup)).replace(/\n/g, '; ')}</code>, then ` : ''}<code>${esc(t.expr)}</code> ${
+        t.raises ? `raises <code>${esc(t.raises)}</code>` : `returns <code>${esc(t.expect)}</code>`}</li>`).join('')}</ul>`
+    }
   }
   let review = ''
   if (reviewing) {
-    review += `<div class="approach"><h4>How to approach it</h4><ol>${(q.approach || []).map((s) => `<li>${inline(s)}</li>`).join('')}</ol></div>`
+    review += `<div class="approach"><h4>How to approach it</h4><ol>${(q.approach || []).map((x) => `<li>${inline(x)}</li>`).join('')}</ol></div>`
     if (isCode(q)) {
       review += `<h4>Reference solution</h4><pre class="solution">${esc(text(q.solution))}</pre>`
       if (q.mistakes?.length) review += `<div class="approach mistakes"><h4>Common mistakes</h4><ul>${q.mistakes.map((m) => `<li>${inline(m)}</li>`).join('')}</ul></div>`
     }
   }
-  return `<div class="panel-head"><span class="eyebrow">Question ${state.index + 1} of ${state.attempt.questionIds.length} · ${esc(sec.name)}</span>
-      <span class="points">${plural(maxPoints(q), 'point')}</span></div>
-    <div class="panel-body problem"><h2>${esc(q.title)}</h2>${md(q.prompt)}${extra}${review}</div>`
+  return `<div class="q-title">
+      ${reviewing ? '' : `<button class="bookmark${flagged ? ' on' : ''}" id="flag" aria-pressed="${flagged ? 'true' : 'false'}" title="Bookmark this question to come back to">${flagged ? '★' : '☆'}</button>`}
+      <h1>${esc(q.title)}</h1></div>
+    <p class="q-meta">${esc(sec.name)} · ${plural(maxPoints(q), 'point')}${reviewing ? '' : ` · Question ${state.index + 1} of ${state.attempt.questionIds.length}`}</p>
+    <div class="problem">${md(q.prompt)}${extra}${review}</div>`
 }
 
 function optionsHtml(q, reviewing) {
   const picked = answerOf(q)
   if (!reviewing) {
-    return `<div class="options" role="radiogroup" aria-label="Answer choices">${q.options.map((o, i) => `
+    return `<h2 class="pick">Pick ONE option</h2>
+      <div class="options" role="radiogroup" aria-label="Answer choices">${q.options.map((o, i) => `
       <label class="option${picked === i ? ' selected' : ''}"><input type="radio" name="opt" value="${i}"${picked === i ? ' checked' : ''}>
       <span class="opt-text">${inline(o)}</span></label>`).join('')}</div>
-      ${Number.isInteger(picked) ? '<button class="btn-link clear-choice" id="clear">Clear my choice</button>' : ''}`
+      <button class="btn-link clear-choice" id="clear"${Number.isInteger(picked) ? '' : ' hidden'}>Clear Selection</button>`
   }
   const status = !Number.isInteger(picked) ? '<span class="tag soft">Not answered</span>' : picked === q.answer ? '<span class="tag ok">You got it</span>' : '<span class="tag bad">Incorrect</span>'
   return `<p class="your-answer">Your answer ${status}</p><div class="options">${q.options.map((o, i) => {
@@ -491,108 +536,127 @@ function lineNumbers(code) {
 
 function codeHtml(q, reviewing) {
   const code = typeof answerOf(q) === 'string' ? answerOf(q) : text(q.starter)
-  const lang = q.type === 'sql' ? 'MySQL (runs on SQLite)' : 'Python 3'
+  const sql = q.type === 'sql'
   let selfMark = ''
   if (reviewing) {
     const r = state.attempt.results?.[q.id]
     const self = state.attempt.selfMarks?.[q.id]
-    selfMark = `<div class="output" style="margin-bottom:0.9rem">
-      <h4>Automatic grade: ${fmtPoints(r?.points ?? 0)} / ${CODE_POINTS}</h4><p style="margin:0">${esc(r?.detail || '')}</p>
+    selfMark = `<div class="self-mark-box">
+      <strong>Automatic grade: ${fmtPoints(r?.points ?? 0)} / ${CODE_POINTS}</strong><span>${esc(r?.detail || '')}</span>
       <div class="self-mark"><span>Mark yourself:</span>
         <button class="btn${self === CODE_POINTS ? ' on' : ''}" data-mark="${CODE_POINTS}">Correct (${CODE_POINTS})</button>
         <button class="btn${self === 0 ? ' on' : ''}" data-mark="0">Incorrect (0)</button>
         <button class="btn${self === undefined || self === null ? ' on' : ''}" data-mark="auto">Use automatic grade</button></div></div>`
   }
-  return `${selfMark}<div class="editor-wrap">
-      <div class="editor-bar"><span class="lang">${lang}</span><span style="flex:1"></span>
-        <button class="btn-link" id="reset">Reset to starter</button></div>
+  const open = state.drawerOpen && state.runs[q.id]
+  return `${selfMark}<div class="code-pane">
+      <div class="code-head"><label class="lang-label" for="lang">Language</label>
+        <select id="lang" class="lang-select" title="${sql ? 'Runs on SQLite with MySQL date and string functions added' : 'Runs on CPython 3.12 (Pyodide)'}">
+          <option>${sql ? 'MySQL' : 'Python 3'}</option></select>
+        <span class="spacer"></span><button class="btn-link" id="reset">Reset code</button></div>
       <div class="editor"><pre class="gutter" aria-hidden="true">${lineNumbers(code)}</pre>
         <textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Code editor">${esc(code)}</textarea></div>
-      <div class="run-row"><button class="btn btn-primary" id="run">Run code</button><span class="hint">Ctrl/Cmd + Enter</span></div>
-      <div id="output">${outputHtml(q)}</div></div>`
+      <div class="drawer${open ? ' open' : ''}" id="output">${outputHtml(q)}</div>
+      <div class="code-foot">
+        <button class="drawer-toggle" id="drawer-toggle" aria-expanded="${open ? 'true' : 'false'}">${open ? '▾' : '▴'} Test Results</button>
+        <span class="spacer"></span><span class="hint">Ctrl/Cmd + Enter</span>
+        <button class="btn btn-run" id="run">▷ ${sql ? 'Run Query' : 'Run Code'}</button></div></div>`
 }
 
 function outputHtml(q) {
   const run = state.runs[q.id]
-  if (!run) return ''
+  if (!run) return '<p class="null">Run your code to see results here.</p>'
   if (run.status === 'running') {
     const note = q.type === 'python' && Runner.pythonState() !== 'ready' ? ' The first Python run downloads the interpreter (about 10 MB), so it can take a few seconds.' : ''
-    return `<div class="output"><div class="verdict"><span class="badge wait">Running</span><span>Running your code…${note}</span></div></div>`
+    return `<div class="verdict"><span class="badge wait">Running</span><span>Running your code…${note}</span></div>`
   }
   if (run.status === 'error') {
-    return `<div class="output"><div class="verdict"><span class="badge fail">Error</span><span>Could not run.</span></div><div class="errbox">${esc(run.message)}</div></div>`
+    return `<div class="verdict"><span class="badge fail">Error</span><span>Could not run.</span></div><div class="errbox">${esc(run.message)}</div>`
   }
   const r = run.result
   if (q.type === 'sql') {
-    return `<div class="output">
-      <div class="verdict"><span class="badge ${r.pass ? 'pass' : 'fail'}">${r.pass ? 'Pass' : 'Fail'}</span><span>${esc(r.reason)}</span></div>
+    return `<div class="verdict"><span class="badge ${r.pass ? 'pass' : 'fail'}">${r.pass ? 'Accepted' : r.error ? 'Error' : 'Wrong Answer'}</span><span>${esc(r.reason)}</span></div>
       ${r.error ? `<div class="errbox">${esc(r.error)}</div>` : ''}
-      ${r.got ? `<h4>Your output</h4>${dataTable(r.got.columns, r.got.rows)}` : ''}
-      ${r.expected ? `<h4>Expected output</h4>${dataTable(r.expected.columns, r.expected.rows)}` : ''}</div>`
+      ${r.got ? `<h4>Your Output (stdout)</h4><pre class="sample-out">${esc(rowsText(r.got)) || '(no rows)'}</pre>` : ''}
+      ${r.expected ? `<h4>Expected Output</h4><pre class="sample-out">${esc(rowsText(r.expected))}</pre>` : ''}
+      ${r.got ? `<details class="as-table"><summary>Show as tables with column names</summary><h4>Your output</h4>${dataTable(r.got.columns, r.got.rows)}<h4>Expected</h4>${dataTable(r.expected.columns, r.expected.rows)}</details>` : ''}`
   }
   const passed = r.tests.filter((t) => t.pass).length
   const all = passed === r.tests.length
-  return `<div class="output">
-    <div class="verdict"><span class="badge ${all ? 'pass' : 'fail'}">${all ? 'Pass' : 'Fail'}</span><span>${passed} of ${r.tests.length} sample tests passed.</span></div>
-    ${r.error ? `<div class="errbox">Your code raised an error before any test ran:\n${esc(r.error)}</div>` : ''}
-    <h4>Sample tests</h4><ul class="tests">${r.tests.map((t) => `<li class="${t.pass ? 'ok' : 'bad'}"><span class="mark">${t.pass ? '✓' : '✗'}</span><span class="t-name">${esc(t.name)}</span>
+  const head = `<div class="verdict"><span class="badge ${all ? 'pass' : 'fail'}">${all ? 'Accepted' : 'Wrong Answer'}</span><span>${passed}/${r.tests.length} test cases passed.</span></div>
+    ${r.error ? `<div class="errbox">Your code has an error:\n${esc(r.error)}</div>` : ''}`
+  if (r.tests.some((t) => 'stdin' in t)) {
+    const firstFail = r.tests.findIndex((t) => !t.pass)
+    return `${head}${r.tests.map((t, i) => `<details class="case ${t.pass ? 'ok' : 'bad'}"${i === firstFail ? ' open' : ''}>
+        <summary><span class="mark">${t.pass ? '✓' : '✗'}</span> Test case ${i}: ${esc(t.name)}</summary>
+        ${t.message ? `<p class="t-msg">${esc(t.message)}</p>` : ''}
+        ${'stdin' in t ? `<h4>Input (stdin)</h4><pre class="sample-out">${esc(t.stdin.replace(/\n$/, '')) || ' '}</pre>
+          <h4>Your Output (stdout)</h4><pre class="sample-out">${esc((t.output || '').replace(/\n$/, '')) || '(no output)'}</pre>
+          <h4>Expected Output</h4><pre class="sample-out">${esc(t.expected.replace(/\n$/, '')) || '(no output)'}</pre>
+          ${t.debug ? `<h4>Debug output (printed, not graded)</h4><pre class="sample-out">${esc(t.debug)}</pre>` : ''}` : ''}
+      </details>`).join('')}`
+  }
+  return `${head}<ul class="tests">${r.tests.map((t) => `<li class="${t.pass ? 'ok' : 'bad'}"><span class="mark">${t.pass ? '✓' : '✗'}</span><span class="t-name">${esc(t.name)}</span>
       ${t.pass ? '' : `<span class="t-msg">${esc(t.message)}</span>`}</li>`).join('')}</ul>
-    ${r.stdout ? `<h4>What you printed</h4><pre class="stdout">${esc(r.stdout)}</pre>` : ''}</div>`
+    ${r.stdout ? `<h4>What you printed</h4><pre class="stdout">${esc(r.stdout)}</pre>` : ''}`
 }
 
 function renderTest() {
   const reviewing = state.view === 'review'
   const a = state.attempt
   const q = current()
-  const answered = a.questionIds.filter((id) => isAnswered(QUESTIONS.get(id))).length
   const last = state.index === a.questionIds.length - 1
   const t = reviewing ? totals(a) : null
   const left = remaining()
 
+  const pill = reviewing
+    ? `<span class="pill">Score ${fmtPoints(t.score)} / ${t.max}</span>`
+    : isTimed(a)
+      ? `<span class="pill timer${left < 5 * 60 * 1000 ? ' low' : ''}" id="timer">◷ <span class="time">${hrClock(left)}</span></span>`
+      : `<span class="pill">Untimed · ${esc(MODES[a.mode])}</span>`
+
   app.innerHTML = `
-    <header class="topbar">
-      <div class="brand">DS <span>Practice</span></div>
-      <div class="section-name">${esc(sectionOf(q).name)}</div>
-      <div class="spacer"></div>
+    <header class="hr-top">
+      ${pill}
+      <span class="spacer"></span>
+      ${themeButton()}
       ${reviewing
-        ? `<span class="timer"><small>Score</small>${fmtPoints(t.score)} / ${t.max}</span>${themeButton()}<button class="btn" id="to-results">Back to results</button>`
-        : `${isTimed(a)
-            ? `<span class="timer${left < 5 * 60 * 1000 ? ' low' : ''}" id="timer"><small>Time left</small><span class="time">${clock(left)}</span></span>`
-            : `<span class="timer"><small>Untimed</small>${esc(MODES[a.mode])}</span>`}${themeButton()}
-           <button class="btn btn-primary" id="submit">Submit test</button>`}
+        ? '<button class="btn" id="to-results">Back to results</button>'
+        : `<button class="btn btn-quiet" id="submit">Submit test</button>
+           <button class="btn btn-proceed" id="proceed">${last ? 'Save &amp; Finish' : 'Save &amp; Proceed'}</button>`}
     </header>
-    <div class="shell">
-      <nav class="sidebar" aria-label="Questions">${sidebarHtml(reviewing)}</nav>
-      <div class="main">
-        <div class="workspace">
-          <section class="panel" aria-label="Problem">${problemHtml(q, reviewing)}</section>
-          <section class="panel" aria-label="Your answer">
-            <div class="panel-head"><span class="eyebrow">${reviewing ? 'Your answer and the explanation' : 'Your answer'}</span></div>
-            <div class="panel-body">${isCode(q) ? codeHtml(q, reviewing) : optionsHtml(q, reviewing)}</div>
-          </section>
-        </div>
-        <footer class="bottombar">
-          <button class="btn" id="prev"${state.index === 0 ? ' disabled' : ''}>← Previous</button>
-          <span class="progress">${reviewing ? `Question ${state.index + 1} of ${a.questionIds.length}` : `${answered} of ${a.questionIds.length} answered`}</span>
-          ${reviewing ? '' : '<span class="keys-hint">Keys: 1 to 4 choose, Enter for next</span>'}
-          <span class="spacer"></span>
-          ${last
-            ? reviewing ? '<button class="btn btn-primary" id="to-results-2">Back to results</button>' : '<button class="btn btn-primary" id="submit-2">Submit test</button>'
-            : '<button class="btn btn-primary" id="next">Next →</button>'}
-        </footer>
-      </div>
-    </div>`
+    <div class="hr-shell${isCode(q) ? ' is-code' : ''}">
+      <nav class="hr-nav" aria-label="Questions">${sidebarHtml(reviewing)}</nav>
+      <section class="hr-problem" aria-label="Problem">${problemHtml(q, reviewing)}</section>
+      <section class="hr-answer" aria-label="Your answer">${isCode(q) ? codeHtml(q, reviewing) : optionsHtml(q, reviewing)}</section>
+    </div>
+    ${reviewing ? `<footer class="bottombar review-bar">
+        <button class="btn" id="prev"${state.index === 0 ? ' disabled' : ''}>← Previous</button>
+        <span class="progress">Question ${state.index + 1} of ${a.questionIds.length}</span><span class="spacer"></span>
+        ${last ? '<button class="btn btn-primary" id="to-results-2">Back to results</button>' : '<button class="btn btn-primary" id="next">Next →</button>'}
+      </footer>` : '<p class="keys-hint">Keys: 1 to 4 picks an option, Enter saves and goes to the next question.</p>'}`
 
   app.querySelectorAll('[data-go]').forEach((b) => b.addEventListener('click', () => go(+b.dataset.go)))
   $('#prev')?.addEventListener('click', () => go(state.index - 1))
   $('#next')?.addEventListener('click', () => go(state.index + 1))
+  $('#proceed')?.addEventListener('click', () => (last ? confirmSubmit() : go(state.index + 1)))
   $('#submit')?.addEventListener('click', confirmSubmit)
-  $('#submit-2')?.addEventListener('click', confirmSubmit)
   for (const id of ['#to-results', '#to-results-2']) $(id)?.addEventListener('click', () => { state.view = 'results'; render() })
+  $('#flag')?.addEventListener('click', () => {
+    a.flags = a.flags || {}
+    if (a.flags[q.id]) delete a.flags[q.id]
+    else a.flags[q.id] = true
+    saveAttempt()
+    render()
+  })
 
   if (!isCode(q) && !reviewing) {
     app.querySelectorAll('input[name="opt"]').forEach((input) => input.addEventListener('change', () => choose(q, +input.value)))
-    $('#clear')?.addEventListener('click', () => { delete a.answers[q.id]; saveAttempt(); render() })
+    $('#clear')?.addEventListener('click', () => {
+      delete a.answers[q.id]
+      saveAttempt()
+      render()
+    })
   }
   if (isCode(q)) wireEditor(q)
   if (reviewing) {
@@ -605,17 +669,16 @@ function renderTest() {
     }))
   }
   if (q.type === 'sql') showSampleOutput(q)
-  app.querySelector('.qdot.current')?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+  app.querySelector('.qnum.current')?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
 }
 
 async function showSampleOutput(q) {
+  const box = () => document.getElementById('expected-sample')
   try {
     const r = await Runner.expectedSql(q)
-    const box = document.getElementById('expected-sample')
-    if (box && current() === q) box.innerHTML = dataTable(r.columns, r.rows)
+    if (box() && current() === q) box().textContent = rowsText(r) || '(no rows)'
   } catch (e) {
-    const box = document.getElementById('expected-sample')
-    if (box) box.innerHTML = `<p class="null">Could not load the SQL engine (${esc(e.message)}).</p>`
+    if (box()) box().textContent = `Could not load the SQL engine (${e.message}).`
   }
 }
 
@@ -623,7 +686,6 @@ function go(i) {
   if (i < 0 || i >= state.attempt.questionIds.length) return
   state.index = i
   render()
-  app.querySelector('.workspace')?.scrollTo?.(0, 0)
   window.scrollTo(0, 0)
 }
 
@@ -631,16 +693,9 @@ function choose(q, i) {
   state.attempt.answers[q.id] = i
   saveAttempt()
   app.querySelectorAll('.option').forEach((el, k) => el.classList.toggle('selected', k === i))
-  const dot = app.querySelector(`.qdot[data-go="${state.index}"]`)
-  dot?.classList.add('answered')
-  updateProgress()
-  if (!$('#clear')) render()
-}
-
-function updateProgress() {
-  const a = state.attempt
-  const el = app.querySelector('.bottombar .progress')
-  if (el && state.view === 'test') el.textContent = `${a.questionIds.filter((id) => isAnswered(QUESTIONS.get(id))).length} of ${a.questionIds.length} answered`
+  app.querySelector(`.qnum[data-go="${state.index}"]`)?.classList.add('answered')
+  const clear = $('#clear')
+  if (clear) clear.hidden = false
 }
 
 async function confirmSubmit() {
@@ -678,10 +733,7 @@ function wireEditor(q) {
     sync()
     state.attempt.answers[q.id] = ta.value
     saveAttempt()
-    if (state.view === 'test') {
-      app.querySelector(`.qdot[data-go="${state.index}"]`)?.classList.toggle('answered', isAnswered(q))
-      updateProgress()
-    }
+    if (state.view === 'test') app.querySelector(`.qnum[data-go="${state.index}"]`)?.classList.toggle('answered', isAnswered(q))
   })
   ta.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
@@ -701,6 +753,10 @@ function wireEditor(q) {
     }
   })
   $('#run').addEventListener('click', () => runCode(q))
+  $('#drawer-toggle').addEventListener('click', () => {
+    state.drawerOpen = !document.getElementById('output').classList.contains('open')
+    setDrawer(state.drawerOpen)
+  })
   $('#reset').addEventListener('click', async () => {
     const ok = await ask({ title: 'Reset your code?', body: '<p>This replaces your code with the starter code.</p>', confirm: 'Reset', danger: true })
     if (!ok) return
@@ -725,9 +781,21 @@ async function runCode(q) {
   if (current() === q) showOutput(q)
 }
 
+function setDrawer(open) {
+  document.getElementById('output')?.classList.toggle('open', open)
+  const toggle = document.getElementById('drawer-toggle')
+  if (toggle) {
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false')
+    toggle.textContent = `${open ? '▾' : '▴'} Test Results`
+  }
+}
+
 function showOutput(q) {
   const box = document.getElementById('output')
-  if (box) box.innerHTML = outputHtml(q)
+  if (!box) return
+  box.innerHTML = outputHtml(q)
+  state.drawerOpen = true
+  setDrawer(true)
 }
 
 // ---------- Results ----------

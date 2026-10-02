@@ -68,7 +68,7 @@ window.BANK = (window.BANK || []).concat(
       "WHERE r.rnk = 1",
       "ORDER BY b.branch_name, r.customer_name;"
     ],
-    "starter": ["-- Write your query here", ""],
+    "starter": ["/*", "Enter your query below.", "Please append a semicolon \";\" at the end of the query", "*/", ""],
     "approach": [
       "Spot the pattern: \"top N per group\" with \"return all ties\" means a window function, and specifically RANK or DENSE_RANK, not ROW_NUMBER.",
       "Build it in layers with CTEs. First filter and aggregate (one row per customer with their 2025 deposit total), then rank inside each branch, then keep rank 1.",
@@ -128,7 +128,7 @@ window.BANK = (window.BANK || []).concat(
       "   AND 1.0 * SUM(CASE WHEN l.status = 'default' THEN 1 ELSE 0 END) / COUNT(l.loan_id) > 0.25",
       "ORDER BY default_rate DESC, b.branch_name;"
     ],
-    "starter": ["-- Write your query here", ""],
+    "starter": ["/*", "Enter your query below.", "Please append a semicolon \";\" at the end of the query", "*/", ""],
     "approach": [
       "\"For each branch ... only branches with ...\" means GROUP BY branch, then filter groups with HAVING (WHERE can't see aggregates).",
       "Count conditionally with SUM(CASE WHEN status = 'default' THEN 1 ELSE 0 END). It treats NULL status as 0, which is what the prompt wants.",
@@ -188,7 +188,7 @@ window.BANK = (window.BANK || []).concat(
       "FROM transactions",
       "ORDER BY account_id, txn_date, txn_id;"
     ],
-    "starter": ["-- Write your query here", ""],
+    "starter": ["/*", "Enter your query below.", "Please append a semicolon \";\" at the end of the query", "*/", ""],
     "approach": [
       "\"Running\" or \"cumulative\" total per something means SUM(...) OVER (PARTITION BY something ORDER BY time).",
       "Make the window's ORDER BY unique. If it orders only by date, rows on the same date are \"peers,\" and the default window frame includes all peers at once, so both same-day rows show the end-of-day total.",
@@ -248,7 +248,7 @@ window.BANK = (window.BANK || []).concat(
       "GROUP BY b.branch_id, b.branch_name",
       "ORDER BY accounts_opened DESC, b.branch_name;"
     ],
-    "starter": ["-- Write your query here", ""],
+    "starter": ["/*", "Enter your query below.", "Please append a semicolon \";\" at the end of the query", "*/", ""],
     "approach": [
       "\"Every branch must appear\" means start from branches and LEFT JOIN the accounts.",
       "Put the date filter in the ON clause. In WHERE, it would remove the NULL rows the LEFT JOIN created for Providence, turning it back into an inner join.",
@@ -310,7 +310,7 @@ window.BANK = (window.BANK || []).concat(
       "HAVING COUNT(DISTINCT merchant) >= 3",
       "ORDER BY txn_date, card_id;"
     ],
-    "starter": ["-- Write your query here", ""],
+    "starter": ["/*", "Enter your query below.", "Please append a semicolon \";\" at the end of the query", "*/", ""],
     "approach": [
       "\"Per card per day\" means GROUP BY card_id, txn_date.",
       "\"Different merchants\" means COUNT(DISTINCT merchant). It also skips NULL merchants automatically.",
@@ -367,7 +367,7 @@ window.BANK = (window.BANK || []).concat(
       "GROUP BY b.branch_id, b.branch_name",
       "ORDER BY b.branch_name;"
     ],
-    "starter": ["-- Write your query here", ""],
+    "starter": ["/*", "Enter your query below.", "Please append a semicolon \";\" at the end of the query", "*/", ""],
     "approach": [
       "\"Nth highest distinct\" is DENSE_RANK: ties share a rank and the next value gets the next number.",
       "Rank within each branch with PARTITION BY branch_id, after dropping NULL amounts.",
@@ -419,7 +419,7 @@ window.BANK = (window.BANK || []).concat(
       "FROM customers",
       "ORDER BY email_domain, customer_id;"
     ],
-    "starter": ["-- Write your query here", ""],
+    "starter": ["/*", "Enter your query below.", "Please append a semicolon \";\" at the end of the query", "*/", ""],
     "approach": [
       "Build each output column separately, and test it on the trickiest rows: the spaces around ' Ana ' and 'park ', the mixed-case domains, and the NULL email.",
       "Trim before you change case or concatenate. In MySQL, write CONCAT(UPPER(TRIM(last_name)), ', ', TRIM(first_name)); in SQLite, || joins strings.",
@@ -475,7 +475,7 @@ window.BANK = (window.BANK || []).concat(
       "JOIN branches b ON b.branch_id = m.branch_id",
       "ORDER BY b.branch_name, m.month;"
     ],
-    "starter": ["-- Write your query here", ""],
+    "starter": ["/*", "Enter your query below.", "Please append a semicolon \";\" at the end of the query", "*/", ""],
     "approach": [
       "\"Compared with the previous row\" means LAG (or LEAD for the next row).",
       "PARTITION BY the group (branch) so each branch's first month has no previous value, and ORDER BY the time column inside OVER. The table's row order means nothing.",

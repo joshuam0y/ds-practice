@@ -10,13 +10,20 @@ const PYODIDE_VERSION = '0.27.2'
 const PY_TIME_LIMIT_MS = 8000
 
 // Python that runs a submission against a question's sample tests and reports the results as JSON.
-// Each test is {name, setup?, expr, expect} (expr must equal expect) or {name, setup?, expr, raises}
-// (running expr must raise that exception). Every test gets a fresh copy of the submission.
+// Two kinds of test:
+//   Function tests: {name, setup?, expr, expect} (expr must equal expect) or {name, setup?, expr, raises}.
+//     Every test gets a fresh copy of the submission.
+//   Program tests, the way HackerRank grades: {name, stdin, stdout}. The whole file runs as __main__ with
+//     stdin fed in and OUTPUT_PATH pointing at a file. What the program writes to that file (or, if it
+//     writes nothing there, what it prints) must match stdout, ignoring trailing spaces and blank lines.
 const PY_HARNESS = String.raw`
 import contextlib
 import io
 import json
 import math
+import os
+import sys
+import tempfile
 
 
 def _short(e):
@@ -47,12 +54,69 @@ def _load(code, out):
     return namespace
 
 
+def _lines(text):
+    lines = [line.rstrip() for line in text.replace("\r\n", "\n").split("\n")]
+    while lines and not lines[-1]:
+        lines.pop()
+    return lines
+
+
+def _program(code, stdin_text):
+    path = os.path.join(tempfile.gettempdir(), "hackerrank_output.txt")
+    open(path, "w").close()
+    printed = io.StringIO()
+    old_stdin, old_path = sys.stdin, os.environ.get("OUTPUT_PATH")
+    sys.stdin = io.StringIO(stdin_text)
+    os.environ["OUTPUT_PATH"] = path
+    error = None
+    try:
+        with contextlib.redirect_stdout(printed):
+            exec(compile(code, "solution.py", "exec"), {"__name__": "__main__"})
+    except SystemExit:
+        pass
+    except BaseException as e:
+        error = e
+    finally:
+        sys.stdin = old_stdin
+        if old_path is None:
+            os.environ.pop("OUTPUT_PATH", None)
+        else:
+            os.environ["OUTPUT_PATH"] = old_path
+    with open(path) as f:
+        written = f.read()
+    return printed.getvalue(), written, error
+
+
+def _run_program_test(code, t):
+    printed, written, error = _program(code, t["stdin"])
+    graded = written if written.strip() else printed
+    result = {"name": t["name"], "pass": False, "message": "", "stdin": t["stdin"], "expected": t["stdout"], "output": graded,
+              "debug": printed if written.strip() else ""}
+    if error is not None:
+        result["message"] = _short(error)
+        return result
+    got, want = _lines(graded), _lines(t["stdout"])
+    if got == want:
+        result["pass"] = True
+        return result
+    for i, (g, w) in enumerate(zip(got, want)):
+        if g != w:
+            result["message"] = f"Line {i + 1}: expected {w!r}, got {g!r}"
+            return result
+    result["message"] = f"Expected {len(want)} line(s) of output, got {len(got)}"
+    return result
+
+
 def run_tests(code, tests_json):
     tests = json.loads(tests_json)
     printed = io.StringIO()
     report = {"error": None, "stdout": "", "tests": []}
+    program = any("stdin" in t for t in tests)
     try:
-        _load(code, printed)
+        if program:
+            compile(code, "solution.py", "exec")
+        else:
+            _load(code, printed)
     except BaseException as e:
         report["error"] = _short(e)
         report["stdout"] = printed.getvalue()
@@ -60,6 +124,9 @@ def run_tests(code, tests_json):
         return json.dumps(report)
 
     for t in tests:
+        if "stdin" in t:
+            report["tests"].append(_run_program_test(code, t))
+            continue
         result = {"name": t["name"], "pass": False, "message": ""}
         during = io.StringIO()
         try:

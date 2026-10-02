@@ -13,7 +13,11 @@ statistics, Python and applied math. It runs entirely in the browser.
 - **Run code** (or Ctrl/Cmd + Enter) on both coding questions:
   - SQL runs on [sql.js](https://github.com/sql-js/sql.js) (SQLite), with MySQL-style `YEAR()`, `MONTH()`, `DAY()`,
     `DATE_FORMAT()`, `DATEDIFF()` and `SUBSTRING_INDEX()` added.
-  - Python runs on [Pyodide](https://pyodide.org) (real CPython 3.12) in a background worker.
+  - Python runs on [Pyodide](https://pyodide.org) (real CPython 3.12) in a background worker. Some questions use
+    HackerRank's own format: a stub that reads stdin under `if __name__ == '__main__':`, graded on printed output
+    (or the `OUTPUT_PATH` file) line by line.
+- The test screen follows HackerRank's layout: timer pill, Save & Proceed, numbered sidebar by section, bookmarks,
+  Input Format and Sample Input/Output for SQL, and a Test Results drawer under the editor.
 - Untimed practice: drill a single section, or retry every question you've missed before. The start page tracks
   weak areas by section and topic across attempts.
 - Keyboard: 1 to 4 picks an option, Enter goes to the next question.
