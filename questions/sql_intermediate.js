@@ -144,6 +144,125 @@ window.BANK = (window.BANK || []).concat(
       "Putting the count condition in WHERE instead of HAVING, which is an error.",
       "Missing the name tie-breaker, so Back Bay and Worcester can come out in either order."
     ]
+  },
+  {
+    "id": "sqli-running-balance",
+    "section": "sqlint",
+    "type": "sql",
+    "topic": "Window functions: running totals",
+    "title": "Running balance per account",
+    "prompt": [
+      "Show a running balance for every transaction. Deposits are positive amounts and withdrawals are negative. An amount of NULL means the transaction was reversed: show its amount as 0 and leave the balance unchanged.",
+      "",
+      "Each account's running balance starts at 0 and adds transactions in date order. When an account has several transactions on the same date, apply them in `txn_id` order.",
+      "",
+      "**Output columns:** `account_id`, `txn_id`, `txn_date`, `amount`, `running_balance`",
+      "",
+      "**Sort by:** `account_id` ascending, then `txn_date` ascending, then `txn_id` ascending."
+    ],
+    "tables": [
+      {
+        "name": "transactions",
+        "columns": [["txn_id", "INTEGER"], ["account_id", "INTEGER"], ["txn_date", "TEXT"], ["amount", "REAL"]],
+        "rows": [
+          [1, 10, "2025-03-01", 500],
+          [2, 10, "2025-03-03", -200],
+          [3, 10, "2025-03-03", 50],
+          [4, 10, "2025-03-07", -100],
+          [8, 10, "2025-03-08", null],
+          [5, 20, "2025-03-02", 1000],
+          [6, 20, "2025-03-05", -1000],
+          [7, 20, "2025-03-05", 250]
+        ]
+      }
+    ],
+    "solution": [
+      "SELECT account_id,",
+      "       txn_id,",
+      "       txn_date,",
+      "       COALESCE(amount, 0) AS amount,",
+      "       SUM(COALESCE(amount, 0)) OVER (",
+      "           PARTITION BY account_id",
+      "           ORDER BY txn_date, txn_id",
+      "       ) AS running_balance",
+      "FROM transactions",
+      "ORDER BY account_id, txn_date, txn_id;"
+    ],
+    "starter": ["-- Write your query here", ""],
+    "approach": [
+      "\"Running\" or \"cumulative\" total per something means SUM(...) OVER (PARTITION BY something ORDER BY time).",
+      "Make the window's ORDER BY unique. If it orders only by date, rows on the same date are \"peers,\" and the default window frame includes all peers at once, so both same-day rows show the end-of-day total.",
+      "Handle NULLs explicitly with COALESCE, both for the displayed amount and inside the SUM.",
+      "The final ORDER BY sorts the output; it is separate from the window's ORDER BY. Write both."
+    ],
+    "mistakes": [
+      "ORDER BY txn_date alone inside OVER: account 10's two rows on March 3 would both show 350, and account 20's rows on March 5 would both show 250.",
+      "Leaving amount as NULL in the output when the prompt asks for 0.",
+      "Forgetting PARTITION BY, so account 20's balance continues from account 10's.",
+      "Using GROUP BY, which collapses the transactions into one row per account instead of one row per transaction."
+    ]
+  },
+  {
+    "id": "sqli-accounts-opened-per-branch",
+    "section": "sqlint",
+    "type": "sql",
+    "topic": "LEFT JOIN with a filter, COUNT and COALESCE",
+    "title": "Accounts opened per branch, including zero",
+    "prompt": [
+      "For every branch, report how many accounts were opened in 2025 and the total of their opening deposits. Every branch must appear, even one that opened no accounts in 2025 (show 0 and 0). An account opened with a NULL opening deposit still counts as opened and adds 0 to the total.",
+      "",
+      "**Output columns:** `branch_name`, `accounts_opened`, `total_opening_deposit`",
+      "",
+      "**Sort by:** `accounts_opened` descending, then `branch_name` ascending."
+    ],
+    "tables": [
+      {
+        "name": "branches",
+        "columns": [["branch_id", "INTEGER"], ["branch_name", "TEXT"]],
+        "rows": [[1, "Back Bay"], [2, "Cambridge"], [3, "Providence"], [4, "Worcester"]]
+      },
+      {
+        "name": "accounts",
+        "columns": [["account_id", "INTEGER"], ["branch_id", "INTEGER"], ["opened_date", "TEXT"], ["opening_deposit", "REAL"]],
+        "rows": [
+          [1, 1, "2025-01-10", 500],
+          [2, 1, "2025-02-11", 1500],
+          [3, 1, "2024-12-31", 800],
+          [4, 2, "2025-05-05", 250],
+          [5, 2, "2025-06-30", null],
+          [6, 3, "2024-07-01", 300],
+          [7, 4, "2025-12-31", 1000],
+          [8, 4, "2026-01-01", 2000]
+        ]
+      }
+    ],
+    "solution": [
+      "SELECT b.branch_name,",
+      "       COUNT(a.account_id) AS accounts_opened,",
+      "       COALESCE(SUM(a.opening_deposit), 0) AS total_opening_deposit",
+      "FROM branches b",
+      "LEFT JOIN accounts a",
+      "       ON a.branch_id = b.branch_id",
+      "      AND a.opened_date >= '2025-01-01'",
+      "      AND a.opened_date < '2026-01-01'",
+      "GROUP BY b.branch_id, b.branch_name",
+      "ORDER BY accounts_opened DESC, b.branch_name;"
+    ],
+    "starter": ["-- Write your query here", ""],
+    "approach": [
+      "\"Every branch must appear\" means start from branches and LEFT JOIN the accounts.",
+      "Put the date filter in the ON clause. In WHERE, it would remove the NULL rows the LEFT JOIN created for Providence, turning it back into an inner join.",
+      "Count a column from the right table, COUNT(a.account_id), so a branch with no match counts 0, not 1.",
+      "SUM over no rows is NULL, so wrap it in COALESCE(..., 0).",
+      "Check the year boundaries in the sample: Dec 31, 2024, Dec 31, 2025 and Jan 1, 2026."
+    ],
+    "mistakes": [
+      "Filtering the year in WHERE: Providence disappears from the output.",
+      "COUNT(*): Providence's single NULL-padded row counts as 1 account opened.",
+      "Showing NULL instead of 0 for Providence's total.",
+      "Off-by-one dates: <= '2025-12-31' is fine for plain dates, but BETWEEN '2025-01-01' AND '2025-12-31' misses late-day timestamps if the column has times.",
+      "Forgetting the branch_name tie-breaker: Back Bay and Cambridge both opened 2."
+    ]
   }
 ]
 );

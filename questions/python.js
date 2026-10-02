@@ -156,6 +156,119 @@ window.BANK = (window.BANK || []).concat(
       "Masking when there are exactly 4 digits, or crashing on the empty string.",
       "Returning None by forgetting the return statement, or printing the result instead of returning it."
     ]
+  },
+  {
+    "id": "py-rank-customers",
+    "section": "python",
+    "type": "python",
+    "topic": "Sorting with lambdas and tie-breaks",
+    "title": "Rank customers for a credit offer",
+    "prompt": [
+      "Write `rank_customers(customers)`. Each customer is a tuple `(name, credit_score, balance)`. Some customers have no credit score yet: their `credit_score` is `None`.",
+      "",
+      "Return a list of **names** of customers who have a credit score, ordered by:",
+      "- `credit_score`, highest first",
+      "- then `balance`, highest first",
+      "- then `name`, alphabetically",
+      "",
+      "An empty input returns an empty list."
+    ],
+    "starter": [
+      "def rank_customers(customers):",
+      "    pass",
+      ""
+    ],
+    "solution": [
+      "def rank_customers(customers):",
+      "    scored = [c for c in customers if c[1] is not None]",
+      "    scored.sort(key=lambda c: (-c[1], -c[2], c[0]))",
+      "    return [name for name, _, _ in scored]",
+      ""
+    ],
+    "tests": [
+      { "name": "Higher score first", "expr": "rank_customers([('Ana', 700, 100), ('Bo', 750, 50)])", "expect": "['Bo', 'Ana']" },
+      { "name": "Score tie broken by balance", "expr": "rank_customers([('Ana', 700, 100), ('Bo', 700, 900)])", "expect": "['Bo', 'Ana']" },
+      { "name": "Score and balance tie broken by name", "expr": "rank_customers([('Cy', 700, 500), ('Ana', 700, 500), ('Bo', 680, 999)])", "expect": "['Ana', 'Cy', 'Bo']" },
+      { "name": "Customers without a score are left out", "expr": "rank_customers([('Ana', None, 5000), ('Bo', 600, 10)])", "expect": "['Bo']" },
+      { "name": "Empty list", "expr": "rank_customers([])", "expect": "[]" },
+      { "name": "Nobody has a score", "expr": "rank_customers([('Ana', None, 1), ('Bo', None, 2)])", "expect": "[]" }
+    ],
+    "approach": [
+      "Filter first: drop the None scores before sorting, because comparing None with a number raises TypeError in Python 3.",
+      "Sort with one key that returns a tuple. Tuples compare element by element, so (score, balance, name) handles every tie-break in one pass.",
+      "To sort a number highest first inside an otherwise ascending sort, negate it: -score. Names stay ascending.",
+      "Return just the names, and check the empty input returns [] rather than None."
+    ],
+    "mistakes": [
+      "Sorting with reverse=True and a (score, balance, name) key: it also reverses the names, so ties come out Z to A.",
+      "Not filtering None, which raises TypeError: '<' not supported between 'NoneType' and 'int'.",
+      "Returning the whole tuples instead of just the names.",
+      "Sorting three separate times in the wrong order. Stable multi-pass sorting works only if you sort by the least important key first."
+    ]
+  },
+  {
+    "id": "py-parse-amount",
+    "section": "python",
+    "type": "python",
+    "topic": "String parsing and exceptions",
+    "title": "Parse a money amount",
+    "prompt": [
+      "Statements show amounts as text. Write `parse_amount(text)` that returns the amount as a `float`.",
+      "",
+      "Accepted formats, with optional whitespace around the whole string:",
+      "- Digits with an optional decimal part: `7`, `45.00`",
+      "- An optional `$` before the digits: `$12.50`",
+      "- Commas as thousands separators, in the right places: `$1,234.50`",
+      "- A negative amount written with a leading `-` (`-$20`) or in parentheses (`(45.00)`)",
+      "",
+      "For anything else, including an empty string, raise `ValueError`."
+    ],
+    "starter": [
+      "def parse_amount(text):",
+      "    pass",
+      ""
+    ],
+    "solution": [
+      "import re",
+      "",
+      "NUMBER = re.compile(r'\\d{1,3}(,\\d{3})+(\\.\\d+)?|\\d+(\\.\\d+)?')",
+      "",
+      "",
+      "def parse_amount(text):",
+      "    s = text.strip()",
+      "    negative = False",
+      "    if s.startswith('(') and s.endswith(')'):",
+      "        negative, s = True, s[1:-1].strip()",
+      "    elif s.startswith('-'):",
+      "        negative, s = True, s[1:].strip()",
+      "    if s.startswith('$'):",
+      "        s = s[1:]",
+      "    if not NUMBER.fullmatch(s):",
+      "        raise ValueError(f'Invalid amount: {text!r}')",
+      "    value = float(s.replace(',', ''))",
+      "    return -value if negative else value",
+      ""
+    ],
+    "tests": [
+      { "name": "Dollar sign and thousands comma", "expr": "parse_amount('$1,234.50')", "expect": "1234.5" },
+      { "name": "Leading minus", "expr": "parse_amount('-$20')", "expect": "-20.0" },
+      { "name": "Parentheses mean negative", "expr": "parse_amount('(45.00)')", "expect": "-45.0" },
+      { "name": "Surrounding whitespace", "expr": "parse_amount('  7 ')", "expect": "7.0" },
+      { "name": "Empty string raises ValueError", "expr": "parse_amount('')", "raises": "ValueError" },
+      { "name": "Misplaced comma raises ValueError", "expr": "parse_amount('1,23')", "raises": "ValueError" }
+    ],
+    "approach": [
+      "Peel the string from the outside in: strip whitespace, detect and remove the negative marker, remove the $, then validate what's left.",
+      "Validate before converting. float() accepts things you don't want (like 'nan' or '1e5') and rejects commas, so check the shape first, here with a regular expression.",
+      "Let the empty-string case fall through to the same ValueError instead of special-casing it.",
+      "Raise ValueError yourself with a clear message; don't return None or a sentinel."
+    ],
+    "mistakes": [
+      "Removing every comma before validating, so '1,23' wrongly parses as 123.",
+      "Calling float() on the raw text, which fails on '$' and ',' and accepts 'nan'.",
+      "Forgetting the parentheses form of negative numbers.",
+      "Catching the ValueError and returning None or 0, so the test expecting an exception fails."
+    ]
   }
 ]
 );
