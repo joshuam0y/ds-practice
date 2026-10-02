@@ -234,7 +234,7 @@ def check_python(q, run_tests):
 
 
 SAFE = {"math": math, "Fraction": Fraction, "comb": math.comb, "perm": math.perm, "factorial": math.factorial,
-        "sqrt": math.sqrt, "exp": math.exp, "e": math.e, "__builtins__": {"abs": abs, "round": round, "sum": sum, "min": min, "max": max, "float": float, "int": int}}
+        "sqrt": math.sqrt, "exp": math.exp, "e": math.e, "__builtins__": {"abs": abs, "round": round, "sum": sum, "min": min, "max": max, "float": float, "int": int, "len": len}}
 
 
 def check_numeric(q):

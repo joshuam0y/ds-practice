@@ -288,6 +288,145 @@ window.BANK = (window.BANK || []).concat(
       "Test the boundary values themselves; they are what these questions are about.",
       "With dates that include times, BETWEEN '2025-01-01' AND '2025-01-31' misses most of Jan 31. A half-open range (< '2025-02-01') is safer."
     ]
+  },
+  {
+    "id": "sqlb-rank-functions",
+    "section": "sqlbasic",
+    "type": "mcq",
+    "topic": "Window functions: ROW_NUMBER, RANK, DENSE_RANK",
+    "title": "Which ranking function gives 1, 2, 2, 4",
+    "prompt": "Four accounts have balances 900, 800, 800 and 700. Ordered by balance descending, which window function assigns them 1, 2, 2, 4?",
+    "options": [
+      "`ROW_NUMBER() OVER (ORDER BY balance DESC)`",
+      "`RANK() OVER (ORDER BY balance DESC)`",
+      "`DENSE_RANK() OVER (ORDER BY balance DESC)`",
+      "`NTILE(2) OVER (ORDER BY balance DESC)`"
+    ],
+    "answer": 1,
+    "explanations": [
+      "ROW_NUMBER gives every row a different number, 1, 2, 3, 4, even when values tie. This is how it \"drops\" ties in top-N queries.",
+      "Correct. RANK gives tied rows the same rank and then skips: two rows share 2, so the next rank is 4.",
+      "DENSE_RANK also gives ties the same rank but doesn't skip: 1, 2, 2, 3.",
+      "NTILE(2) splits the rows into 2 equal buckets: 1, 1, 2, 2."
+    ],
+    "approach": [
+      "Memorize the three on the same data (900, 800, 800, 700): ROW_NUMBER 1,2,3,4; RANK 1,2,2,4; DENSE_RANK 1,2,2,3.",
+      "Gaps after ties: RANK. No gaps: DENSE_RANK. Never ties: ROW_NUMBER.",
+      "\"Nth highest distinct value\" questions want DENSE_RANK; \"include all ties for first\" works with RANK or DENSE_RANK."
+    ]
+  },
+  {
+    "id": "sqlb-union-vs-union-all",
+    "section": "sqlbasic",
+    "type": "mcq",
+    "topic": "UNION and UNION ALL",
+    "title": "Customers with checking or savings",
+    "prompt": [
+      "`checking` contains customer_id values 1, 2 and 5. `savings` contains customer_id values 5 and 6.",
+      "",
+      "```",
+      "SELECT customer_id FROM checking",
+      "UNION",
+      "SELECT customer_id FROM savings;",
+      "```",
+      "",
+      "How many rows does this return?"
+    ],
+    "options": ["5", "4", "1", "6"],
+    "answer": 1,
+    "explanations": [
+      "This is what UNION ALL returns: it keeps duplicates, so customer 5 appears twice.",
+      "Correct. UNION removes duplicate rows, so the result is 1, 2, 5, 6.",
+      "This is the intersection (customers in both tables), which INTERSECT or an inner join would give.",
+      "This is the 3 × 2 cross join count, which has nothing to do with UNION."
+    ],
+    "approach": [
+      "UNION stacks the results and removes duplicates; UNION ALL stacks and keeps everything.",
+      "List the combined values and cross out repeats.",
+      "UNION ALL is faster because it skips the duplicate check, so use it when you know there are no duplicates or want them."
+    ],
+    "check": { "compute": "len({1, 2, 5} | {5, 6})", "values": ["5", "4", "1", "6"] }
+  },
+  {
+    "id": "sqlb-group-by-nonaggregated",
+    "section": "sqlbasic",
+    "type": "mcq",
+    "topic": "GROUP BY rules",
+    "title": "A column that isn't grouped",
+    "prompt": [
+      "```",
+      "SELECT branch_id, customer_name, SUM(balance)",
+      "FROM accounts",
+      "GROUP BY branch_id;",
+      "```",
+      "",
+      "What happens in standard SQL (and in MySQL with its default ONLY_FULL_GROUP_BY mode)?"
+    ],
+    "options": [
+      "It returns one row per customer with their branch's total",
+      "It returns an error, because customer_name is neither grouped nor aggregated",
+      "It returns one row per branch with all customer names joined together",
+      "It returns one row per branch with the first customer name alphabetically"
+    ],
+    "answer": 1,
+    "explanations": [
+      "GROUP BY branch_id makes one row per branch, never one per customer.",
+      "Correct. Each branch has many customers, so the database can't pick one customer_name for the branch's single row. Every selected column must be in GROUP BY or inside an aggregate.",
+      "Joining names needs an explicit aggregate such as GROUP_CONCAT (MySQL) or STRING_AGG.",
+      "Nothing picks the alphabetically first name automatically. You would write MIN(customer_name) for that."
+    ],
+    "approach": [
+      "Rule: every column in SELECT must either appear in GROUP BY or be wrapped in an aggregate.",
+      "Picture the output: one row per group. Ask whether each selected column has a single value per group.",
+      "Older MySQL returned an arbitrary value instead of an error; don't rely on it."
+    ]
+  },
+  {
+    "id": "sqlb-like-ends-with",
+    "section": "sqlbasic",
+    "type": "mcq",
+    "topic": "String matching with LIKE",
+    "title": "Emails at one domain",
+    "prompt": "Which WHERE clause finds customers whose email ends with `@citizensbank.com`?",
+    "options": [
+      "`WHERE email LIKE '@citizensbank.com%'`",
+      "`WHERE email = '%@citizensbank.com'`",
+      "`WHERE email LIKE '%@citizensbank.com'`",
+      "`WHERE email LIKE '_@citizensbank.com'`"
+    ],
+    "answer": 2,
+    "explanations": [
+      "This matches emails that start with '@citizensbank.com', the opposite of what's wanted.",
+      "= compares literally, so % is just a percent sign here. Wildcards only work with LIKE.",
+      "Correct. % matches any number of characters (including none), so '%@citizensbank.com' means \"anything, then ends with @citizensbank.com.\"",
+      "_ matches exactly one character, so this only finds emails like 'a@citizensbank.com'."
+    ],
+    "approach": [
+      "LIKE wildcards: % is any run of characters, _ is exactly one character.",
+      "Ends with X: '%X'. Starts with X: 'X%'. Contains X: '%X%'.",
+      "Wildcards need LIKE; with = they're ordinary characters."
+    ]
+  },
+  {
+    "id": "sqlb-coalesce-first",
+    "section": "sqlbasic",
+    "type": "mcq",
+    "topic": "NULL handling with COALESCE",
+    "title": "Choosing a display name",
+    "prompt": "For a customer whose `nickname` is NULL and `first_name` is `'Ana'`, what does `COALESCE(nickname, first_name, 'Customer')` return?",
+    "options": ["NULL", "'Customer'", "'Ana'", "An error, because the arguments mix columns and text"],
+    "answer": 2,
+    "explanations": [
+      "COALESCE returns NULL only if every argument is NULL.",
+      "'Customer' is the fallback used only when both nickname and first_name are NULL.",
+      "Correct. COALESCE returns the first argument that isn't NULL: nickname is NULL, so it moves on to first_name, 'Ana'.",
+      "Mixing columns and literals is normal for COALESCE, as long as the types are compatible."
+    ],
+    "approach": [
+      "Read COALESCE left to right and stop at the first non-NULL value.",
+      "Common uses: default values for display, and turning NULL into 0 before arithmetic.",
+      "IFNULL(a, b) in MySQL is the two-argument version."
+    ]
   }
 ]
 );

@@ -263,6 +263,124 @@ window.BANK = (window.BANK || []).concat(
       "Off-by-one dates: <= '2025-12-31' is fine for plain dates, but BETWEEN '2025-01-01' AND '2025-12-31' misses late-day timestamps if the column has times.",
       "Forgetting the branch_name tie-breaker: Back Bay and Cambridge both opened 2."
     ]
+  },
+  {
+    "id": "sqli-card-many-merchants",
+    "section": "sqlint",
+    "type": "sql",
+    "topic": "GROUP BY with HAVING and COUNT DISTINCT",
+    "title": "Cards used at many merchants in one day",
+    "prompt": [
+      "The fraud team wants cards that were used at **3 or more different merchants on the same day**.",
+      "",
+      "Only count approved transactions (`status = 'approved'`). Several transactions at the same merchant on the same day count as one merchant. A transaction with a NULL merchant has no known merchant and does not count.",
+      "",
+      "**Output columns:** `card_id`, `txn_date`, `merchant_count`",
+      "",
+      "**Sort by:** `txn_date` ascending, then `card_id` ascending."
+    ],
+    "tables": [
+      {
+        "name": "card_transactions",
+        "columns": [["txn_id", "INTEGER"], ["card_id", "TEXT"], ["merchant", "TEXT"], ["txn_date", "TEXT"], ["status", "TEXT"]],
+        "rows": [
+          [1, "C1", "Amazon", "2025-04-01", "approved"],
+          [2, "C1", "Target", "2025-04-01", "approved"],
+          [3, "C1", "Amazon", "2025-04-01", "approved"],
+          [4, "C1", "Shell", "2025-04-01", "declined"],
+          [5, "C2", "Amazon", "2025-04-01", "approved"],
+          [6, "C2", "Target", "2025-04-01", "approved"],
+          [7, "C2", "Shell", "2025-04-01", "approved"],
+          [8, "C3", "Uber", "2025-04-02", "approved"],
+          [9, "C3", null, "2025-04-02", "approved"],
+          [10, "C3", "Lyft", "2025-04-02", "approved"],
+          [11, "C1", "Uber", "2025-04-02", "approved"],
+          [12, "C1", "Lyft", "2025-04-02", "approved"],
+          [13, "C1", "Starbucks", "2025-04-02", "approved"],
+          [14, "C1", "Amazon", "2025-04-02", "approved"],
+          [15, "C2", "Uber", "2025-04-02", "approved"]
+        ]
+      }
+    ],
+    "solution": [
+      "SELECT card_id, txn_date, COUNT(DISTINCT merchant) AS merchant_count",
+      "FROM card_transactions",
+      "WHERE status = 'approved'",
+      "GROUP BY card_id, txn_date",
+      "HAVING COUNT(DISTINCT merchant) >= 3",
+      "ORDER BY txn_date, card_id;"
+    ],
+    "starter": ["-- Write your query here", ""],
+    "approach": [
+      "\"Per card per day\" means GROUP BY card_id, txn_date.",
+      "\"Different merchants\" means COUNT(DISTINCT merchant). It also skips NULL merchants automatically.",
+      "Filter rows before grouping with WHERE (approved only); filter groups after with HAVING (>= 3).",
+      "Check the boundaries against the sample: C2 on April 1 has exactly 3 and must appear; C1 on April 1 has only 2 approved merchants."
+    ],
+    "mistakes": [
+      "COUNT(*) or COUNT(merchant) instead of COUNT(DISTINCT merchant): C1's two Amazon purchases on April 1 count twice, and C3's NULL row counts with COUNT(*).",
+      "Forgetting the approved filter: C1's declined Shell transaction pushes it to 3 merchants on April 1.",
+      "Using > 3 instead of >= 3, which drops C2.",
+      "Putting the count condition in WHERE, which is an error."
+    ]
+  },
+  {
+    "id": "sqli-second-highest-loan",
+    "section": "sqlint",
+    "type": "sql",
+    "topic": "Window functions: DENSE_RANK and missing results",
+    "title": "Second-largest loan in each branch",
+    "prompt": [
+      "For every branch, find the **second-highest distinct loan amount**. If two loans share the top amount, the second-highest is the next smaller amount. Ignore loans with a NULL amount. If a branch has no second-highest amount, it still appears, with NULL.",
+      "",
+      "**Output columns:** `branch_name`, `second_highest`",
+      "",
+      "**Sort by:** `branch_name` ascending."
+    ],
+    "tables": [
+      {
+        "name": "branches",
+        "columns": [["branch_id", "INTEGER"], ["branch_name", "TEXT"]],
+        "rows": [[1, "Back Bay"], [2, "Cambridge"], [3, "Providence"], [4, "Worcester"]]
+      },
+      {
+        "name": "loans",
+        "columns": [["loan_id", "INTEGER"], ["branch_id", "INTEGER"], ["amount", "REAL"]],
+        "rows": [
+          [1, 1, 50000], [2, 1, 30000], [3, 1, 50000], [4, 1, 20000],
+          [5, 2, 15000], [6, 2, 15000],
+          [7, 3, 40000],
+          [8, 4, 10000], [9, 4, 25000], [10, 4, 18000], [11, 4, null]
+        ]
+      }
+    ],
+    "solution": [
+      "WITH ranked AS (",
+      "    SELECT branch_id, amount,",
+      "           DENSE_RANK() OVER (PARTITION BY branch_id ORDER BY amount DESC) AS rnk",
+      "    FROM loans",
+      "    WHERE amount IS NOT NULL",
+      ")",
+      "SELECT b.branch_name, MAX(r.amount) AS second_highest",
+      "FROM branches b",
+      "LEFT JOIN ranked r ON r.branch_id = b.branch_id AND r.rnk = 2",
+      "GROUP BY b.branch_id, b.branch_name",
+      "ORDER BY b.branch_name;"
+    ],
+    "starter": ["-- Write your query here", ""],
+    "approach": [
+      "\"Nth highest distinct\" is DENSE_RANK: ties share a rank and the next value gets the next number.",
+      "Rank within each branch with PARTITION BY branch_id, after dropping NULL amounts.",
+      "\"Every branch, NULL if missing\" means start from branches and LEFT JOIN the rank-2 rows, with rnk = 2 in the ON clause.",
+      "Several loans can share the second amount, so collapse them to one row per branch (MAX or DISTINCT).",
+      "A non-window alternative: MAX(amount) among loans where amount < the branch's MAX(amount)."
+    ],
+    "mistakes": [
+      "ROW_NUMBER or RANK: Back Bay's two 50,000 loans make row 2 another 50,000 (ROW_NUMBER), or leave no rank 2 at all (RANK jumps to 3).",
+      "ORDER BY amount DESC LIMIT 1 OFFSET 1 per branch: it returns the duplicate 50,000, and it doesn't work per group anyway.",
+      "Filtering rnk = 2 in WHERE after a LEFT JOIN, which drops Cambridge and Providence instead of showing NULL.",
+      "Returning duplicate rows when two loans share the second amount."
+    ]
   }
 ]
 );

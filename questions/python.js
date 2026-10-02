@@ -269,6 +269,149 @@ window.BANK = (window.BANK || []).concat(
       "Forgetting the parentheses form of negative numbers.",
       "Catching the ValueError and returning None or 0, so the test expecting an exception fails."
     ]
+  },
+  {
+    "id": "py-loan-classes",
+    "section": "python",
+    "type": "python",
+    "topic": "OOP: inheritance, method overriding, __str__",
+    "title": "Loans with a promotional period",
+    "prompt": [
+      "Implement two classes.",
+      "",
+      "**`Loan(borrower, principal, annual_rate)`**",
+      "- Raise `ValueError` if `principal <= 0` or `annual_rate < 0`.",
+      "- `interest(months)` returns simple interest, `principal × annual_rate × months / 12`, rounded to 2 decimals. Raise `ValueError` if `months < 0`. Zero months gives `0.0`.",
+      "- `str(loan)` returns `Borrower: $principal at rate%`, with the principal using thousands separators and 2 decimals, and the rate as a percentage with 2 decimals. Example: `Ana: $12,500.00 at 4.50%`",
+      "",
+      "**`PromoLoan(borrower, principal, annual_rate, promo_months)`**: a subclass of `Loan`. No interest is charged during the first `promo_months` months, so `interest(months)` charges only the months after the promotion. `str()` adds ` (promo N months)` to the end of the parent's text."
+    ],
+    "starter": [
+      "class Loan:",
+      "    def __init__(self, borrower, principal, annual_rate):",
+      "        pass",
+      "",
+      "    def interest(self, months):",
+      "        pass",
+      "",
+      "    def __str__(self):",
+      "        pass",
+      "",
+      "",
+      "class PromoLoan(Loan):",
+      "    def __init__(self, borrower, principal, annual_rate, promo_months):",
+      "        pass",
+      "",
+      "    def interest(self, months):",
+      "        pass",
+      "",
+      "    def __str__(self):",
+      "        pass",
+      ""
+    ],
+    "solution": [
+      "class Loan:",
+      "    def __init__(self, borrower, principal, annual_rate):",
+      "        if principal <= 0:",
+      "            raise ValueError('principal must be positive')",
+      "        if annual_rate < 0:",
+      "            raise ValueError('annual_rate cannot be negative')",
+      "        self.borrower = borrower",
+      "        self.principal = principal",
+      "        self.annual_rate = annual_rate",
+      "",
+      "    def interest(self, months):",
+      "        if months < 0:",
+      "            raise ValueError('months cannot be negative')",
+      "        return round(self.principal * self.annual_rate * months / 12, 2)",
+      "",
+      "    def __str__(self):",
+      "        return f'{self.borrower}: ${self.principal:,.2f} at {self.annual_rate * 100:.2f}%'",
+      "",
+      "",
+      "class PromoLoan(Loan):",
+      "    def __init__(self, borrower, principal, annual_rate, promo_months):",
+      "        super().__init__(borrower, principal, annual_rate)",
+      "        self.promo_months = promo_months",
+      "",
+      "    def interest(self, months):",
+      "        if months < 0:",
+      "            raise ValueError('months cannot be negative')",
+      "        return super().interest(max(0, months - self.promo_months))",
+      "",
+      "    def __str__(self):",
+      "        return f'{super().__str__()} (promo {self.promo_months} months)'",
+      ""
+    ],
+    "tests": [
+      { "name": "Simple interest for 6 months", "expr": "Loan('Ana', 12000, 0.05).interest(6)", "expect": "300.0" },
+      { "name": "Zero months is zero interest", "expr": "Loan('Ana', 1000, 0.07).interest(0)", "expect": "0.0" },
+      { "name": "String format", "expr": "str(Loan('Ana', 12500, 0.045))", "expect": "'Ana: $12,500.00 at 4.50%'" },
+      { "name": "Zero principal raises ValueError", "expr": "Loan('Bo', 0, 0.05)", "raises": "ValueError" },
+      { "name": "Promo months are free, later months are charged", "setup": "p = PromoLoan('Cy', 12000, 0.06, 3)", "expr": "(p.interest(2), p.interest(5))", "expect": "(0.0, 120.0)" },
+      { "name": "Promo string extends the parent's", "expr": "str(PromoLoan('Cy', 12000, 0.06, 3))", "expect": "'Cy: $12,000.00 at 6.00% (promo 3 months)'" }
+    ],
+    "approach": [
+      "Validate in __init__ and raise immediately, before storing anything.",
+      "Use format specs for output: {x:,.2f} gives thousands separators and 2 decimals; multiply the rate by 100 for a percentage.",
+      "In the subclass, reuse the parent: super().__init__ for setup, super().interest for the formula, super().__str__ for the text. Override only what changes.",
+      "Handle the boundary where months is less than the promotion: max(0, months − promo) keeps it from going negative."
+    ],
+    "mistakes": [
+      "Formatting with str(principal), which gives '12500' instead of '12,500.00'.",
+      "Rounding the rate or principal instead of the final interest.",
+      "Copying the parent's formula into the subclass instead of calling super(), then forgetting to round there.",
+      "Charging negative interest when months < promo_months.",
+      "Printing the text inside __str__ instead of returning it, so str() raises TypeError: __str__ returned non-string."
+    ]
+  },
+  {
+    "id": "py-monthly-totals",
+    "section": "python",
+    "type": "python",
+    "topic": "Dictionaries, string slicing and rounding",
+    "title": "Monthly spending totals",
+    "prompt": [
+      "Write `monthly_totals(transactions)`. Each transaction is a dict like `{'date': '2025-01-15', 'amount': 42.5}`. An `amount` of `None` means the transaction was voided.",
+      "",
+      "Return a dict that maps each month (`'YYYY-MM'`) to the total amount for that month, rounded to 2 decimals. Voided transactions add nothing, but a month whose transactions are all voided still appears with `0.0`. The dict's keys must be in ascending month order. An empty list returns `{}`."
+    ],
+    "starter": [
+      "def monthly_totals(transactions):",
+      "    pass",
+      ""
+    ],
+    "solution": [
+      "def monthly_totals(transactions):",
+      "    totals = {}",
+      "    for t in transactions:",
+      "        month = t['date'][:7]",
+      "        totals.setdefault(month, 0.0)",
+      "        if t['amount'] is not None:",
+      "            totals[month] += t['amount']",
+      "    return {month: round(totals[month], 2) for month in sorted(totals)}",
+      ""
+    ],
+    "tests": [
+      { "name": "Two months", "expr": "monthly_totals([{'date': '2025-01-03', 'amount': 10.0}, {'date': '2025-01-20', 'amount': 5.5}, {'date': '2025-02-01', 'amount': 7.0}])", "expect": "{'2025-01': 15.5, '2025-02': 7.0}" },
+      { "name": "Rounded to 2 decimals", "expr": "monthly_totals([{'date': '2025-03-01', 'amount': 0.1}, {'date': '2025-03-02', 'amount': 0.2}])", "expect": "{'2025-03': 0.3}" },
+      { "name": "Voided amounts are skipped", "expr": "monthly_totals([{'date': '2025-04-01', 'amount': None}, {'date': '2025-04-09', 'amount': 20.0}])", "expect": "{'2025-04': 20.0}" },
+      { "name": "Month with only voided transactions shows 0.0", "expr": "monthly_totals([{'date': '2025-05-05', 'amount': None}])", "expect": "{'2025-05': 0.0}" },
+      { "name": "Empty input", "expr": "monthly_totals([])", "expect": "{}" },
+      { "name": "Keys in ascending month order", "expr": "list(monthly_totals([{'date': '2025-02-10', 'amount': 1.0}, {'date': '2024-12-31', 'amount': 2.0}, {'date': '2025-01-01', 'amount': 3.0}]))", "expect": "['2024-12', '2025-01', '2025-02']" }
+    ],
+    "approach": [
+      "The month key is the first 7 characters of the date: date[:7].",
+      "Create the key even for voided transactions (setdefault), so an all-voided month still appears with 0.0. Only add when the amount isn't None.",
+      "Round at the end, not on each addition, so rounding errors don't pile up.",
+      "Dicts keep insertion order, so build the final dict from sorted(keys) to control the order."
+    ],
+    "mistakes": [
+      "Skipping voided transactions entirely, so an all-voided month never appears.",
+      "total += None, which raises TypeError.",
+      "Returning 0.30000000000000004 because the total was never rounded.",
+      "Returning keys in input order instead of month order."
+    ]
   }
 ]
 );
