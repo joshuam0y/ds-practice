@@ -185,6 +185,8 @@ table.data th small { color: var(--text-soft); font-weight: 400; margin-left: 0.
 .bottombar { display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 1rem; background: var(--panel); border-top: 1px solid var(--line); }
 .bottombar .spacer { flex: 1; }
 .bottombar .progress { color: var(--text-soft); font-size: 0.85rem; }
+.keys-hint { color: var(--text-soft); font-size: 0.75rem; }
+@media (max-width: 900px) { .keys-hint { display: none; } }
 
 /* ---------- Start and results pages ---------- */
 .page { max-width: 960px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }

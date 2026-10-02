@@ -20,15 +20,15 @@ window.BANK = (window.BANK || []).concat(
     ],
     "options": [
       "They appear once, with account_id NULL",
-      "They are left out of the result",
       "The query fails because a.status can be NULL",
+      "They are left out of the result",
       "They appear once for every open account in the table"
     ],
-    "answer": 1,
+    "answer": 2,
     "explanations": [
       "This is what the analyst wanted, and it is what the LEFT JOIN alone would produce. The WHERE clause then removes these rows.",
-      "Correct. For customers without accounts, a.status is NULL, and NULL = 'open' is unknown, not true, so WHERE drops them. The LEFT JOIN behaves like an INNER JOIN. Moving the condition into the ON clause (ON ... AND a.status = 'open') keeps them.",
       "NULLs in a WHERE comparison never cause an error. The comparison just evaluates to unknown and the row is filtered out.",
+      "Correct. For customers without accounts, a.status is NULL, and NULL = 'open' is unknown, not true, so WHERE drops them. The LEFT JOIN behaves like an INNER JOIN. Moving the condition into the ON clause (ON ... AND a.status = 'open') keeps them.",
       "A LEFT JOIN never pairs a customer with other customers' accounts. That would be a cross join."
     ],
     "approach": [
@@ -46,16 +46,16 @@ window.BANK = (window.BANK || []).concat(
     "prompt": "The `accounts` table has a `closed_date` column that is NULL for accounts that are still open. Which query returns exactly the accounts that are still open?",
     "options": [
       "`SELECT * FROM accounts WHERE closed_date = NULL;`",
-      "`SELECT * FROM accounts WHERE closed_date IS NULL;`",
+      "`SELECT * FROM accounts WHERE closed_date <> NULL;`",
       "`SELECT * FROM accounts WHERE closed_date = '';`",
-      "`SELECT * FROM accounts WHERE closed_date <> NULL;`"
+      "`SELECT * FROM accounts WHERE closed_date IS NULL;`"
     ],
-    "answer": 1,
+    "answer": 3,
     "explanations": [
       "Comparing anything to NULL with = gives unknown, never true, so this returns no rows at all.",
-      "Correct. IS NULL is the only way to test for a missing value.",
+      "<> NULL is also unknown for every row, so this returns no rows either. The right way to find closed accounts would be IS NOT NULL.",
       "An empty string is a real value, not NULL. This finds rows that store '' and misses every NULL.",
-      "<> NULL is also unknown for every row, so this returns no rows either. The right way to find closed accounts would be IS NOT NULL."
+      "Correct. IS NULL is the only way to test for a missing value."
     ],
     "approach": [
       "NULL means \"unknown,\" so any comparison with it (=, <>, <, >) is unknown too, and WHERE keeps only rows where the condition is true.",
@@ -170,15 +170,15 @@ window.BANK = (window.BANK || []).concat(
       "What does this query return?"
     ],
     "options": [
-      "Each branch_id once, with one of its account types",
       "Each different combination of branch_id and account_type once",
+      "Each branch_id once, with one of its account types",
       "Each account_type once, with the first branch that offers it",
       "An error, because DISTINCT can only apply to one column"
     ],
-    "answer": 1,
+    "answer": 0,
     "explanations": [
-      "DISTINCT doesn't pick one value per branch. A branch with checking and savings accounts appears twice.",
       "Correct. DISTINCT applies to the whole selected row, so it removes rows where both columns repeat. A branch with three account types appears three times.",
+      "DISTINCT doesn't pick one value per branch. A branch with checking and savings accounts appears twice.",
       "There is no notion of \"first\" here, and account types can appear with several branches.",
       "DISTINCT applies to every column in the SELECT list, however many there are."
     ],
@@ -196,17 +196,17 @@ window.BANK = (window.BANK || []).concat(
     "title": "Last four digits of a card number",
     "prompt": "`card_number` stores 16-digit card numbers as text, such as `'4111111111111234'`. In MySQL, which expression returns the last four digits (`'1234'`)?",
     "options": [
-      "`RIGHT(card_number, 4)`",
+      "`SUBSTRING(card_number, 12, 4)`",
       "`LEFT(card_number, 4)`",
       "`SUBSTRING(card_number, 4)`",
-      "`SUBSTRING(card_number, 12, 4)`"
+      "`RIGHT(card_number, 4)`"
     ],
-    "answer": 0,
+    "answer": 3,
     "explanations": [
-      "Correct. RIGHT(s, n) returns the last n characters.",
+      "SQL strings start at position 1, so the last four of 16 characters start at position 13. Starting at 12 gives '1123': an off-by-one error.",
       "LEFT returns the first 4 characters, '4111'.",
       "With only a start position, SUBSTRING returns everything from position 4 to the end, 13 characters.",
-      "SQL strings start at position 1, so the last four of 16 characters start at position 13. Starting at 12 gives '1123': an off-by-one error."
+      "Correct. RIGHT(s, n) returns the last n characters."
     ],
     "approach": [
       "SQL string positions start at 1, not 0.",
@@ -231,12 +231,12 @@ window.BANK = (window.BANK || []).concat(
       "",
       "How many rows does this return?"
     ],
-    "options": ["3", "4", "5", "12"],
-    "answer": 0,
+    "options": ["5", "4", "3", "12"],
+    "answer": 2,
     "explanations": [
-      "Correct. An inner join keeps only matching pairs: customer 1 matches 2 accounts and customer 2 matches 1. Customer 3 has no match, and the NULL account matches nobody because NULL = anything is never true.",
-      "This is the LEFT JOIN count: the 3 matches plus customer 3 kept with NULLs.",
       "This is a FULL OUTER JOIN count: the 3 matches, plus customer 3, plus the unmatched NULL account.",
+      "This is the LEFT JOIN count: the 3 matches plus customer 3 kept with NULLs.",
+      "Correct. An inner join keeps only matching pairs: customer 1 matches 2 accounts and customer 2 matches 1. Customer 3 has no match, and the NULL account matches nobody because NULL = anything is never true.",
       "This is a cross join, 3 × 4, every customer paired with every account."
     ],
     "approach": [
@@ -244,7 +244,7 @@ window.BANK = (window.BANK || []).concat(
       "Inner join drops unmatched rows on both sides. LEFT JOIN keeps unmatched left rows, FULL OUTER keeps both.",
       "NULL keys never match, not even another NULL."
     ],
-    "check": { "compute": "2 + 1", "values": ["3", "4", "5", "12"] }
+    "check": {"compute": "2 + 1", "values": ["5", "4", "3", "12"]}
   },
   {
     "id": "sqlb-avg-ignores-null",
@@ -266,7 +266,7 @@ window.BANK = (window.BANK || []).concat(
       "So AVG(col) = SUM(col) / COUNT(col), not SUM(col) / COUNT(*).",
       "Decide whether a missing value should count as zero; if so, use COALESCE."
     ],
-    "check": { "compute": "600/3", "values": ["600/4", "600/3", "float('nan')", "600"] }
+    "check": {"compute": "600/3", "values": ["600/4", "600/3", "float('nan')", "600"]}
   },
   {
     "id": "sqlb-between-inclusive",
@@ -298,15 +298,15 @@ window.BANK = (window.BANK || []).concat(
     "prompt": "Four accounts have balances 900, 800, 800 and 700. Ordered by balance descending, which window function assigns them 1, 2, 2, 4?",
     "options": [
       "`ROW_NUMBER() OVER (ORDER BY balance DESC)`",
-      "`RANK() OVER (ORDER BY balance DESC)`",
       "`DENSE_RANK() OVER (ORDER BY balance DESC)`",
+      "`RANK() OVER (ORDER BY balance DESC)`",
       "`NTILE(2) OVER (ORDER BY balance DESC)`"
     ],
-    "answer": 1,
+    "answer": 2,
     "explanations": [
       "ROW_NUMBER gives every row a different number, 1, 2, 3, 4, even when values tie. This is how it \"drops\" ties in top-N queries.",
-      "Correct. RANK gives tied rows the same rank and then skips: two rows share 2, so the next rank is 4.",
       "DENSE_RANK also gives ties the same rank but doesn't skip: 1, 2, 2, 3.",
+      "Correct. RANK gives tied rows the same rank and then skips: two rows share 2, so the next rank is 4.",
       "NTILE(2) splits the rows into 2 equal buckets: 1, 1, 2, 2."
     ],
     "approach": [
@@ -332,20 +332,20 @@ window.BANK = (window.BANK || []).concat(
       "",
       "How many rows does this return?"
     ],
-    "options": ["5", "4", "1", "6"],
-    "answer": 1,
+    "options": ["5", "6", "1", "4"],
+    "answer": 3,
     "explanations": [
       "This is what UNION ALL returns: it keeps duplicates, so customer 5 appears twice.",
-      "Correct. UNION removes duplicate rows, so the result is 1, 2, 5, 6.",
+      "This is the 3 × 2 cross join count, which has nothing to do with UNION.",
       "This is the intersection (customers in both tables), which INTERSECT or an inner join would give.",
-      "This is the 3 × 2 cross join count, which has nothing to do with UNION."
+      "Correct. UNION removes duplicate rows, so the result is 1, 2, 5, 6."
     ],
     "approach": [
       "UNION stacks the results and removes duplicates; UNION ALL stacks and keeps everything.",
       "List the combined values and cross out repeats.",
       "UNION ALL is faster because it skips the duplicate check, so use it when you know there are no duplicates or want them."
     ],
-    "check": { "compute": "len({1, 2, 5} | {5, 6})", "values": ["5", "4", "1", "6"] }
+    "check": {"compute": "len({1, 2, 5} | {5, 6})", "values": ["5", "6", "1", "4"]}
   },
   {
     "id": "sqlb-group-by-nonaggregated",
@@ -364,15 +364,15 @@ window.BANK = (window.BANK || []).concat(
     ],
     "options": [
       "It returns one row per customer with their branch's total",
-      "It returns an error, because customer_name is neither grouped nor aggregated",
       "It returns one row per branch with all customer names joined together",
+      "It returns an error, because customer_name is neither grouped nor aggregated",
       "It returns one row per branch with the first customer name alphabetically"
     ],
-    "answer": 1,
+    "answer": 2,
     "explanations": [
       "GROUP BY branch_id makes one row per branch, never one per customer.",
-      "Correct. Each branch has many customers, so the database can't pick one customer_name for the branch's single row. Every selected column must be in GROUP BY or inside an aggregate.",
       "Joining names needs an explicit aggregate such as GROUP_CONCAT (MySQL) or STRING_AGG.",
+      "Correct. Each branch has many customers, so the database can't pick one customer_name for the branch's single row. Every selected column must be in GROUP BY or inside an aggregate.",
       "Nothing picks the alphabetically first name automatically. You would write MIN(customer_name) for that."
     ],
     "approach": [
@@ -390,15 +390,15 @@ window.BANK = (window.BANK || []).concat(
     "prompt": "Which WHERE clause finds customers whose email ends with `@citizensbank.com`?",
     "options": [
       "`WHERE email LIKE '@citizensbank.com%'`",
-      "`WHERE email = '%@citizensbank.com'`",
       "`WHERE email LIKE '%@citizensbank.com'`",
+      "`WHERE email = '%@citizensbank.com'`",
       "`WHERE email LIKE '_@citizensbank.com'`"
     ],
-    "answer": 2,
+    "answer": 1,
     "explanations": [
       "This matches emails that start with '@citizensbank.com', the opposite of what's wanted.",
-      "= compares literally, so % is just a percent sign here. Wildcards only work with LIKE.",
       "Correct. % matches any number of characters (including none), so '%@citizensbank.com' means \"anything, then ends with @citizensbank.com.\"",
+      "= compares literally, so % is just a percent sign here. Wildcards only work with LIKE.",
       "_ matches exactly one character, so this only finds emails like 'a@citizensbank.com'."
     ],
     "approach": [
@@ -414,13 +414,13 @@ window.BANK = (window.BANK || []).concat(
     "topic": "NULL handling with COALESCE",
     "title": "Choosing a display name",
     "prompt": "For a customer whose `nickname` is NULL and `first_name` is `'Ana'`, what does `COALESCE(nickname, first_name, 'Customer')` return?",
-    "options": ["NULL", "'Customer'", "'Ana'", "An error, because the arguments mix columns and text"],
-    "answer": 2,
+    "options": ["NULL", "'Customer'", "An error, because the arguments mix columns and text", "'Ana'"],
+    "answer": 3,
     "explanations": [
       "COALESCE returns NULL only if every argument is NULL.",
       "'Customer' is the fallback used only when both nickname and first_name are NULL.",
-      "Correct. COALESCE returns the first argument that isn't NULL: nickname is NULL, so it moves on to first_name, 'Ana'.",
-      "Mixing columns and literals is normal for COALESCE, as long as the types are compatible."
+      "Mixing columns and literals is normal for COALESCE, as long as the types are compatible.",
+      "Correct. COALESCE returns the first argument that isn't NULL: nickname is NULL, so it moves on to first_name, 'Ana'."
     ],
     "approach": [
       "Read COALESCE left to right and stop at the first non-NULL value.",

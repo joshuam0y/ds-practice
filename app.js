@@ -170,11 +170,16 @@ function sectionOf(q) {
   return SECTION[q.section]
 }
 
-// Prefer the questions seen least; break ties randomly
-function draw() {
+// Full tests are timed; drills and missed-question retries are untimed practice
+const MODES = { test: 'Full test', drill: 'Section drill', missed: 'Missed questions' }
+const DRILL_MCQ = 10
+const isTimed = (a) => (a?.mode ?? 'test') === 'test'
+
+// Prefer the questions seen least; break ties randomly. plan is a list of {key, count}.
+function draw(plan) {
   const seen = load(KEYS.seen, {})
   const ids = []
-  for (const sec of SECTIONS) {
+  for (const sec of plan) {
     const pool = shuffle(BANK.filter((q) => q.section === sec.key)).sort((a, b) => (seen[a.id] || 0) - (seen[b.id] || 0))
     ids.push(...pool.slice(0, sec.count).map((q) => q.id))
   }
@@ -183,8 +188,26 @@ function draw() {
   return ids
 }
 
-function startAttempt() {
-  state.attempt = { id: Date.now().toString(36), startedAt: Date.now(), questionIds: draw(), answers: {}, selfMarks: {} }
+// Questions whose most recent result, in any past attempt, was not full marks
+function missedIds() {
+  const latest = new Map()
+  for (const a of history()) {
+    for (const id of a.questionIds) {
+      const q = QUESTIONS.get(id)
+      if (q && !latest.has(id)) latest.set(id, pointsFor(a, q) < maxPoints(q))
+    }
+  }
+  const order = (id) => SECTIONS.findIndex((s) => s.key === QUESTIONS.get(id).section)
+  return [...latest].filter(([, missed]) => missed).map(([id]) => id).sort((a, b) => order(a) - order(b))
+}
+
+function startAttempt(mode = 'test', section = null) {
+  let ids
+  if (mode === 'drill') ids = draw([{ key: section, count: SECTION[section].kind === 'Multiple choice' ? DRILL_MCQ : 1 }])
+  else if (mode === 'missed') ids = missedIds().slice(0, 14)
+  else ids = draw(SECTIONS)
+  if (!ids.length) return
+  state.attempt = { id: Date.now().toString(36), mode, section, startedAt: Date.now(), questionIds: ids, answers: {}, selfMarks: {} }
   state.index = 0
   state.runs = {}
   state.view = 'test'
@@ -266,7 +289,7 @@ async function submit(auto = false) {
   const a = state.attempt
   if (!a || a.submittedAt || state.grading) return
   state.grading = true
-  a.submittedAt = Math.min(Date.now(), a.startedAt + DURATION_MS)
+  a.submittedAt = isTimed(a) ? Math.min(Date.now(), a.startedAt + DURATION_MS) : Date.now()
   a.autoSubmitted = auto
   save(KEYS.attempt, null)
   state.view = 'grading'
@@ -284,7 +307,7 @@ function remaining() {
   return state.attempt ? state.attempt.startedAt + DURATION_MS - Date.now() : DURATION_MS
 }
 setInterval(() => {
-  if (state.view !== 'test' || !state.attempt || state.attempt.submittedAt) return
+  if (state.view !== 'test' || !state.attempt || state.attempt.submittedAt || !isTimed(state.attempt)) return
   const left = remaining()
   const el = document.getElementById('timer')
   if (el) {
@@ -317,6 +340,7 @@ function render() {
 
 function renderStart() {
   const past = history()
+  const missed = missedIds()
   const bankCounts = Object.fromEntries(SECTIONS.map((s) => [s.key, BANK.filter((q) => q.section === s.key).length]))
   app.innerHTML = `
     <header class="topbar"><div class="brand">DS <span>Practice</span> <small>· Data Science Intern assessment</small></div><div class="spacer"></div>${themeButton()}</header>
@@ -337,21 +361,64 @@ function renderStart() {
         </ul>
         <div class="actions"><button class="btn btn-primary btn-lg" id="start">Start test</button></div>
       </section>
+      <section class="card">
+        <h2>Untimed practice</h2>
+        <p class="lede">Drill one section (${DRILL_MCQ} multiple choice questions, or one coding question), or retry every question you've missed before.</p>
+        <div class="actions">${SECTIONS.map((s) => `<button class="btn" data-drill="${s.key}">${esc(s.name)}</button>`).join('')}</div>
+        <div class="actions" style="margin-top:0.75rem"><button class="btn" id="missed"${missed.length ? '' : ' disabled'}>Retry missed questions (${missed.length})</button></div>
+      </section>
+      ${weakAreasHtml(past)}
       ${past.length ? `<section class="card"><h2>Past attempts</h2>
-        <table class="plain"><thead><tr><th>Date</th><th class="num">Score</th><th class="num">Time used</th><th></th></tr></thead>
+        <table class="plain"><thead><tr><th>Date</th><th>Type</th><th class="num">Score</th><th class="num">Time used</th><th></th></tr></thead>
         <tbody>${past.map((a) => {
           const t = totals(a)
           return `<tr class="clickable" data-attempt="${esc(a.id)}"><td>${new Date(a.startedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</td>
-            <td class="num">${fmtPoints(t.score)} / ${t.max}</td><td class="num">${clock(a.submittedAt - a.startedAt)}</td><td class="num"><button class="btn-link">Review</button></td></tr>`
+            <td>${esc(MODES[a.mode ?? 'test'])}${a.section ? `: ${esc(SECTION[a.section].name)}` : ''}</td><td class="num">${fmtPoints(t.score)} / ${t.max}</td><td class="num">${clock(a.submittedAt - a.startedAt)}</td><td class="num"><button class="btn-link">Review</button></td></tr>`
         }).join('')}</tbody></table></section>` : ''}
     </main>`
-  $('#start').addEventListener('click', startAttempt)
+  $('#start').addEventListener('click', () => startAttempt('test'))
+  app.querySelectorAll('[data-drill]').forEach((b) => b.addEventListener('click', () => startAttempt('drill', b.dataset.drill)))
+  $('#missed')?.addEventListener('click', () => startAttempt('missed'))
   app.querySelectorAll('[data-attempt]').forEach((row) => row.addEventListener('click', () => {
     state.attempt = past.find((a) => a.id === row.dataset.attempt)
     state.runs = {}
     state.view = 'results'
     render()
   }))
+}
+
+// Accuracy by section and by topic across every past attempt, weakest first
+function weakAreasHtml(past) {
+  if (!past.length) return ''
+  const sections = Object.fromEntries(SECTIONS.map((s) => [s.key, { score: 0, max: 0 }]))
+  const topics = new Map()
+  for (const a of past) {
+    for (const id of a.questionIds) {
+      const q = QUESTIONS.get(id)
+      if (!q) continue
+      const p = pointsFor(a, q)
+      sections[q.section].score += p
+      sections[q.section].max += maxPoints(q)
+      const t = topics.get(q.topic) ?? { section: q.section, score: 0, max: 0, seen: 0 }
+      t.score += p
+      t.max += maxPoints(q)
+      t.seen++
+      topics.set(q.topic, t)
+    }
+  }
+  const weak = [...topics].filter(([, t]) => t.score < t.max).sort((x, y) => x[1].score / x[1].max - y[1].score / y[1].max).slice(0, 6)
+  return `<section class="card"><h2>Weak areas</h2>
+    <p class="lede">From ${plural(past.length, 'past attempt')}. Your share of points by section, and the topics you've missed most.</p>
+    <table class="plain"><thead><tr><th>Section</th><th class="num">Points</th><th style="width:40%"></th><th></th></tr></thead><tbody>${SECTIONS.map((s) => {
+      const b = sections[s.key]
+      const pct = b.max ? Math.round((100 * b.score) / b.max) : null
+      return `<tr><td>${esc(s.name)}</td><td class="num">${pct === null ? 'not tried' : `${pct}%`}</td>
+        <td><div class="bar-track"><div class="bar-fill" style="width:${pct ?? 0}%"></div></div></td>
+        <td class="num"><button class="btn-link" data-drill="${s.key}">Drill</button></td></tr>`
+    }).join('')}</tbody></table>
+    ${weak.length ? `<h2 style="margin-top:1.4rem">Topics to work on</h2><table class="plain"><thead><tr><th>Topic</th><th>Section</th><th class="num">Points</th></tr></thead><tbody>${
+      weak.map(([topic, t]) => `<tr><td>${esc(topic)}</td><td>${esc(SECTION[t.section].name)}</td><td class="num">${fmtPoints(t.score)} / ${t.max}</td></tr>`).join('')}</tbody></table>` : ''}
+  </section>`
 }
 
 function renderGrading() {
@@ -489,7 +556,9 @@ function renderTest() {
       <div class="spacer"></div>
       ${reviewing
         ? `<span class="timer"><small>Score</small>${fmtPoints(t.score)} / ${t.max}</span>${themeButton()}<button class="btn" id="to-results">Back to results</button>`
-        : `<span class="timer${left < 5 * 60 * 1000 ? ' low' : ''}" id="timer"><small>Time left</small><span class="time">${clock(left)}</span></span>${themeButton()}
+        : `${isTimed(a)
+            ? `<span class="timer${left < 5 * 60 * 1000 ? ' low' : ''}" id="timer"><small>Time left</small><span class="time">${clock(left)}</span></span>`
+            : `<span class="timer"><small>Untimed</small>${esc(MODES[a.mode])}</span>`}${themeButton()}
            <button class="btn btn-primary" id="submit">Submit test</button>`}
     </header>
     <div class="shell">
@@ -505,6 +574,7 @@ function renderTest() {
         <footer class="bottombar">
           <button class="btn" id="prev"${state.index === 0 ? ' disabled' : ''}>← Previous</button>
           <span class="progress">${reviewing ? `Question ${state.index + 1} of ${a.questionIds.length}` : `${answered} of ${a.questionIds.length} answered`}</span>
+          ${reviewing ? '' : '<span class="keys-hint">Keys: 1 to 4 choose, Enter for next</span>'}
           <span class="spacer"></span>
           ${last
             ? reviewing ? '<button class="btn btn-primary" id="to-results-2">Back to results</button>' : '<button class="btn btn-primary" id="submit-2">Submit test</button>'
@@ -578,7 +648,7 @@ async function confirmSubmit() {
   const unanswered = a.questionIds.map((id, i) => [QUESTIONS.get(id), i + 1]).filter(([q]) => !isAnswered(q)).map(([, n]) => n)
   const ok = await ask({
     title: 'Submit your test?',
-    body: `<p>You have answered ${a.questionIds.length - unanswered.length} of ${a.questionIds.length} questions and have ${clock(remaining())} left.</p>
+    body: `<p>You have answered ${a.questionIds.length - unanswered.length} of ${a.questionIds.length} questions${isTimed(a) ? ` and have ${clock(remaining())} left` : ''}.</p>
       ${unanswered.length ? `<p>Unanswered: ${unanswered.join(', ')}.</p>` : ''}<p>You can't change answers after submitting.</p>`,
     confirm: 'Submit test',
     cancel: 'Keep working',
@@ -683,14 +753,15 @@ function renderResults() {
       <button class="btn" id="home">Home</button></header>
     <main class="page">
       <section class="card">
-        <h1>Results</h1>
+        <h1>Results${isTimed(a) ? '' : `: ${esc(MODES[a.mode])}${a.section ? `, ${esc(SECTION[a.section].name)}` : ''}`}</h1>
         <p class="lede">${a.autoSubmitted ? 'Time ran out, so the test was submitted automatically. ' : ''}${new Date(a.startedAt).toLocaleString([], { dateStyle: 'full', timeStyle: 'short' })}</p>
         <div class="score-row">
           <div><div class="stat-label">Score</div><div class="score-big">${fmtPoints(t.score)} <span style="font-size:1.2rem;color:var(--text-soft)">/ ${t.max}</span></div></div>
           <div><div class="stat-label">Percent</div><div class="stat-value">${Math.round((100 * t.score) / t.max)}%</div></div>
-          <div><div class="stat-label">Time used</div><div class="stat-value">${clock(used)} <span style="font-size:0.9rem;color:var(--text-soft)">of 75:00</span></div></div>
+          <div><div class="stat-label">Time used</div><div class="stat-value">${clock(used)}${isTimed(a) ? ' <span style="font-size:0.9rem;color:var(--text-soft)">of 75:00</span>' : ''}</div></div>
         </div>
-        <div class="actions"><button class="btn btn-primary" id="new">Start a new test</button><button class="btn" id="review">Review answers</button></div>
+        <div class="actions"><button class="btn btn-primary" id="new">Start a new test</button><button class="btn" id="review">Review answers</button>
+          ${a.mode === 'drill' ? `<button class="btn" id="again">Drill ${esc(SECTION[a.section].name)} again</button>` : ''}</div>
       </section>
       <section class="card">
         <h2>By section</h2>
@@ -714,7 +785,8 @@ function renderResults() {
       </section>
     </main>`
   $('#home').addEventListener('click', () => { state.view = 'start'; render() })
-  $('#new').addEventListener('click', startAttempt)
+  $('#new').addEventListener('click', () => startAttempt('test'))
+  $('#again')?.addEventListener('click', () => startAttempt('drill', a.section))
   $('#review').addEventListener('click', () => openReview(0))
   app.querySelectorAll('[data-review]').forEach((row) => row.addEventListener('click', () => openReview(+row.dataset.review)))
 }
@@ -734,6 +806,18 @@ document.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && isCode(q) && e.target.id !== 'code') {
     e.preventDefault()
     runCode(q)
+    return
+  }
+  // Plain-key shortcuts only when focus isn't in an editor or on a control that uses the key itself
+  if (state.view !== 'test' || e.ctrlKey || e.metaKey || e.altKey || e.target.closest?.('textarea, input:not([type="radio"]), select, button')) return
+  if (!isCode(q) && /^[1-4]$/.test(e.key) && +e.key <= q.options.length) {
+    e.preventDefault()
+    choose(q, +e.key - 1)
+    app.querySelectorAll('input[name="opt"]')[+e.key - 1].checked = true
+  } else if (e.key === 'Enter') {
+    e.preventDefault()
+    if (state.index < state.attempt.questionIds.length - 1) go(state.index + 1)
+    else confirmSubmit()
   }
 })
 
@@ -747,7 +831,7 @@ function boot() {
     state.index = 0
     state.view = 'test'
     warmUp()
-    if (remaining() <= 0) {
+    if (isTimed(saved) && remaining() <= 0) {
       submit(true)
       return
     }

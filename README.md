@@ -14,6 +14,9 @@ statistics, Python and applied math. It runs entirely in the browser.
   - SQL runs on [sql.js](https://github.com/sql-js/sql.js) (SQLite), with MySQL-style `YEAR()`, `MONTH()`, `DAY()`,
     `DATE_FORMAT()`, `DATEDIFF()` and `SUBSTRING_INDEX()` added.
   - Python runs on [Pyodide](https://pyodide.org) (real CPython 3.12) in a background worker.
+- Untimed practice: drill a single section, or retry every question you've missed before. The start page tracks
+  weak areas by section and topic across attempts.
+- Keyboard: 1 to 4 picks an option, Enter goes to the next question.
 - Results by section, then a review of every question: the correct answer, how to approach it, and why each wrong
   option is wrong. Coding questions show a reference solution and common mistakes, and you can mark yourself.
 

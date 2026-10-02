@@ -306,6 +306,16 @@ def main():
                 checked += 1
                 print(f"  {q['id']}: recomputed {target:.6g} -> option {q['answer'] + 1} ({q['options'][q['answer']]})")
     print(f"  {len(mcqs)} multiple choice questions, {checked} with numeric answers recomputed")
+    # The correct option shouldn't sit in the same position so often that guessing it pays off
+    for s in ("stats", "sqlbasic", "math"):
+        positions = [q["answer"] for q in by_section[s] if isinstance(q.get("answer"), int)]
+        if not positions:
+            continue
+        counts = [positions.count(i) for i in range(4)]
+        limit = math.ceil(len(positions) / 4) + 1
+        print(f"  {NAMES[s]}: correct answer positions A-D = {counts}")
+        if min(counts) == 0 or max(counts) > limit:
+            problem(NAMES[s], f"correct answers are unevenly spread across positions {counts} (each should be used, at most {limit})")
 
     print("\n" + "=" * 70)
     print("4. Section sizes")
