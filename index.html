@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DS Practice: Data Science Intern Assessment</title>
+  <meta name="description" content="Timed practice for a data science intern technical assessment: SQL, statistics, Python and applied math.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%226%22 fill=%22%231ba94c%22/%3E%3Ctext x=%2216%22 y=%2222%22 font-size=%2216%22 font-family=%22Arial%22 font-weight=%22700%22 fill=%22white%22 text-anchor=%22middle%22%3EDS%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Source+Code+Pro:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    // Apply the saved theme before anything draws, so dark mode doesn't flash white
+    try {
+      const saved = localStorage.getItem('dsp.theme')
+      const theme = saved ? JSON.parse(saved) : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+      document.documentElement.dataset.theme = theme
+    } catch (e) { document.documentElement.dataset.theme = 'light' }
+  </script>
+</head>
+<body>
+  <div id="app"></div>
+  <dialog id="dialog"></dialog>
+
+  <!-- SQLite compiled to WebAssembly, for running SQL answers in the page -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.12.0/sql-wasm.js"></script>
+
+  <!-- Question bank, one file per section -->
+  <script src="questions/sql_intermediate.js"></script>
+  <script src="questions/statistics.js"></script>
+  <script src="questions/sql_basic.js"></script>
+  <script src="questions/python.js"></script>
+  <script src="questions/applied_math.js"></script>
+
+  <script src="runner.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
