@@ -354,6 +354,115 @@ window.BANK = (window.BANK || []).concat(
       "Subtract from the total, and check which of the two counts the question actually wants."
     ],
     "check": { "compute": "factorial(5) - factorial(4)*2", "values": ["120", "96", "72", "48"] }
+  },
+  {
+    "id": "math-at-least-one-manager",
+    "section": "math",
+    "type": "mcq",
+    "topic": "Combinations: at least one",
+    "title": "A review panel with at least one manager",
+    "prompt": "A review panel of 3 is chosen from 5 analysts and 4 managers. How many panels include at least one manager?",
+    "options": ["84", "74", "112", "40"],
+    "answer": 1,
+    "explanations": [
+      "This is C(9, 3), every panel, including the 10 with no manager.",
+      "Correct. Total panels C(9, 3) = 84. Panels with no manager: C(5, 3) = 10. At least one manager: 84 − 10 = 74.",
+      "This picks one manager first (4 ways) and then any 2 of the other 8 (28 ways). Panels with two or three managers get counted more than once.",
+      "This counts panels with exactly one manager: 4 × C(5, 2) = 40. It misses the panels with two or three."
+    ],
+    "approach": [
+      "\"At least one\" counts are easiest as total minus none.",
+      "Total: C(9, 3). None: all three from the 5 analysts, C(5, 3).",
+      "Avoid \"pick one, then pick the rest\" for at-least-one problems: it double counts."
+    ],
+    "check": { "compute": "comb(9, 3) - comb(5, 3)", "values": ["84", "74", "112", "40"] }
+  },
+  {
+    "id": "math-expected-disputes",
+    "section": "math",
+    "type": "mcq",
+    "topic": "Expected value of a count",
+    "title": "Expected number of disputes",
+    "prompt": "Each of 200 card accounts files a dispute in a given month with probability 0.01, independently of the others. What is the expected number of disputes this month?",
+    "options": ["0.01", "0.2", "2", "20"],
+    "answer": 2,
+    "explanations": [
+      "This is the probability for a single account, not the expected count across all 200.",
+      "This misplaces the decimal: 200 × 0.01 is 2, not 0.2.",
+      "Correct. The count is binomial, and its expected value is n × p = 200 × 0.01 = 2.",
+      "This misplaces the decimal the other way: it uses p = 0.1."
+    ],
+    "approach": [
+      "Expected count = number of trials × probability per trial (n × p).",
+      "This works by linearity of expectation, even without knowing the full distribution.",
+      "With large n and small p, the count is close to Poisson with λ = n × p = 2."
+    ],
+    "check": { "compute": "200 * 0.01", "values": ["0.01", "0.2", "2", "20"] }
+  },
+  {
+    "id": "math-normal-symmetry",
+    "section": "math",
+    "type": "mcq",
+    "topic": "Normal distribution: symmetry",
+    "title": "Using symmetry around the mean",
+    "prompt": "Personal loan amounts are normally distributed with mean $20,000. The probability that a loan is above $26,000 is 0.10. What is the probability that a loan is between $14,000 and $26,000?",
+    "options": ["0.90", "0.80", "0.20", "0.40"],
+    "answer": 1,
+    "explanations": [
+      "This removes only the upper tail. By symmetry, the lower tail below $14,000 is also 0.10.",
+      "Correct. $14,000 and $26,000 are the same distance from the mean, so each tail beyond them is 0.10. The middle is 1 − 0.10 − 0.10 = 0.80.",
+      "This is the two tails together, the probability of being outside the interval.",
+      "This is the probability from the mean to one end only (0.5 − 0.1)."
+    ],
+    "approach": [
+      "Check whether the endpoints are symmetric around the mean: 20,000 ± 6,000.",
+      "A normal curve is symmetric, so equal-distance tails have equal probability.",
+      "Middle = 1 − both tails. Draw the curve and shade it if unsure."
+    ],
+    "check": { "compute": "1 - 2*0.10", "values": ["0.90", "0.80", "0.20", "0.40"] }
+  },
+  {
+    "id": "math-ordering-tellers",
+    "section": "math",
+    "type": "mcq",
+    "topic": "Analytical reasoning: ordering",
+    "title": "Who processed the second fewest",
+    "prompt": "Four tellers processed different numbers of transactions yesterday. Ana processed more than Bo. Cy processed fewer than Bo but more than Dee. Who processed the second fewest?",
+    "options": ["Ana", "Bo", "Cy", "Dee"],
+    "answer": 2,
+    "explanations": [
+      "Ana processed more than Bo, who processed more than Cy and Dee, so Ana has the most.",
+      "Bo is second most: only Ana is above him.",
+      "Correct. The order from most to fewest is Ana, Bo, Cy, Dee, so Cy is second fewest.",
+      "Dee processed fewer than Cy, so Dee has the fewest."
+    ],
+    "approach": [
+      "Turn each sentence into an inequality: Ana > Bo, Bo > Cy, Cy > Dee.",
+      "Chain them into one order: Ana > Bo > Cy > Dee.",
+      "Re-read what's asked (\"second fewest\") and count from the correct end."
+    ]
+  },
+  {
+    "id": "math-without-replacement",
+    "section": "math",
+    "type": "mcq",
+    "topic": "Probability without replacement",
+    "title": "Two files that both have errors",
+    "prompt": "A batch of 10 loan files contains 3 with errors. An auditor picks 2 files at random, without replacement. What is the probability that both have errors?",
+    "options": ["1/15", "9/100", "3/5", "2/9"],
+    "answer": 0,
+    "explanations": [
+      "Correct. P(first has an error) = 3/10. Given that, 2 of the remaining 9 have errors: 2/9. Multiply: 3/10 × 2/9 = 6/90 = 1/15. Or C(3, 2) / C(10, 2) = 3/45 = 1/15.",
+      "This is (3/10)², which assumes the first file goes back before the second pick (with replacement).",
+      "This adds 3/10 + 3/10. \"Both\" means multiply (with the right conditional probability), not add.",
+      "This is only the second step, P(second has an error | first had one). It leaves out the first draw."
+    ],
+    "approach": [
+      "Without replacement, the second probability depends on the first: update both the count and the total.",
+      "Multiply along the sequence: P(A) × P(B | A).",
+      "Check with combinations: favorable pairs / all pairs = C(3, 2) / C(10, 2)."
+    ],
+    "check": { "compute": "Fraction(3, 10) * Fraction(2, 9)", "values": ["1/15", "9/100", "3/5", "2/9"] }
   }
 ]
 );

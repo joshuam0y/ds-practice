@@ -358,6 +358,127 @@ window.BANK = (window.BANK || []).concat(
       "Pick n values with clean square roots (36, 49, 100) and check that you took the root."
     ],
     "check": { "compute": "60 / sqrt(36)", "values": ["10", "60/36", "60", "100"] }
+  },
+  {
+    "id": "stat-correlation-unit-free",
+    "section": "stats",
+    "type": "mcq",
+    "topic": "Covariance and correlation",
+    "title": "The measure without units",
+    "prompt": "An analyst wants to compare how strongly balance relates to tenure at two banks, one reporting in dollars and one in euros. Which measure has no units and always lies between −1 and 1?",
+    "options": ["Covariance", "Correlation", "Variance", "Standard deviation"],
+    "answer": 1,
+    "explanations": [
+      "Covariance carries the units of both variables (dollar-years here) and has no fixed range, so it can't be compared across currencies.",
+      "Correct. Correlation is covariance divided by both standard deviations, which cancels the units and bounds it between −1 and 1.",
+      "Variance measures the spread of one variable, in squared units, and is never negative.",
+      "Standard deviation measures the spread of one variable, in that variable's units."
+    ],
+    "approach": [
+      "Correlation r = Cov(X, Y) / (SD(X) × SD(Y)): unit-free, between −1 and 1.",
+      "Covariance has the right sign but its size depends on units, so it's hard to interpret alone.",
+      "Variance and SD describe a single variable, not a relationship."
+    ]
+  },
+  {
+    "id": "stat-lower-alpha-tradeoff",
+    "section": "stats",
+    "type": "mcq",
+    "topic": "Type I and Type II errors: the trade-off",
+    "title": "Making the fraud test stricter",
+    "prompt": "A fraud test uses H0: \"the transaction is legitimate.\" The bank lowers the significance level from 0.05 to 0.01 and changes nothing else. What is the likely effect?",
+    "options": [
+      "Fewer legitimate transactions flagged, but more fraud missed",
+      "Fewer legitimate transactions flagged and less fraud missed",
+      "More legitimate transactions flagged, but less fraud missed",
+      "Fewer legitimate transactions flagged, with no change in missed fraud"
+    ],
+    "answer": 0,
+    "explanations": [
+      "Correct. A smaller alpha makes rejecting H0 harder. False alarms (Type I) fall, but more real fraud fails to be flagged (Type II rises).",
+      "With the same data, you can't lower both error rates by changing alpha alone. That takes more data or a better model.",
+      "This is the effect of raising alpha, not lowering it.",
+      "Type I and Type II errors trade off: making rejection harder always increases misses, all else equal."
+    ],
+    "approach": [
+      "Lower alpha means a stricter bar for rejecting H0.",
+      "Stricter bar: fewer false positives (Type I) but more false negatives (Type II).",
+      "Translate back into the scenario's words: rejecting \"legitimate\" means flagging."
+    ]
+  },
+  {
+    "id": "stat-median-even-count",
+    "section": "stats",
+    "type": "mcq",
+    "topic": "Median with an even number of values",
+    "title": "Median of six loan amounts",
+    "prompt": "Six recent loans, in $ thousands, are 8, 3, 12, 5, 10 and 6. What is the median?",
+    "options": ["8.5", "7", "about 7.33", "6"],
+    "answer": 1,
+    "explanations": [
+      "This averages the two middle values of the unsorted list (12 and 5). Always sort first.",
+      "Correct. Sorted: 3, 5, 6, 8, 10, 12. With an even count, the median is the average of the two middle values: (6 + 8) / 2 = 7.",
+      "This is the mean, 44 / 6.",
+      "This takes only the lower of the two middle values instead of averaging them."
+    ],
+    "approach": [
+      "Sort the values first.",
+      "Odd count: the middle value. Even count: the average of the two middle values.",
+      "Compare with the mean to see which way the data lean."
+    ],
+    "check": { "compute": "(6 + 8) / 2", "values": ["8.5", "7", "44/6", "6"] }
+  },
+  {
+    "id": "stat-compare-boxplots",
+    "section": "stats",
+    "type": "mcq",
+    "topic": "Box plots: comparing groups",
+    "title": "Two branches' wait times",
+    "prompt": "Box plots of customer wait times at two branches show: Branch A has median 8 minutes and IQR 4 minutes. Branch B has median 8 minutes and IQR 12 minutes. Which statement is supported?",
+    "options": [
+      "Branch B has a longer average wait",
+      "Typical waits are similar, but Branch B's waits are much more variable",
+      "Branch A has more outliers",
+      "Branch B has a higher median wait"
+    ],
+    "answer": 1,
+    "explanations": [
+      "The medians are equal, and a box plot doesn't show the mean, so you can't say which average is longer.",
+      "Correct. Equal medians mean a similar typical wait, and B's IQR (the spread of the middle 50%) is three times A's.",
+      "Nothing given here describes outliers. You'd need to see points beyond the whiskers.",
+      "Both medians are 8 minutes."
+    ],
+    "approach": [
+      "Compare centers with medians and spreads with IQRs (or box widths).",
+      "Only claim what the five-number summary shows: no means and no outlier counts unless they're drawn.",
+      "Eliminate options that contradict the numbers given before weighing the rest."
+    ]
+  },
+  {
+    "id": "stat-clt-skewed",
+    "section": "stats",
+    "type": "mcq",
+    "topic": "Sampling distributions and the central limit theorem",
+    "title": "Averages of skewed transactions",
+    "prompt": "Individual card transaction amounts are strongly right-skewed. An analyst repeatedly takes random samples of 100 transactions and records each sample's mean. What shape will the distribution of these sample means have?",
+    "options": [
+      "Strongly right-skewed, like the individual transactions",
+      "Approximately normal",
+      "Uniform",
+      "Left-skewed, to balance out the original skew"
+    ],
+    "answer": 1,
+    "explanations": [
+      "Individual values keep their skew, but averages of many values don't. With n = 100 the skew largely washes out.",
+      "Correct. By the central limit theorem, means of large random samples are approximately normal whatever the original shape, centered at the population mean with spread σ/√n.",
+      "Nothing about averaging produces a uniform distribution.",
+      "Averaging doesn't flip skew; it reduces it."
+    ],
+    "approach": [
+      "Separate the distribution of individual values from the distribution of sample means.",
+      "CLT: for large n (a common rule of thumb is 30 or more), sample means are approximately normal.",
+      "The sample means center on the population mean, with standard error σ/√n."
+    ]
   }
 ]
 );
