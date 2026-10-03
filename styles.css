@@ -366,3 +366,8 @@ table.data.md td { white-space: normal; }
 .hint-box { border: 1px dashed var(--line); border-radius: 6px; padding: 0.6rem 0.9rem; margin: 0.4rem 0 1rem; }
 .hint-box p { margin: 0 0 0.5rem; }
 .hint-btn { padding-left: 0; color: var(--blue); }
+
+/* Paused screen */
+.paused { display: grid; place-items: center; min-height: calc(100vh - 64px); padding: 1.5rem; background: var(--bg); }
+.paused-card { max-width: 32rem; text-align: center; }
+.paused-card .actions { justify-content: center; }

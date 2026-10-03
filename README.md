@@ -20,7 +20,8 @@ statistics, Python and applied math. It runs entirely in the browser.
   Medium to match the real test's range.
 - Draws 14 questions per attempt (1 SQL query, 4 statistics, 3 SQL basics, 1 Python, 5 applied math), preferring
   questions you've seen least.
-- One 75 minute timer, free navigation, auto-submit at zero. Progress survives a refresh.
+- One 75 minute timer, free navigation, auto-submit at zero. Progress survives a refresh. A practice-only Pause
+  stops the timer and hides the questions until you resume (paused time is not counted).
 - **Run code** (or Ctrl/Cmd + Enter) on both coding questions:
   - SQL runs on [sql.js](https://github.com/sql-js/sql.js) (SQLite), with MySQL-style `YEAR()`, `MONTH()`, `DAY()`,
     `DATE_FORMAT()`, `DATEDIFF()` and `SUBSTRING_INDEX()` added.

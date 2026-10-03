@@ -324,7 +324,11 @@ async function submit(auto = false) {
   const a = state.attempt
   if (!a || a.submittedAt || state.grading) return
   state.grading = true
-  a.submittedAt = isTimed(a) ? Math.min(Date.now(), a.startedAt + DURATION_MS) : Date.now()
+  if (a.pausedAt) {
+    a.pausedTotal = (a.pausedTotal || 0) + (Date.now() - a.pausedAt)
+    delete a.pausedAt
+  }
+  a.submittedAt = isTimed(a) ? Math.min(Date.now(), a.startedAt + DURATION_MS + (a.pausedTotal || 0)) : Date.now()
   a.autoSubmitted = auto
   save(KEYS.attempt, null)
   state.view = 'grading'
@@ -338,11 +342,36 @@ async function submit(auto = false) {
 
 // ---------- Timer ----------
 
+// Paused time doesn't count: the clock is frozen at pausedAt, and earlier pauses add to pausedTotal
 function remaining() {
-  return state.attempt ? state.attempt.startedAt + DURATION_MS - Date.now() : DURATION_MS
+  const a = state.attempt
+  if (!a) return DURATION_MS
+  const now = a.pausedAt ?? Date.now()
+  return a.startedAt + DURATION_MS + (a.pausedTotal || 0) - now
+}
+const isPaused = () => Boolean(state.attempt?.pausedAt && !state.attempt.submittedAt)
+function timeUsed(a) {
+  const used = a.submittedAt - a.startedAt - (a.pausedTotal || 0)
+  return isTimed(a) ? Math.min(used, DURATION_MS) : used
+}
+
+function pause() {
+  const a = state.attempt
+  if (!a || a.submittedAt || a.pausedAt || !isTimed(a)) return
+  a.pausedAt = Date.now()
+  saveAttempt()
+  render()
+}
+function resume() {
+  const a = state.attempt
+  if (!a?.pausedAt) return
+  a.pausedTotal = (a.pausedTotal || 0) + (Date.now() - a.pausedAt)
+  delete a.pausedAt
+  saveAttempt()
+  render()
 }
 setInterval(() => {
-  if (state.view !== 'test' || !state.attempt || state.attempt.submittedAt || !isTimed(state.attempt)) return
+  if (state.view !== 'test' || !state.attempt || state.attempt.submittedAt || !isTimed(state.attempt) || isPaused()) return
   const left = remaining()
   const el = document.getElementById('timer')
   if (el) {
@@ -414,7 +443,7 @@ function renderStart() {
         <tbody>${past.map((a) => {
           const t = totals(a)
           return `<tr class="clickable" data-attempt="${esc(a.id)}"><td>${new Date(a.startedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</td>
-            <td>${esc(MODES[a.mode ?? 'test'])}${a.section ? `: ${esc(SECTION[a.section].name)}` : ''}</td><td class="num">${fmtPoints(t.score)} / ${t.max}</td><td class="num">${clock(a.submittedAt - a.startedAt)}</td><td class="num"><button class="btn-link">Review</button></td></tr>`
+            <td>${esc(MODES[a.mode ?? 'test'])}${a.section ? `: ${esc(SECTION[a.section].name)}` : ''}</td><td class="num">${fmtPoints(t.score)} / ${t.max}</td><td class="num">${clock(timeUsed(a))}</td><td class="num"><button class="btn-link">Review</button></td></tr>`
         }).join('')}</tbody></table></section>` : ''}
     </main>`
   $('#start').addEventListener('click', () => startAttempt('test'))
@@ -724,9 +753,27 @@ function outputHtml(q) {
     ${r.stdout ? `<h4>What you printed</h4><pre class="stdout">${esc(r.stdout)}</pre>` : ''}`
 }
 
+function renderPaused() {
+  const a = state.attempt
+  const answered = a.questionIds.filter((id) => isAnswered(QUESTIONS.get(id))).length
+  app.innerHTML = `
+    <header class="hr-top"><span class="pill">Paused · ${hrClock(remaining())} left</span><span class="spacer"></span>${themeButton()}</header>
+    <div class="paused">
+      <div class="card paused-card">
+        <h1>Test paused</h1>
+        <p class="lede">The timer is stopped at <strong>${hrClock(remaining())}</strong> left, and the questions are hidden until you resume.
+          You have answered ${answered} of ${a.questionIds.length}. The real HackerRank test can't be paused, so use this sparingly.</p>
+        <div class="actions"><button class="btn btn-primary btn-lg" id="resume">Resume test</button></div>
+      </div>
+    </div>`
+  $('#resume').addEventListener('click', resume)
+  $('#resume').focus()
+}
+
 function renderTest() {
   const reviewing = state.view === 'review'
   const a = state.attempt
+  if (!reviewing && isPaused()) return renderPaused()
   const q = current()
   const last = state.index === a.questionIds.length - 1
   const t = reviewing ? totals(a) : null
@@ -745,7 +792,8 @@ function renderTest() {
       ${themeButton()}
       ${reviewing
         ? '<button class="btn" id="to-results">Back to results</button>'
-        : `<button class="btn btn-quiet" id="submit">Submit test</button>
+        : `${isTimed(a) ? '<button class="btn btn-quiet" id="pause" title="Practice only: the real test cannot be paused">❚❚ Pause</button>' : ''}
+           <button class="btn btn-quiet" id="submit">Submit test</button>
            <button class="btn btn-proceed" id="proceed">${last ? 'Save &amp; Finish' : 'Save &amp; Proceed'}</button>`}
     </header>
     <div class="hr-shell${isCode(q) ? ' is-code' : ''}">
@@ -764,6 +812,7 @@ function renderTest() {
   $('#next')?.addEventListener('click', () => go(state.index + 1))
   $('#proceed')?.addEventListener('click', () => (last ? confirmSubmit() : go(state.index + 1)))
   $('#submit')?.addEventListener('click', confirmSubmit)
+  $('#pause')?.addEventListener('click', pause)
   for (const id of ['#to-results', '#to-results-2']) $(id)?.addEventListener('click', () => { state.view = 'results'; render() })
   $('#hint')?.addEventListener('click', () => {
     a.hints = a.hints || {}
@@ -961,7 +1010,7 @@ function resultPill(q) {
 function renderResults() {
   const a = state.attempt
   const t = totals(a)
-  const used = a.submittedAt - a.startedAt
+  const used = timeUsed(a)
   app.innerHTML = `
     <header class="topbar"><div class="brand">DS <span>Practice</span></div><div class="spacer"></div>${themeButton()}
       <button class="btn" id="home">Home</button></header>
@@ -1015,7 +1064,7 @@ function openReview(i) {
 // ---------- Global keys ----------
 
 document.addEventListener('keydown', (e) => {
-  if ((state.view !== 'test' && state.view !== 'review') || dialog.open) return
+  if ((state.view !== 'test' && state.view !== 'review') || dialog.open || isPaused()) return
   const q = current()
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && isCode(q) && e.target.id !== 'code') {
     e.preventDefault()
