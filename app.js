@@ -267,7 +267,17 @@ function draw(plan) {
     for (const item of shuffle(picked)) {
       seen[item.key] = (seen[item.key] || 0) + 1
       if (!item.template) {
-        ids.push(item.key)
+        const q = QUESTIONS.get(item.key)
+        if (q.type !== 'mcq' && q.type !== 'multi') {
+          ids.push(item.key)
+          continue
+        }
+        // Written multiple choice: a copy with the options in a fresh order for this attempt, so answer
+        // positions can't be memorized (the attempt keeps its own copy, so reviewing it later still matches)
+        const copy = shuffledCopy(q)
+        extra[copy.id] = copy
+        QUESTIONS.set(copy.id, copy)
+        ids.push(copy.id)
         continue
       }
       // Retry a few times so one drill doesn't show the same generated numbers twice
@@ -284,17 +294,30 @@ function draw(plan) {
   return { ids, extra }
 }
 
+function shuffledCopy(q) {
+  const order = shuffle(q.options.map((_, i) => i))
+  const copy = { ...q, id: `${q.id}~${Math.floor(Math.random() * 1e9).toString(36)}`, baseId: q.id,
+    options: order.map((i) => q.options[i]), explanations: order.map((i) => q.explanations[i]) }
+  if (q.type === 'multi') copy.answers = q.answers.map((a) => order.indexOf(a)).sort((x, y) => x - y)
+  else copy.answer = order.indexOf(q.answer)
+  delete copy.check
+  return copy
+}
+
 // Questions whose most recent result, in any past attempt, was not full marks
 function missedIds() {
+  // Keyed by the original question, so a question seen in several attempts (each with its own shuffled copy)
+  // counts once, by its most recent result
   const latest = new Map()
   for (const a of history()) {
     for (const id of a.questionIds) {
       const q = QUESTIONS.get(id)
-      if (q && !latest.has(id)) latest.set(id, pointsFor(a, q) < maxPoints(q))
+      const base = q?.baseId || id
+      if (q && !latest.has(base)) latest.set(base, { id, missed: pointsFor(a, q) < maxPoints(q) })
     }
   }
   const order = (id) => SECTIONS.findIndex((s) => s.key === QUESTIONS.get(id).section)
-  return [...latest].filter(([, missed]) => missed).map(([id]) => id).sort((a, b) => order(a) - order(b))
+  return [...latest.values()].filter((x) => x.missed).map((x) => x.id).sort((a, b) => order(a) - order(b))
 }
 
 // mode: test (full assessment), skill (timed one-subject test), drill (one section), topic (one topic), missed
@@ -311,8 +334,20 @@ function startAttempt(mode = 'test', section = null, topic = null, difficulty = 
     drawn = draw(SKILL[section].plan.map((x) => ({ ...x, difficulty, fill: true })))
     durationMs = SKILL[section].minutes * 60 * 1000
   } else if (mode === 'missed') {
-    const ids = missedIds().slice(0, 14)
-    drawn = { ids, extra: Object.fromEntries(ids.filter((id) => QUESTIONS.get(id)?.generated).map((id) => [id, QUESTIONS.get(id)])) }
+    const extra = {}
+    // Retry with a fresh option order; generated questions come back exactly as they were
+    const ids = missedIds().slice(0, 14).map((id) => {
+      const q = QUESTIONS.get(id)
+      if (q.baseId && QUESTIONS.has(q.baseId)) {
+        const copy = shuffledCopy(QUESTIONS.get(q.baseId))
+        QUESTIONS.set(copy.id, copy)
+        extra[copy.id] = copy
+        return copy.id
+      }
+      if (q.generated) extra[id] = q
+      return id
+    })
+    drawn = { ids, extra }
   } else drawn = draw(TEST_SECTIONS)
   if (!drawn.ids.length) return
   state.attempt = { id: Date.now().toString(36), mode, section, topic, difficulty, durationMs, startedAt: Date.now(), questionIds: drawn.ids, extra: drawn.extra, answers: {}, selfMarks: {} }
@@ -602,7 +637,7 @@ function renderStart() {
       ${body}
     </main>
     <footer class="site-foot">
-      <div class="foot-made">Made by <strong>Joshua Moy</strong> · <a href="https://github.com/joshuam0y" target="_blank" rel="noopener">GitHub</a></div>
+      <div class="foot-made">Made by <strong>Joshua Moy</strong> · <a href="https://www.linkedin.com/in/joshuam0y" target="_blank" rel="noopener">LinkedIn</a> · <a href="https://github.com/joshuam0y" target="_blank" rel="noopener">GitHub</a></div>
       <p class="foot-bio">Joshua is a data science student at Northeastern University who builds data tools: practice sites like this one, hourly data pipelines, sports models that grade their own picks in public, and interactive maps and dashboards. He built this site to prepare for data science, analyst and engineering interviews.</p>
       <p class="foot-note">Practice questions are original, written to match the topics these assessments cover. For practice only.</p>
     </footer>`
