@@ -260,10 +260,13 @@ function draw(plan) {
       const have = new Set(pool.map((x) => x.key))
       pool = [...pool, ...shuffle([...bankFor(true).map((q) => ({ key: q.id })), ...tplFor(true).map((t) => ({ key: `tpl:${t.key}`, template: t }))]).filter((x) => !have.has(x.key))]
     }
-    const picked = shuffle(pool).sort((a, b) => (seen[a.key] || 0) - (seen[b.key] || 0)).slice(0, sec.count)
-    // A topic with generators never runs out: keep building fresh questions until the drill is full
+    // A generator makes a new question (new numbers) every time, so it counts as "seen" a third as much as a
+    // written question: once the written ones are used, practice leans on fresh generated versions
+    const seenScore = (x) => (seen[x.key] || 0) / (x.template ? 3 : 1)
+    const picked = shuffle(pool).sort((a, b) => seenScore(a) - seenScore(b)).slice(0, sec.count)
+    // With generators a drill never runs out: keep building fresh questions until it's full
     const gens = pool.filter((x) => x.template)
-    for (let k = 0; sec.topic && picked.length < sec.count && gens.length; k++) picked.push(gens[k % gens.length])
+    for (let k = 0; picked.length < sec.count && gens.length; k++) picked.push(gens[k % gens.length])
     for (const item of shuffle(picked)) {
       seen[item.key] = (seen[item.key] || 0) + 1
       if (!item.template) {
