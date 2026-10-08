@@ -371,3 +371,5 @@ table.data.md td { white-space: normal; }
 .paused { display: grid; place-items: center; min-height: calc(100vh - 64px); padding: 1.5rem; background: var(--bg); }
 .paused-card { max-width: 32rem; text-align: center; }
 .paused-card .actions { justify-content: center; }
+
+.topic-pick { min-width: 18rem; max-width: 100%; padding: 0.5rem 0.6rem; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); color: inherit; font: inherit; }

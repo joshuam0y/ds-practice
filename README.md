@@ -7,6 +7,18 @@ statistics, Python and applied math. It runs entirely in the browser.
 
 ## What it does
 
+- **Full assessment:** the 14-question, 75-minute simulation of the real HackerRank screen.
+- **Skill tests:** timed tests on one subject, like HackerRank's skill tests: SQL (2 queries + 6 multiple choice, 45 min),
+  Python (45 min), Statistics and Applied Math (10 questions, 25 min), Problem Solving (2 coding, 45 min), pandas
+  (2 coding, 30 min) and Machine Learning (10 questions, 20 min).
+- **Practice by topic:** pick one topic (window functions, Poisson, decorators, ...) for an untimed drill with hints.
+  Topics with generators never run out.
+- **Extra sections beyond the assessment**, at LeetCode/NeetCode difficulty: Python Problem Solving (the core NeetCode
+  patterns: hashing, two pointers, sliding window, stack, binary search, intervals, Kadane), pandas (real pandas in the
+  browser through Pyodide: filtering, groupby, merge, pivot tables, duplicates, ranking, missing values) and Machine
+  Learning concepts (overfitting, cross-validation, leakage, scaling, precision/recall, ROC AUC, scikit-learn workflow).
+  These are an extension of HackerRank, LeetCode and NeetCode practice, not a replacement.
+
 - **Unlimited questions in every section:** besides the written bank, 52 generators build a fresh question every time.
   - `generators.js`: 22 single-answer and 4 multi-select templates for statistics, applied math and SQL basics.
     `tools/check_generators.mjs` builds 10,400 and re-derives every answer independently (brute force where possible).
@@ -25,7 +37,7 @@ statistics, Python and applied math. It runs entirely in the browser.
 - **Run code** (or Ctrl/Cmd + Enter) on both coding questions:
   - SQL runs on [sql.js](https://github.com/sql-js/sql.js) (SQLite), with MySQL-style `YEAR()`, `MONTH()`, `DAY()`,
     `DATE_FORMAT()`, `DATEDIFF()` and `SUBSTRING_INDEX()` added.
-  - Python runs on [Pyodide](https://pyodide.org) (real CPython 3.12) in a background worker. Some questions use
+  - Python runs on [Pyodide](https://pyodide.org) (real CPython 3.12) in a background worker; questions that list `packages` (pandas) load them on first use. Some questions use
     HackerRank's own format: a stub that reads stdin under `if __name__ == '__main__':`, graded on printed output
     (or the `OUTPUT_PATH` file) line by line.
 - The test screen follows HackerRank's layout: timer pill, Save & Proceed, numbered sidebar by section, bookmarks,
@@ -62,3 +74,7 @@ python3 verify.py
 It runs every SQL reference solution in sqlite3 and prints the output, runs every Python reference solution and
 starter stub against the sample tests, recomputes numeric multiple choice answers, and checks structure and section
 sizes. Run it after any change to `questions/`.
+
+## Checking the bank
+
+`python3 verify.py` checks everything. The pandas questions need pandas installed locally (`pip install pandas`); without it they're skipped with a note.

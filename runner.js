@@ -351,10 +351,14 @@ const Runner = (() => {
     const ready = loadPyodide().then((py) => { postMessage({ type: 'ready' }); return py })
       .catch((e) => { postMessage({ type: 'failed', error: String(e) }); throw e })
     let harnessLoaded = false
+    const loadedPackages = new Set()
     onmessage = async (event) => {
-      const { id, harness, code, tests } = event.data
+      const { id, harness, code, tests, packages } = event.data
       try {
         const py = await ready
+        // pandas, numpy and friends download once, the first time a question needs them
+        const missing = (packages || []).filter((p) => !loadedPackages.has(p))
+        if (missing.length) { await py.loadPackage(missing); missing.forEach((p) => loadedPackages.add(p)) }
         if (!harnessLoaded) { py.runPython(harness); harnessLoaded = true }
         const runTests = py.globals.get('run_tests')
         const out = runTests(code, JSON.stringify(tests))
@@ -403,15 +407,16 @@ const Runner = (() => {
     await workerReady
     const id = nextId++
     return new Promise((resolve, reject) => {
+      const limit = question.packages?.length ? Math.max(PY_TIME_LIMIT_MS, 90000) : PY_TIME_LIMIT_MS
       const timer = setTimeout(() => {
         // A loop that never ends: stop this worker and start a fresh one for next time
         pending.delete(id)
         worker.terminate()
         worker = null
-        reject(new Error(`Your code ran for more than ${PY_TIME_LIMIT_MS / 1000} seconds and was stopped. Look for a loop that never ends.`))
-      }, PY_TIME_LIMIT_MS)
+        reject(new Error(`Your code ran for more than ${limit / 1000} seconds and was stopped. Look for a loop that never ends.`))
+      }, limit)
       pending.set(id, { resolve, reject, timer })
-      worker.postMessage({ id, harness: PY_HARNESS, code, tests: question.tests })
+      worker.postMessage({ id, harness: PY_HARNESS, code, tests: question.tests, packages: question.packages || [] })
     })
   }
 

@@ -1212,6 +1212,440 @@ window.BANK = (window.BANK || []).concat(
       "Breaking the dining tie by first appearance (NSF) instead of alphabetically (FRAUD).",
       "Forgetting COALESCE on the code: grocery's only decline has no code and must count as UNKNOWN."
     ]
+  },
+  {
+    "id": "sqli-top-three-amounts",
+    "section": "sqlint",
+    "type": "sql",
+    "difficulty": "Medium",
+    "topic": "Window functions: DENSE_RANK top N per group",
+    "title": "Top three deposit amounts in each branch",
+    "prompt": [
+      "Each branch wants to see its biggest depositors: every deposit whose amount is among the **three highest distinct amounts** in that branch. If two deposits share an amount, both appear, and they count as one of the three amounts.",
+      "",
+      "Branches with no deposits don't appear.",
+      "",
+      "**Output columns:** `branch_name`, `customer_name`, `amount`",
+      "",
+      "**Sort by:** `branch_name` ascending, then `amount` descending, then `customer_name` ascending."
+    ],
+    "tables": [
+      {
+        "name": "branches",
+        "columns": [
+          [
+            "branch_id",
+            "INTEGER"
+          ],
+          [
+            "branch_name",
+            "TEXT"
+          ]
+        ],
+        "rows": [
+          [
+            1,
+            "Back Bay"
+          ],
+          [
+            2,
+            "Cambridge"
+          ],
+          [
+            3,
+            "Providence"
+          ]
+        ]
+      },
+      {
+        "name": "deposits",
+        "columns": [
+          [
+            "deposit_id",
+            "INTEGER"
+          ],
+          [
+            "branch_id",
+            "INTEGER"
+          ],
+          [
+            "customer_name",
+            "TEXT"
+          ],
+          [
+            "amount",
+            "REAL"
+          ]
+        ],
+        "rows": [
+          [
+            1,
+            1,
+            "Ava",
+            900
+          ],
+          [
+            2,
+            1,
+            "Ben",
+            900
+          ],
+          [
+            3,
+            1,
+            "Cy",
+            700
+          ],
+          [
+            4,
+            1,
+            "Dee",
+            650
+          ],
+          [
+            5,
+            1,
+            "Eli",
+            400
+          ],
+          [
+            6,
+            2,
+            "Fay",
+            500
+          ],
+          [
+            7,
+            2,
+            "Gus",
+            300
+          ]
+        ]
+      }
+    ],
+    "solution": [
+      "WITH ranked AS (",
+      "    SELECT branch_id, customer_name, amount,",
+      "           DENSE_RANK() OVER (PARTITION BY branch_id ORDER BY amount DESC) AS rnk",
+      "    FROM deposits",
+      ")",
+      "SELECT b.branch_name, r.customer_name, r.amount",
+      "FROM ranked r",
+      "JOIN branches b ON b.branch_id = r.branch_id",
+      "WHERE r.rnk <= 3",
+      "ORDER BY b.branch_name, r.amount DESC, r.customer_name;"
+    ],
+    "starter": [
+      "/*",
+      "Enter your query below.",
+      "Please append a semicolon \";\" at the end of the query",
+      "*/",
+      ""
+    ],
+    "approach": [
+      "\"Top N distinct values per group, keep ties\" is DENSE_RANK: tied amounts share a rank and the next amount gets the next number.",
+      "Rank in a CTE, then keep rnk <= 3 in the outer query (window functions can't go in WHERE).",
+      "A branch with fewer than three amounts just returns what it has."
+    ],
+    "walkthrough": [
+      "`DENSE_RANK() OVER (PARTITION BY branch_id ORDER BY amount DESC)`: Back Bay's 900, 900, 700, 650, 400 get 1, 1, 2, 3, 4.",
+      "`WHERE r.rnk <= 3`: keeps Ava, Ben, Cy and Dee (four rows, three distinct amounts); Eli's 400 is rank 4.",
+      "Cambridge has only two amounts, so both stay. Providence has none, so the inner JOIN leaves it out.",
+      "`ORDER BY b.branch_name, r.amount DESC, r.customer_name`: the exact order asked for."
+    ],
+    "mistakes": [
+      "RANK instead of DENSE_RANK: 900, 900, 700, 650 get 1, 1, 3, 4, so Dee's 650 is wrongly dropped.",
+      "ROW_NUMBER: keeps only one of the two 900 deposits.",
+      "ORDER BY amount DESC LIMIT 3: works for the whole table, not per branch.",
+      "Putting the rank condition in the same SELECT's WHERE."
+    ]
+  },
+  {
+    "id": "sqli-login-streaks",
+    "section": "sqlint",
+    "type": "sql",
+    "difficulty": "Medium",
+    "topic": "Window functions: LAG with dates",
+    "title": "Customers who logged in three days in a row",
+    "prompt": [
+      "Find every customer who logged in to online banking on **at least three consecutive calendar days** at some point. A customer can log in several times on one day; that still counts as one day.",
+      "",
+      "**Output columns:** `customer_id`",
+      "",
+      "**Sort by:** `customer_id` ascending."
+    ],
+    "tables": [
+      {
+        "name": "logins",
+        "columns": [
+          [
+            "login_id",
+            "INTEGER"
+          ],
+          [
+            "customer_id",
+            "INTEGER"
+          ],
+          [
+            "login_date",
+            "TEXT"
+          ]
+        ],
+        "rows": [
+          [
+            1,
+            1,
+            "2025-03-01"
+          ],
+          [
+            2,
+            1,
+            "2025-03-02"
+          ],
+          [
+            3,
+            1,
+            "2025-03-02"
+          ],
+          [
+            4,
+            1,
+            "2025-03-03"
+          ],
+          [
+            5,
+            2,
+            "2025-03-01"
+          ],
+          [
+            6,
+            2,
+            "2025-03-02"
+          ],
+          [
+            7,
+            2,
+            "2025-03-04"
+          ],
+          [
+            8,
+            2,
+            "2025-03-05"
+          ],
+          [
+            9,
+            3,
+            "2025-03-10"
+          ],
+          [
+            10,
+            3,
+            "2025-03-11"
+          ],
+          [
+            11,
+            3,
+            "2025-03-12"
+          ],
+          [
+            12,
+            3,
+            "2025-03-13"
+          ],
+          [
+            13,
+            4,
+            "2025-03-31"
+          ],
+          [
+            14,
+            4,
+            "2025-04-01"
+          ],
+          [
+            15,
+            4,
+            "2025-04-02"
+          ],
+          [
+            16,
+            5,
+            "2025-03-05"
+          ]
+        ]
+      }
+    ],
+    "solution": [
+      "WITH days AS (",
+      "    SELECT DISTINCT customer_id, login_date",
+      "    FROM logins",
+      "),",
+      "lagged AS (",
+      "    SELECT customer_id, login_date,",
+      "           LAG(login_date, 2) OVER (PARTITION BY customer_id ORDER BY login_date) AS two_back",
+      "    FROM days",
+      ")",
+      "SELECT DISTINCT customer_id",
+      "FROM lagged",
+      "WHERE DATEDIFF(login_date, two_back) = 2",
+      "ORDER BY customer_id;"
+    ],
+    "starter": [
+      "/*",
+      "Enter your query below.",
+      "Please append a semicolon \";\" at the end of the query",
+      "*/",
+      ""
+    ],
+    "approach": [
+      "Remove same-day repeats first (SELECT DISTINCT customer_id, login_date), or two logins on one day look like two days.",
+      "LAG(login_date, 2) is the login day two rows earlier. If that day is exactly 2 days before this one, the three days in between are consecutive.",
+      "DISTINCT in the final SELECT, because a customer with a 4-day streak matches twice."
+    ],
+    "walkthrough": [
+      "`days`: customer 1 becomes 03-01, 03-02, 03-03 (the duplicate 03-02 is gone).",
+      "`LAG(login_date, 2) OVER (PARTITION BY customer_id ORDER BY login_date)`: for 03-03 it's 03-01.",
+      "`DATEDIFF(login_date, two_back) = 2`: 03-03 minus 03-01 is 2 days, so customer 1 qualifies. Customer 4's 04-02 minus 03-31 is also 2, across the month boundary.",
+      "Customer 2 has a gap (03-02 to 03-04), and customer 5 has one day, so neither appears.",
+      "`SELECT DISTINCT customer_id ... ORDER BY customer_id`: customer 3's 4-day streak matches twice but appears once."
+    ],
+    "mistakes": [
+      "Skipping the DISTINCT on days: customer 1's two 03-02 logins make LAG look at the wrong row.",
+      "Comparing day numbers (DAY(login_date)) instead of whole dates, which breaks across months.",
+      "Using LAG(login_date) once, which only checks two days in a row.",
+      "Forgetting DISTINCT in the final SELECT, so customer 3 appears twice."
+    ]
+  },
+  {
+    "id": "sqli-verification-rate",
+    "section": "sqlint",
+    "type": "sql",
+    "difficulty": "Medium",
+    "topic": "LEFT JOIN with AVG(CASE) rates",
+    "title": "One-time passcode verification rate",
+    "prompt": [
+      "When a customer signs in on a new device, the bank texts a one-time passcode. Each request in `otp_requests` ends as `'verified'` or `'expired'`.",
+      "",
+      "For **every** customer, report their verification rate: verified requests divided by all their requests, rounded to 2 decimal places. A customer with no requests has a rate of 0.",
+      "",
+      "**Output columns:** `customer_id`, `verification_rate`",
+      "",
+      "**Sort by:** `customer_id` ascending."
+    ],
+    "tables": [
+      {
+        "name": "customers",
+        "columns": [
+          [
+            "customer_id",
+            "INTEGER"
+          ],
+          [
+            "name",
+            "TEXT"
+          ]
+        ],
+        "rows": [
+          [
+            1,
+            "Ava"
+          ],
+          [
+            2,
+            "Ben"
+          ],
+          [
+            3,
+            "Cy"
+          ],
+          [
+            4,
+            "Dee"
+          ]
+        ]
+      },
+      {
+        "name": "otp_requests",
+        "columns": [
+          [
+            "request_id",
+            "INTEGER"
+          ],
+          [
+            "customer_id",
+            "INTEGER"
+          ],
+          [
+            "result",
+            "TEXT"
+          ]
+        ],
+        "rows": [
+          [
+            1,
+            1,
+            "verified"
+          ],
+          [
+            2,
+            1,
+            "verified"
+          ],
+          [
+            3,
+            1,
+            "expired"
+          ],
+          [
+            4,
+            2,
+            "expired"
+          ],
+          [
+            5,
+            2,
+            "expired"
+          ],
+          [
+            6,
+            3,
+            "verified"
+          ]
+        ]
+      }
+    ],
+    "solution": [
+      "SELECT c.customer_id,",
+      "       ROUND(COALESCE(AVG(CASE WHEN o.result = 'verified' THEN 1.0 ELSE 0 END), 0), 2) AS verification_rate",
+      "FROM customers c",
+      "LEFT JOIN otp_requests o ON o.customer_id = c.customer_id",
+      "GROUP BY c.customer_id",
+      "ORDER BY c.customer_id;"
+    ],
+    "starter": [
+      "/*",
+      "Enter your query below.",
+      "Please append a semicolon \";\" at the end of the query",
+      "*/",
+      ""
+    ],
+    "approach": [
+      "\"For every customer\" means start from customers and LEFT JOIN the requests.",
+      "AVG(CASE WHEN ... THEN 1.0 ELSE 0 END) is the share of rows that match: a rate in one expression.",
+      "Use 1.0 (not 1) so the average isn't integer math, and COALESCE for safety."
+    ],
+    "walkthrough": [
+      "`LEFT JOIN otp_requests o ON o.customer_id = c.customer_id`: Dee has no requests, so she gets one row of NULLs.",
+      "`CASE WHEN o.result = 'verified' THEN 1.0 ELSE 0 END`: 1 for verified, 0 for expired, and 0 for Dee's NULL row.",
+      "`AVG(...)`: Ava (1 + 1 + 0) / 3 = 0.67, Ben 0, Cy 1, Dee 0.",
+      "`ROUND(..., 2)` and `ORDER BY c.customer_id`: two decimals, in id order."
+    ],
+    "mistakes": [
+      "An inner JOIN, which drops Dee.",
+      "SUM(verified) / COUNT(*) with whole numbers: integer division turns 2 / 3 into 0.",
+      "COUNT(*) as the denominator after the LEFT JOIN with a THEN 1 ELSE NULL CASE: Dee's NULL row changes the math.",
+      "Forgetting to round to 2 decimals."
+    ]
   }
 ]
 );

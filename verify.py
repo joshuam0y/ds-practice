@@ -28,15 +28,19 @@ from fractions import Fraction
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-FILES = ["sql_intermediate", "statistics", "sql_basic", "python", "applied_math"]
-PER_TEST = {"sqlint": 1, "stats": 4, "sqlbasic": 3, "python": 1, "math": 5}
-TARGET = {"sqlint": 8, "stats": 20, "sqlbasic": 15, "python": 8, "math": 25}
-NAMES = {"sqlint": "SQL (Intermediate)", "stats": "Statistics", "sqlbasic": "SQL (Basic)", "python": "Python (Basic)", "math": "Applied Math"}
-TYPE_FOR = {"sqlint": {"sql"}, "python": {"python"}, "stats": {"mcq", "multi"}, "sqlbasic": {"mcq", "multi"}, "math": {"mcq", "multi"}}
+FILES = ["sql_intermediate", "statistics", "sql_basic", "python", "applied_math", "python_problems", "pandas", "machine_learning"]
+# Extra practice sections (not in the full test) need enough for one skill test: 2 coding or 10 multiple choice
+PER_TEST = {"sqlint": 1, "stats": 4, "sqlbasic": 3, "python": 1, "math": 5, "algo": 2, "pandas": 2, "ml": 10}
+TARGET = {"sqlint": 8, "stats": 20, "sqlbasic": 15, "python": 8, "math": 25, "algo": 12, "pandas": 8, "ml": 15}
+NAMES = {"sqlint": "SQL (Intermediate)", "stats": "Statistics", "sqlbasic": "SQL (Basic)", "python": "Python (Basic)", "math": "Applied Math",
+         "algo": "Python (Problem Solving)", "pandas": "pandas", "ml": "Machine Learning"}
+TYPE_FOR = {"sqlint": {"sql"}, "python": {"python"}, "stats": {"mcq", "multi"}, "sqlbasic": {"mcq", "multi"}, "math": {"mcq", "multi"},
+            "algo": {"python"}, "pandas": {"python"}, "ml": {"mcq", "multi"}}
 PREFIX = "window.BANK = (window.BANK || []).concat("
 BAD_DASHES = {"\u2014": "em dash", "\u2013": "en dash"}
 
 problems = []
+SKIPPED = []   # questions that need a package (like pandas) that isn't installed here
 
 
 def problem(where, message):
@@ -418,6 +422,14 @@ def check_generated_code(node, run_tests, per_template=60):
         print(f"  {key:<28} {n} generated, reference solution checked against independent expected output")
 
 
+def _importable(module):
+    try:
+        __import__(module)
+        return True
+    except ImportError:
+        return False
+
+
 def main():
     bank = load_bank()
     check_structure(bank)
@@ -434,8 +446,12 @@ def main():
     print("2. Python coding questions: reference solution and starter stub")
     print("=" * 70)
     run_tests = load_harness()
-    for q in by_section["python"]:
+    for q in by_section["python"] + by_section["algo"] + by_section["pandas"]:
         if q.get("tests") and q.get("solution"):
+            if q.get("packages") and not all(_importable(m) for m in q["packages"]):
+                SKIPPED.append(q["id"])
+                print(f"\n[Python] {q['id']}: SKIPPED, needs {' and '.join(q['packages'])} (pip install {' '.join(q['packages'])})")
+                continue
             check_python(q, run_tests)
 
     print("\n" + "=" * 70)
@@ -458,7 +474,7 @@ def main():
                 print(f"  {q['id']}: recomputed {target:.6g} -> option {q['answer'] + 1} ({q['options'][q['answer']]})")
     print(f"  {len(mcqs)} multiple choice questions, {checked} with numeric answers recomputed")
     # The correct option shouldn't sit in the same position so often that guessing it pays off
-    for s in ("stats", "sqlbasic", "math"):
+    for s in ("stats", "sqlbasic", "math", "ml"):
         positions = [q["answer"] for q in by_section[s] if isinstance(q.get("answer"), int)]
         if not positions:
             continue
@@ -503,7 +519,10 @@ def main():
         for p in problems:
             print(f"  - {p}")
         sys.exit(1)
-    print("ALL CHECKS PASSED")
+    if SKIPPED:
+        print(f"ALL CHECKS PASSED, except {len(SKIPPED)} question(s) skipped because pandas isn't installed here: pip install pandas")
+    else:
+        print("ALL CHECKS PASSED")
 
 
 if __name__ == "__main__":
