@@ -600,7 +600,12 @@ function renderStart() {
     <main class="page">
       <nav class="home-tabs" role="tablist" aria-label="Home">${HOME_TABS.map(([k, label]) => `<button role="tab" class="home-tab${tab === k ? ' on' : ''}" aria-selected="${tab === k}" data-home-tab="${k}">${label}${k === 'progress' && past.length ? ` <span class="badge">${past.length}</span>` : ''}</button>`).join('')}</nav>
       ${body}
-    </main>`
+    </main>
+    <footer class="site-foot">
+      <div class="foot-made">Made by <strong>Joshua Moy</strong> · <a href="https://github.com/joshuam0y" target="_blank" rel="noopener">GitHub</a></div>
+      <p class="foot-bio">Joshua is a data science student at Northeastern University who builds data tools: practice sites like this one, hourly data pipelines, sports models that grade their own picks in public, and interactive maps and dashboards. He built this site to prepare for data science, analyst and engineering interviews.</p>
+      <p class="foot-note">Practice questions are original, written to match the topics these assessments cover. For practice only.</p>
+    </footer>`
   app.querySelectorAll('[data-home-tab]').forEach((b) => b.addEventListener('click', () => { save(KEYS.homeTab, b.dataset.homeTab); renderStart() }))
   app.querySelectorAll('[data-subject]').forEach((b) => b.addEventListener('click', () => {
     save(KEYS.subject, b.dataset.subject)

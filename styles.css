@@ -419,3 +419,10 @@ table.data.md td { white-space: normal; }
   .subject-name { font-size: 0.95rem; }
   .mode-row { grid-template-columns: 1fr; }
 }
+
+/* ---------- Home footer */
+.site-foot { max-width: 920px; margin: 0.5rem auto 2.5rem; padding: 1.25rem 1.5rem 0; border-top: 1px solid var(--line); color: var(--text-soft); font-size: 0.88rem; text-align: center; }
+.foot-made { color: var(--text); font-size: 0.95rem; margin-bottom: 0.4rem; }
+.foot-made strong { color: var(--heading); }
+.foot-bio { margin: 0 auto 0.5rem; max-width: 640px; line-height: 1.55; }
+.foot-note { margin: 0; font-size: 0.8rem; }
