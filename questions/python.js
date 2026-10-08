@@ -2210,6 +2210,254 @@ window.BANK = (window.BANK || []).concat(
       "Normalizing for the key but returning the original spelling, so the output says 'Food' or ' Fun'.",
       "Rounding each amount instead of the total, so 0.1 + 0.2 still shows 0.30000000000000004."
     ]
+  },
+  {
+    "id": "py-preset-arguments",
+    "section": "python",
+    "type": "python",
+    "difficulty": "Medium",
+    "topic": "Functions as values: *args, **kwargs and closures",
+    "title": "Preset arguments for a fee calculator",
+    "prompt": [
+      "Implement `preset(func, *args, **kwargs)`. It returns a new function that, when called with more arguments, calls `func` with the preset arguments first and the new ones after.",
+      "",
+      "- Positional arguments: the preset ones come first, then the new ones.",
+      "- Keyword arguments: both sets are used. If the same keyword appears in both, the new call's value wins.",
+      "- Each call is independent: calling the returned function does not add anything to the preset arguments.",
+      "- It must also work on a function that `preset` already returned.",
+      "",
+      "`total_fee` is given in the editor for testing:",
+      "",
+      "```",
+      "def total_fee(*amounts, rate=0.01, minimum=0):",
+      "    return max(round(sum(amounts) * rate, 2), minimum)",
+      "",
+      "add_100 = preset(total_fee, 100)",
+      "print(add_100(200))               # total_fee(100, 200) -> 3.0",
+      "high = preset(total_fee, rate=0.02)",
+      "print(high(500, rate=0.05))       # rate 0.05 wins -> 25.0",
+      "```"
+    ],
+    "starter": [
+      "def total_fee(*amounts, rate=0.01, minimum=0):",
+      "    return max(round(sum(amounts) * rate, 2), minimum)",
+      "",
+      "",
+      "def preset(func, *args, **kwargs):",
+      "    # Write your code here",
+      "    pass",
+      ""
+    ],
+    "solution": [
+      "def total_fee(*amounts, rate=0.01, minimum=0):",
+      "    return max(round(sum(amounts) * rate, 2), minimum)",
+      "",
+      "",
+      "def preset(func, *args, **kwargs):",
+      "    def wrapper(*more_args, **more_kwargs):",
+      "        merged = {**kwargs, **more_kwargs}   # new keywords override the preset ones",
+      "        return func(*args, *more_args, **merged)",
+      "    return wrapper",
+      ""
+    ],
+    "tests": [
+      {
+        "name": "Preset positional arguments come first",
+        "setup": "",
+        "expr": "preset(total_fee, 100, 200)(300)",
+        "expect": "6.0"
+      },
+      {
+        "name": "Preset keyword argument is used",
+        "setup": "",
+        "expr": "preset(total_fee, rate=0.02)(500)",
+        "expect": "10.0"
+      },
+      {
+        "name": "A new keyword value overrides the preset one",
+        "setup": "",
+        "expr": "preset(total_fee, rate=0.02)(500, rate=0.05)",
+        "expect": "25.0"
+      },
+      {
+        "name": "Works on a function preset already returned",
+        "setup": "f = preset(total_fee, minimum=5)\ng = preset(f, 100)",
+        "expr": "g(50)",
+        "expect": "5"
+      },
+      {
+        "name": "Calls don't accumulate arguments",
+        "setup": "g = preset(total_fee, 100)",
+        "expr": "(g(100), g(100))",
+        "expect": "(2.0, 2.0)"
+      },
+      {
+        "name": "No new arguments at all",
+        "setup": "",
+        "expr": "preset(total_fee, 1000)()",
+        "expect": "10.0"
+      }
+    ],
+    "approach": [
+      "A function that returns a function: define an inner function inside preset and return it (without calling it).",
+      "The inner function remembers func, args and kwargs from the outer call. That's a closure.",
+      "Collect the new arguments with *more_args and **more_kwargs, then call func(*args, *more_args, **{**kwargs, **more_kwargs}).",
+      "Build a new merged dict on every call instead of changing kwargs, so calls stay independent."
+    ],
+    "walkthrough": [
+      "`def preset(func, *args, **kwargs):`: *args packs the preset positional values into a tuple, **kwargs packs the keywords into a dict.",
+      "`def wrapper(*more_args, **more_kwargs):`: the function we hand back. It accepts any number of new arguments.",
+      "`merged = {**kwargs, **more_kwargs}`: a fresh dict each call; keys from more_kwargs come last, so they win.",
+      "`return func(*args, *more_args, **merged)`: the * and ** unpack the tuples and dict back into a normal call.",
+      "`return wrapper`: return the function itself, not wrapper(), so the caller can call it later."
+    ],
+    "mistakes": [
+      "Returning wrapper() instead of wrapper, which calls func right away with only the preset arguments.",
+      "kwargs.update(more_kwargs) inside wrapper: the preset dict changes, so the second call remembers the first call's keywords.",
+      "Putting the new positional arguments before the preset ones.",
+      "Writing {**more_kwargs, **kwargs}, which lets the preset values win.",
+      "Passing args instead of *args, which sends one tuple instead of separate values."
+    ]
+  },
+  {
+    "id": "py-retry-decorator",
+    "section": "python",
+    "type": "python",
+    "difficulty": "Medium",
+    "topic": "Decorators: functions that wrap functions",
+    "title": "Retry a flaky bank API call",
+    "prompt": [
+      "Calls to a payments API sometimes fail with a temporary error. Write a decorator factory `retry(times, exceptions=(Exception,))`.",
+      "",
+      "- `retry(3)` returns a decorator. A function decorated with it is tried up to `times` attempts in total.",
+      "- The first attempt that succeeds returns its result right away.",
+      "- Only errors listed in `exceptions` are retried. Any other error is raised immediately.",
+      "- If every attempt fails, raise the error from the last attempt.",
+      "- The wrapped function keeps its name (`__name__`) and passes any positional and keyword arguments through.",
+      "",
+      "`Flaky` is given in the editor for testing: it fails its first `fail_times` calls, then returns `x * 2`.",
+      "",
+      "```",
+      "@retry(3)",
+      "def ping():",
+      "    return 'ok'",
+      "",
+      "f = Flaky(2)",
+      "print(retry(3)(f)(5), f.calls)    # fails twice, then 10 on the 3rd call -> 10 3",
+      "```"
+    ],
+    "starter": [
+      "import functools",
+      "",
+      "",
+      "class Flaky:",
+      "    def __init__(self, fail_times, error=ConnectionError):",
+      "        self.fail_times = fail_times",
+      "        self.error = error",
+      "        self.calls = 0",
+      "",
+      "    def __call__(self, x):",
+      "        self.calls += 1",
+      "        if self.calls <= self.fail_times:",
+      "            raise self.error('try again')",
+      "        return x * 2",
+      "",
+      "",
+      "def retry(times, exceptions=(Exception,)):",
+      "    # Write your code here",
+      "    pass",
+      ""
+    ],
+    "solution": [
+      "import functools",
+      "",
+      "",
+      "class Flaky:",
+      "    def __init__(self, fail_times, error=ConnectionError):",
+      "        self.fail_times = fail_times",
+      "        self.error = error",
+      "        self.calls = 0",
+      "",
+      "    def __call__(self, x):",
+      "        self.calls += 1",
+      "        if self.calls <= self.fail_times:",
+      "            raise self.error('try again')",
+      "        return x * 2",
+      "",
+      "",
+      "def retry(times, exceptions=(Exception,)):",
+      "    def decorator(func):",
+      "        @functools.wraps(func)",
+      "        def wrapper(*args, **kwargs):",
+      "            last_error = None",
+      "            for _ in range(times):",
+      "                try:",
+      "                    return func(*args, **kwargs)",
+      "                except exceptions as e:",
+      "                    last_error = e",
+      "            raise last_error",
+      "        return wrapper",
+      "    return decorator",
+      ""
+    ],
+    "tests": [
+      {
+        "name": "Succeeds on the third try",
+        "setup": "f = Flaky(2)\ng = retry(3)(f)",
+        "expr": "(g(5), f.calls)",
+        "expect": "(10, 3)"
+      },
+      {
+        "name": "Gives up after all attempts and re-raises",
+        "setup": "f = Flaky(5)\ng = retry(3)(f)",
+        "expr": "g(1)",
+        "raises": "ConnectionError"
+      },
+      {
+        "name": "Stops after exactly 3 attempts",
+        "setup": "f = Flaky(5)\ng = retry(3)(f)\ntry:\n    g(1)\nexcept ConnectionError:\n    pass",
+        "expr": "f.calls",
+        "expect": "3"
+      },
+      {
+        "name": "Errors not listed are raised right away",
+        "setup": "f = Flaky(1, ValueError)\ng = retry(3, exceptions=(ConnectionError,))(f)\ntry:\n    g(1)\n    raised = None\nexcept ValueError:\n    raised = 'ValueError'",
+        "expr": "(raised, f.calls)",
+        "expect": "('ValueError', 1)"
+      },
+      {
+        "name": "Works with @ and keeps the name",
+        "setup": "@retry(2)\ndef ping():\n    return 'ok'",
+        "expr": "(ping(), ping.__name__)",
+        "expect": "('ok', 'ping')"
+      },
+      {
+        "name": "Passes keyword arguments through",
+        "setup": "@retry(2)\ndef add(a, b=0):\n    return a + b",
+        "expr": "add(1, b=2)",
+        "expect": "3"
+      }
+    ],
+    "approach": [
+      "A decorator factory is three layers: retry(times) returns decorator(func), which returns wrapper(*args, **kwargs).",
+      "wrapper loops up to times attempts. A return inside the try exits as soon as one attempt works.",
+      "Catch only the listed exceptions (except exceptions as e). Anything else isn't caught, so it's raised immediately.",
+      "Save the error each time, and after the loop raise the last one. Use functools.wraps(func) to keep the name."
+    ],
+    "walkthrough": [
+      "`def retry(times, exceptions=(Exception,)):`: the outer layer only stores the settings.",
+      "`def decorator(func):` and `@functools.wraps(func)`: the middle layer receives the function and copies its __name__ onto the wrapper.",
+      "`for _ in range(times): try: return func(*args, **kwargs)`: each attempt passes the arguments straight through; success returns immediately.",
+      "`except exceptions as e: last_error = e`: a tuple of exception classes works directly in except.",
+      "`raise last_error` after the loop: every attempt failed, so re-raise the final error. `return wrapper` and `return decorator` hand the layers back."
+    ],
+    "mistakes": [
+      "Only two layers (def retry(func)), which can't take the times argument: @retry(3) then calls retry with 3 as the function.",
+      "except Exception: always, which also retries errors that should be raised right away.",
+      "Retrying times + 1 attempts (a first call plus times retries) when the prompt says times attempts in total.",
+      "Swallowing the error and returning None when every attempt fails.",
+      "Forgetting functools.wraps, so ping.__name__ becomes 'wrapper'."
+    ]
   }
 ]
 );

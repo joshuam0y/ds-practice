@@ -543,6 +543,129 @@ window.BANK = (window.BANK || []).concat(
       "Check the sort direction: \"largest first\" needs DESC.",
       "Know which shortcuts MySQL allows (aliases in HAVING) and which are errors everywhere (aggregates in WHERE)."
     ]
+  },
+  {
+    "id": "sqlb-ddl-drop-column",
+    "section": "sqlbasic",
+    "type": "mcq",
+    "topic": "Table structure: ALTER TABLE",
+    "title": "Removing a column",
+    "prompt": "The `transfers` table has a `memo` column nobody uses. Which MySQL statement removes the column itself (not just its values)?",
+    "options": [
+      "UPDATE transfers SET memo = NULL;",
+      "DELETE memo FROM transfers;",
+      "ALTER TABLE transfers DROP COLUMN memo;",
+      "DROP COLUMN memo FROM transfers;"
+    ],
+    "answer": 2,
+    "explanations": [
+      "This empties the values but the column is still there. UPDATE changes data, not the table's structure.",
+      "DELETE removes rows, never columns, and this isn't valid syntax.",
+      "Correct. Changing a table's structure (adding, removing or renaming a column) is always ALTER TABLE: ALTER TABLE transfers DROP COLUMN memo.",
+      "There is no standalone DROP COLUMN statement; DROP COLUMN only works inside ALTER TABLE."
+    ],
+    "approach": [
+      "Data or structure? Changing rows uses INSERT, UPDATE, DELETE. Changing columns uses ALTER TABLE.",
+      "ALTER TABLE t ADD COLUMN c type; ALTER TABLE t DROP COLUMN c; ALTER TABLE t RENAME COLUMN a TO b."
+    ]
+  },
+  {
+    "id": "sqlb-truncate-vs-drop",
+    "section": "sqlbasic",
+    "type": "mcq",
+    "topic": "Table structure: DROP, TRUNCATE, DELETE",
+    "title": "Empty a table but keep it",
+    "prompt": "Every night the `staging_txns` table is loaded fresh. You need to remove all of today's rows but keep the table and its columns for tomorrow's load. Which statement does that?",
+    "options": [
+      "DROP TABLE staging_txns;",
+      "TRUNCATE TABLE staging_txns;",
+      "ALTER TABLE staging_txns DROP ROWS;",
+      "DELETE TABLE staging_txns;"
+    ],
+    "answer": 1,
+    "explanations": [
+      "DROP TABLE deletes the whole table, columns included. Tomorrow's load would fail because the table no longer exists.",
+      "Correct. TRUNCATE removes every row and keeps the table structure. DELETE FROM staging_txns; would also work (row by row, and it can take a WHERE).",
+      "ALTER TABLE changes structure; there is no DROP ROWS.",
+      "Not valid syntax. The DELETE statement is DELETE FROM table_name."
+    ],
+    "approach": [
+      "DROP = the table is gone. TRUNCATE = all rows gone, table kept. DELETE FROM ... WHERE = some or all rows gone, table kept."
+    ]
+  },
+  {
+    "id": "sqlb-join-statement-false",
+    "section": "sqlbasic",
+    "type": "mcq",
+    "topic": "Joins: what each join returns",
+    "title": "Which statement about joins is false",
+    "prompt": "Which of these statements about joins is **not** correct?",
+    "options": [
+      "An INNER JOIN returns only the rows that have a match in both tables.",
+      "A LEFT JOIN keeps every row from the left table, with NULLs where the right table has no match.",
+      "A self join joins a table to itself, using two different aliases.",
+      "A RIGHT JOIN returns only the rows from the right table that have a match in the left table."
+    ],
+    "answer": 3,
+    "explanations": [
+      "This is true: rows without a match on either side are dropped.",
+      "This is true: that's what makes a LEFT JOIN different from an INNER JOIN.",
+      "This is true: for example, employees e JOIN employees m ON e.manager_id = m.emp_id.",
+      "Correct (this is the false one). A RIGHT JOIN keeps every row from the right table, matched or not; it's a LEFT JOIN with the tables swapped. Only matching rows describes an INNER JOIN."
+    ],
+    "approach": [
+      "Read \"not correct\" twice: you're looking for the one false statement.",
+      "LEFT keeps all of the left table, RIGHT keeps all of the right table, INNER keeps only matches."
+    ]
+  },
+  {
+    "id": "sqlb-self-join-manager",
+    "section": "sqlbasic",
+    "type": "mcq",
+    "topic": "Joins: self join",
+    "title": "Each employee's manager",
+    "prompt": "`employees(emp_id, name, manager_id)` stores each employee's manager as another row in the same table. The CEO's `manager_id` is NULL. Which query lists every employee with their manager's name, including the CEO?",
+    "options": [
+      "SELECT e.name, m.name AS manager FROM employees e LEFT JOIN employees m ON e.manager_id = m.emp_id;",
+      "SELECT e.name, m.name AS manager FROM employees e JOIN employees m ON e.manager_id = m.emp_id;",
+      "SELECT e.name, m.name AS manager FROM employees e LEFT JOIN employees m ON e.emp_id = m.manager_id;",
+      "SELECT e.name, m.name AS manager FROM employees e CROSS JOIN employees m;"
+    ],
+    "answer": 0,
+    "explanations": [
+      "Correct. A self join with two aliases: e is the employee, m is the manager row whose emp_id equals e.manager_id. LEFT JOIN keeps the CEO, with a NULL manager.",
+      "An inner join drops the CEO, whose NULL manager_id matches nothing.",
+      "The condition is reversed: this pairs each employee with the people who report to them.",
+      "A cross join pairs every employee with every employee, with no relationship at all."
+    ],
+    "approach": [
+      "Give the two copies of the table clear roles (e = employee, m = manager) and write the ON condition in words first: the manager's id equals my manager_id.",
+      "\"Including\" rows that may not match means LEFT JOIN."
+    ]
+  },
+  {
+    "id": "sqlb-ddl-add-column",
+    "section": "sqlbasic",
+    "type": "mcq",
+    "topic": "Table structure: ALTER TABLE",
+    "title": "Adding a column",
+    "prompt": "Which statement adds a new `risk_score` integer column to the existing `loans` table?",
+    "options": [
+      "ALTER TABLE loans ADD COLUMN risk_score INT;",
+      "INSERT INTO loans (risk_score) VALUES (NULL);",
+      "UPDATE loans ADD risk_score INT;",
+      "CREATE COLUMN risk_score INT ON loans;"
+    ],
+    "answer": 0,
+    "explanations": [
+      "Correct. New columns are added with ALTER TABLE ... ADD COLUMN. Existing rows get NULL (or the DEFAULT, if one is given).",
+      "INSERT adds a new row, and only works for columns that already exist.",
+      "UPDATE changes values in existing columns; it can't add one.",
+      "There is no CREATE COLUMN statement."
+    ],
+    "approach": [
+      "Structure changes are ALTER TABLE: ADD COLUMN, DROP COLUMN, RENAME COLUMN, MODIFY (MySQL)."
+    ]
   }
 ]
 );

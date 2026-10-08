@@ -705,6 +705,79 @@ window.BANK = (window.BANK || []).concat(
       "One tail is half of what's outside the interval.",
       "Symmetry gives mean = median and P(X > mean) = 0.5."
     ]
+  },
+  {
+    "id": "math-poisson-read-pmf",
+    "section": "math",
+    "type": "mcq",
+    "topic": "Poisson distribution: reading the mean",
+    "title": "Which Poisson has the largest rate",
+    "prompt": "Three Poisson distributions X, Y and Z describe fraud alerts per day. X has its highest probabilities at k = 0 and k = 1 (about 0.37 each). Y peaks at k = 3 and 4 (about 0.20 each). Z peaks at k = 9 and 10 (about 0.13 each). How do their rates λ compare?",
+    "options": [
+      "λX < λY < λZ",
+      "λZ < λY < λX",
+      "All three have the same λ",
+      "You can't tell without the full tables"
+    ],
+    "answer": 0,
+    "explanations": [
+      "Correct. A Poisson peaks near its mean λ (at λ − 1 and λ when λ is a whole number), so X has λ = 1, Y has λ = 4 and Z has λ = 10.",
+      "This reads the height of the peak as the rate. A larger λ spreads the probability over more values, so its peak is lower, not higher.",
+      "The peaks are at different k, so the means differ.",
+      "The location of the peak is enough: the mean of a Poisson sits at its peak."
+    ],
+    "approach": [
+      "The peak (mode) of a Poisson is at about λ. A bigger λ moves the peak right and makes it lower and wider."
+    ]
+  },
+  {
+    "id": "math-poisson-at-least-k",
+    "section": "math",
+    "type": "mcq",
+    "topic": "Poisson distribution: at least k",
+    "title": "At least 8 alerts in an hour",
+    "prompt": "Alerts arrive at an average of 6 per hour, following a Poisson distribution. Which expression gives the probability of **at least 8** alerts in an hour?",
+    "options": [
+      "1 − e^−6 · 6^8 / 8!",
+      "Σ (k = 0 to 8) e^−6 · 6^k / k!",
+      "1 − Σ (k = 0 to 7) e^−6 · 6^k / k!",
+      "1 − Σ (k = 0 to 8) e^−6 · 6^k / k!"
+    ],
+    "answer": 2,
+    "explanations": [
+      "This subtracts only P(X = 8). \"At least 8\" means 8, 9, 10, ... and its complement is all of 0 through 7.",
+      "This is P(X ≤ 8), at most 8.",
+      "Correct. P(X ≥ 8) = 1 − P(X ≤ 7) = 1 − Σ from k = 0 to 7. Σ from k = 8 to infinity would be the same value.",
+      "This is 1 − P(X ≤ 8) = P(X ≥ 9), which leaves out exactly 8."
+    ],
+    "approach": [
+      "\"At least k\" = 1 − P(X ≤ k − 1). Watch the off-by-one: the sum stops at k − 1.",
+      "A single term like e^−λ λ^k / k! is only P(X = k)."
+    ]
+  },
+  {
+    "id": "math-inclusion-exclusion-reverse",
+    "section": "math",
+    "type": "mcq",
+    "topic": "Independence and the addition rule",
+    "title": "Working backwards from P(A or B)",
+    "prompt": "35% of customers have a credit card or a car loan (or both). 25% have a credit card, and 10% have both. What percent have a car loan?",
+    "options": [
+      "10%",
+      "20%",
+      "25%",
+      "45%"
+    ],
+    "answer": 1,
+    "explanations": [
+      "35% − 25% forgets to add back the 10% who have both.",
+      "Correct. P(card or loan) = P(card) + P(loan) − P(both), so 35% = 25% + P(loan) − 10%, which gives P(loan) = 20%.",
+      "This assumes the two groups are the same size.",
+      "35% + 10% double counts. Use the addition rule and solve for the missing term."
+    ],
+    "approach": [
+      "Write P(A or B) = P(A) + P(B) − P(A and B), fill in the three numbers you know, and solve for the fourth."
+    ]
   }
 ]
 );

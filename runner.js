@@ -219,6 +219,52 @@ const Runner = (() => {
     })
   }
 
+  // MySQL's GROUP_CONCAT(expr ORDER BY ... SEPARATOR 's') -> SQLite's group_concat(expr, 's' ORDER BY ...),
+  // so MySQL habits work here. Default separator is ',' as in MySQL. Already-SQLite calls are left alone.
+  function topLevel(body, word) {
+    let depth = 0, quote = null
+    const low = body.toLowerCase()
+    for (let n = 0; n < body.length; n++) {
+      const ch = body[n]
+      if (quote) { if (ch === quote) quote = null; continue }
+      if (ch === "'" || ch === '"') quote = ch
+      else if (ch === '(') depth++
+      else if (ch === ')') depth--
+      else if (depth === 0 && low.startsWith(word, n) && (!/[a-z0-9_]/.test(word[0]) || n === 0 || !/[a-z0-9_]/.test(low[n - 1]))) return n
+    }
+    return -1
+  }
+  function rewriteGcBody(body) {
+    const sepAt = topLevel(body, 'separator')
+    let sep = "','"
+    if (sepAt >= 0) { sep = body.slice(sepAt + 'separator'.length).trim(); body = body.slice(0, sepAt) }
+    const orderAt = topLevel(body, 'order by')
+    const expr = orderAt >= 0 ? body.slice(0, orderAt) : body
+    const order = orderAt >= 0 ? body.slice(orderAt) : ''
+    if (sepAt < 0 && (!order || topLevel(expr, ',') >= 0)) return body
+    return `${expr.trim()}, ${sep}` + (order ? ` ${order.trim()}` : '')
+  }
+  function mysqlGroupConcat(sql) {
+    const out = []
+    const low = sql.toLowerCase()
+    let i = 0
+    for (;;) {
+      const j = low.indexOf('group_concat(', i)
+      if (j < 0) { out.push(sql.slice(i)); return out.join('') }
+      let k = j + 'group_concat('.length, depth = 1, quote = null
+      while (k < sql.length && depth) {
+        const ch = sql[k]
+        if (quote) { if (ch === quote) quote = null }
+        else if (ch === "'" || ch === '"') quote = ch
+        else if (ch === '(') depth++
+        else if (ch === ')') depth--
+        k++
+      }
+      out.push(sql.slice(i, j) + 'group_concat(' + rewriteGcBody(sql.slice(j + 'group_concat('.length, k - 1)) + ')')
+      i = k
+    }
+  }
+
   function buildDb(SQL, question) {
     const db = new SQL.Database()
     addMysqlFunctions(db)
@@ -235,7 +281,7 @@ const Runner = (() => {
   function runOn(SQL, question, sql) {
     const db = buildDb(SQL, question)
     try {
-      const results = db.exec(sql)
+      const results = db.exec(mysqlGroupConcat(sql))
       const last = results[results.length - 1]
       return last ? { columns: last.columns, rows: last.values } : { columns: [], rows: [] }
     } finally {

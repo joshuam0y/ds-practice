@@ -861,6 +861,357 @@ window.BANK = (window.BANK || []).concat(
       "Ordering by txn_id alone, which picks Ben's txn 13 instead of his earliest transaction, 16.",
       "A LEFT JOIN from customers, which adds Dev with NULLs."
     ]
+  },
+  {
+    "id": "sqli-loan-outcome-report",
+    "section": "sqlint",
+    "type": "sql",
+    "difficulty": "Medium",
+    "topic": "GROUP BY with GROUP_CONCAT, CASE and NULL defaults",
+    "title": "Loan application outcome report",
+    "prompt": [
+      "The lending team wants a one-page summary of loan applications by outcome.",
+      "",
+      "For each `status` in `loan_applications`, report how many applications there were, their total amount, and the rejection reasons.",
+      "",
+      "- `total_applications`: the number of applications with that status.",
+      "- `total_amount`: the sum of `amount` for that status, rounded to 2 decimal places.",
+      "- `rejection_reasons`: for `'approved'` rows, always the text `N/A` (even if a reason was filled in by mistake). For `'rejected'` rows, every distinct reason in one string, separated by a comma and a space (`, `), ordered by how many applications had that reason (most first), then alphabetically. A rejected application with a NULL `reject_reason` counts as the reason `Unknown`.",
+      "",
+      "**Output columns:** `status`, `total_applications`, `total_amount`, `rejection_reasons`",
+      "",
+      "**Sort by:** `status` ascending."
+    ],
+    "tables": [
+      {
+        "name": "loan_applications",
+        "columns": [
+          [
+            "app_id",
+            "INTEGER"
+          ],
+          [
+            "status",
+            "TEXT"
+          ],
+          [
+            "amount",
+            "REAL"
+          ],
+          [
+            "reject_reason",
+            "TEXT"
+          ]
+        ],
+        "rows": [
+          [
+            1,
+            "approved",
+            5000.0,
+            null
+          ],
+          [
+            2,
+            "rejected",
+            2000.0,
+            "low score"
+          ],
+          [
+            3,
+            "rejected",
+            1500.0,
+            "high debt"
+          ],
+          [
+            4,
+            "approved",
+            12000.5,
+            null
+          ],
+          [
+            5,
+            "rejected",
+            800.0,
+            "low score"
+          ],
+          [
+            6,
+            "rejected",
+            3000.0,
+            null
+          ],
+          [
+            7,
+            "rejected",
+            2500.0,
+            "high debt"
+          ],
+          [
+            8,
+            "approved",
+            750.25,
+            null
+          ],
+          [
+            9,
+            "approved",
+            1000.0,
+            "manual review"
+          ]
+        ]
+      }
+    ],
+    "solution": [
+      "WITH reason_counts AS (",
+      "    SELECT COALESCE(reject_reason, 'Unknown') AS reason, COUNT(*) AS n",
+      "    FROM loan_applications",
+      "    WHERE status = 'rejected'",
+      "    GROUP BY COALESCE(reject_reason, 'Unknown')",
+      "),",
+      "reason_list AS (",
+      "    SELECT GROUP_CONCAT(reason ORDER BY n DESC, reason ASC SEPARATOR ', ') AS reasons",
+      "    FROM reason_counts",
+      ")",
+      "SELECT a.status,",
+      "       COUNT(*) AS total_applications,",
+      "       ROUND(SUM(a.amount), 2) AS total_amount,",
+      "       CASE WHEN a.status = 'approved' THEN 'N/A'",
+      "            ELSE (SELECT reasons FROM reason_list)",
+      "       END AS rejection_reasons",
+      "FROM loan_applications a",
+      "GROUP BY a.status",
+      "ORDER BY a.status;"
+    ],
+    "starter": [
+      "/*",
+      "Enter your query below.",
+      "Please append a semicolon \";\" at the end of the query",
+      "*/",
+      ""
+    ],
+    "approach": [
+      "Split the work in two: the per-status counts and totals are a plain GROUP BY, and the reason list needs its own grouping (one row per reason with its count) before you can sort the reasons.",
+      "Turn NULL reasons into 'Unknown' with COALESCE before counting, so they group together.",
+      "Build the list with GROUP_CONCAT(reason ORDER BY n DESC, reason ASC SEPARATOR ', '). The ORDER BY inside GROUP_CONCAT controls the order of the items in the string.",
+      "Use CASE in the final SELECT to print 'N/A' for approved rows no matter what their reason column says."
+    ],
+    "walkthrough": [
+      "`reason_counts`: only rejected rows, with NULL reasons renamed to 'Unknown', grouped so each reason has its count: high debt 2, low score 2, Unknown 1.",
+      "`reason_list`: one row holding 'high debt, low score, Unknown'. The two reasons with 2 tie, so the alphabetical tie-break puts high debt first.",
+      "Main query: `GROUP BY a.status` gives one row per status with `COUNT(*)` and `ROUND(SUM(a.amount), 2)` (approved: 5000 + 12000.50 + 750.25 + 1000 = 18750.75).",
+      "`CASE WHEN a.status = 'approved' THEN 'N/A' ELSE (SELECT reasons FROM reason_list) END`: approved always shows N/A, even app 9 with its stray 'manual review' reason.",
+      "`ORDER BY a.status;`: approved before rejected."
+    ],
+    "mistakes": [
+      "GROUP_CONCAT(reject_reason) straight from the table: reasons repeat ('low score, high debt, low score, ...'), the NULL one disappears, and the order is random.",
+      "Forgetting COALESCE: the rejected application with no reason never shows up as Unknown.",
+      "Sorting the list only alphabetically, or only by count, so ties come out in the wrong order.",
+      "Letting approved rows show their reasons: app 9 would print 'manual review' instead of N/A.",
+      "Using ',' instead of ', ' as the separator when the prompt asks for a comma and a space."
+    ]
+  },
+  {
+    "id": "sqli-decline-report-by-category",
+    "section": "sqlint",
+    "type": "sql",
+    "difficulty": "Medium",
+    "topic": "Conditional counts with CASE and top value per group",
+    "title": "Card declines by merchant category",
+    "prompt": [
+      "Risk wants to see which merchant categories have the most declined card payments.",
+      "",
+      "For each `category` in `card_txns`, report:",
+      "",
+      "- `approved`: the number of approved transactions.",
+      "- `declined`: the number of declined transactions.",
+      "- `decline_rate`: declined divided by all transactions in the category, rounded to 2 decimal places.",
+      "- `top_decline_code`: the most common `decline_code` among that category's declined transactions. Count a NULL code as `UNKNOWN`. Break ties alphabetically. If the category has no declines, show `None`.",
+      "",
+      "**Output columns:** `category`, `approved`, `declined`, `decline_rate`, `top_decline_code`",
+      "",
+      "**Sort by:** `decline_rate` descending, then `category` ascending."
+    ],
+    "tables": [
+      {
+        "name": "card_txns",
+        "columns": [
+          [
+            "txn_id",
+            "INTEGER"
+          ],
+          [
+            "category",
+            "TEXT"
+          ],
+          [
+            "status",
+            "TEXT"
+          ],
+          [
+            "amount",
+            "REAL"
+          ],
+          [
+            "decline_code",
+            "TEXT"
+          ]
+        ],
+        "rows": [
+          [
+            1,
+            "grocery",
+            "approved",
+            54.2,
+            null
+          ],
+          [
+            2,
+            "grocery",
+            "approved",
+            12.1,
+            null
+          ],
+          [
+            3,
+            "grocery",
+            "approved",
+            80.0,
+            null
+          ],
+          [
+            4,
+            "grocery",
+            "declined",
+            300.0,
+            null
+          ],
+          [
+            5,
+            "travel",
+            "approved",
+            420.0,
+            null
+          ],
+          [
+            6,
+            "travel",
+            "declined",
+            950.0,
+            "LIMIT"
+          ],
+          [
+            7,
+            "travel",
+            "declined",
+            610.0,
+            "NSF"
+          ],
+          [
+            8,
+            "travel",
+            "declined",
+            1200.0,
+            "LIMIT"
+          ],
+          [
+            9,
+            "dining",
+            "approved",
+            45.0,
+            null
+          ],
+          [
+            10,
+            "dining",
+            "approved",
+            60.5,
+            null
+          ],
+          [
+            11,
+            "dining",
+            "declined",
+            75.0,
+            "NSF"
+          ],
+          [
+            12,
+            "dining",
+            "declined",
+            220.0,
+            "FRAUD"
+          ],
+          [
+            13,
+            "fuel",
+            "approved",
+            40.0,
+            null
+          ],
+          [
+            14,
+            "fuel",
+            "approved",
+            38.75,
+            null
+          ]
+        ]
+      }
+    ],
+    "solution": [
+      "WITH counts AS (",
+      "    SELECT category,",
+      "           SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) AS approved,",
+      "           SUM(CASE WHEN status = 'declined' THEN 1 ELSE 0 END) AS declined,",
+      "           COUNT(*) AS total",
+      "    FROM card_txns",
+      "    GROUP BY category",
+      "),",
+      "codes AS (",
+      "    SELECT category,",
+      "           COALESCE(decline_code, 'UNKNOWN') AS code,",
+      "           ROW_NUMBER() OVER (PARTITION BY category",
+      "                              ORDER BY COUNT(*) DESC, COALESCE(decline_code, 'UNKNOWN')) AS rn",
+      "    FROM card_txns",
+      "    WHERE status = 'declined'",
+      "    GROUP BY category, COALESCE(decline_code, 'UNKNOWN')",
+      ")",
+      "SELECT c.category,",
+      "       c.approved,",
+      "       c.declined,",
+      "       ROUND(1.0 * c.declined / c.total, 2) AS decline_rate,",
+      "       COALESCE(k.code, 'None') AS top_decline_code",
+      "FROM counts c",
+      "LEFT JOIN codes k ON k.category = c.category AND k.rn = 1",
+      "ORDER BY decline_rate DESC, c.category;"
+    ],
+    "starter": [
+      "/*",
+      "Enter your query below.",
+      "Please append a semicolon \";\" at the end of the query",
+      "*/",
+      ""
+    ],
+    "approach": [
+      "Conditional counts: SUM(CASE WHEN status = 'declined' THEN 1 ELSE 0 END) counts one status inside a normal GROUP BY.",
+      "\"Most common X per group, ties alphabetical\" is a ranking problem: group by (category, code) to count, then ROW_NUMBER() OVER (PARTITION BY category ORDER BY COUNT(*) DESC, code).",
+      "LEFT JOIN the rank-1 code back so categories with no declines stay, then COALESCE the missing code to 'None'.",
+      "Multiply by 1.0 before dividing so 1 / 4 is 0.25, not 0."
+    ],
+    "walkthrough": [
+      "`counts`: one row per category. grocery has 3 approved and 1 declined out of 4.",
+      "`codes`: declined rows only, NULL codes renamed UNKNOWN, counted per category and code. travel: LIMIT 2, NSF 1. dining: FRAUD 1 and NSF 1 tie.",
+      "`ROW_NUMBER() ... ORDER BY COUNT(*) DESC, code`: the most common code gets 1; for dining the tie goes alphabetically to FRAUD.",
+      "`LEFT JOIN codes k ON ... AND k.rn = 1`: fuel has no declines, so its code is NULL and COALESCE prints None.",
+      "`ROUND(1.0 * c.declined / c.total, 2)` and the final ORDER BY: travel 0.75, dining 0.5, grocery 0.25, fuel 0.0."
+    ],
+    "mistakes": [
+      "COUNT(status = 'declined') or COUNT(CASE ... ELSE 0 END): COUNT counts every non-NULL value, including 0, so both columns come out as the total.",
+      "Integer division: 1 / 4 is 0 in SQLite, so every rate except travel's would show 0.",
+      "Putting k.rn = 1 in WHERE after the LEFT JOIN, which drops fuel.",
+      "Breaking the dining tie by first appearance (NSF) instead of alphabetically (FRAUD).",
+      "Forgetting COALESCE on the code: grocery's only decline has no code and must count as UNKNOWN."
+    ]
   }
 ]
 );

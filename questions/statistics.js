@@ -607,6 +607,139 @@ window.BANK = (window.BANK || []).concat(
       "Correlation is unit-free and says nothing about cause."
     ],
     "check": {"truth": ["abs(0.6**2 - 0.36) < 1e-12", "0.6 > 0", "False", "False", "0.6 > 0", "False"]}
+  },
+  {
+    "id": "stat-multi-error-types",
+    "section": "stats",
+    "type": "multi",
+    "topic": "Type I and Type II errors",
+    "title": "Pick every true statement about error types",
+    "prompt": "A fraud screen tests each payment with H0: \"this payment is legitimate.\" Which statements are true? Pick all that apply.",
+    "options": [
+      "A Type I error rejects a null hypothesis that is true.",
+      "A Type II error fails to reject a null hypothesis that is false.",
+      "A Type I error is a false negative.",
+      "A Type II error is a false positive.",
+      "Here, a Type I error means flagging a legitimate payment as fraud.",
+      "A single decision can be both a Type I and a Type II error."
+    ],
+    "answers": [
+      0,
+      1,
+      4
+    ],
+    "explanations": [
+      "Correct. That's the definition: reject H0 when it's true.",
+      "Correct. That's the definition: keep H0 when it's false.",
+      "Not true. A Type I error is a false positive (a false alarm).",
+      "Not true. A Type II error is a false negative (a miss).",
+      "Correct. H0 is legitimate; rejecting it means flagging, so a wrongly flagged good payment is Type I.",
+      "Not true. Type I needs a rejection and a true H0; Type II needs no rejection and a false H0. One decision can only be one of these."
+    ],
+    "approach": [
+      "Type I = false positive = reject a true H0 (probability α). Type II = false negative = keep a false H0 (β).",
+      "In multi-select questions, judge each statement on its own; any number can be true."
+    ]
+  },
+  {
+    "id": "stat-stratified-allocation",
+    "section": "stats",
+    "type": "mcq",
+    "topic": "Sampling methods",
+    "title": "Proportional stratified sample",
+    "prompt": "A bank has 1,000 customers: 600 retail, 300 small business and 100 private banking. It draws a stratified sample of 50, with each segment represented in proportion to its size. How many customers come from each segment?",
+    "options": [
+      "Retail 30, small business 15, private banking 5",
+      "Retail 17, small business 17, private banking 16",
+      "Retail 60, small business 30, private banking 10",
+      "Retail 50, small business 0, private banking 0"
+    ],
+    "answer": 0,
+    "explanations": [
+      "Correct. Each segment gets its share of the 50: 600/1000 × 50 = 30, 300/1000 × 50 = 15, 100/1000 × 50 = 5.",
+      "This splits the sample equally, ignoring the segment sizes. That's not proportional allocation.",
+      "This takes 10% of each segment, which adds up to 100, not the 50 asked for.",
+      "This is just the largest group. Stratified sampling takes some from every stratum."
+    ],
+    "approach": [
+      "Proportional allocation: sample from each group = (group size ÷ population) × sample size.",
+      "Check that the pieces add up to the total sample size."
+    ]
+  },
+  {
+    "id": "stat-normal-fit",
+    "section": "stats",
+    "type": "mcq",
+    "topic": "Normal distribution: when it fits",
+    "title": "Which is least likely to be normal",
+    "prompt": "Which of these is **least** likely to be well described by a normal distribution?",
+    "options": [
+      "Heights of adult women in one country",
+      "Small errors from a well-calibrated scale",
+      "Checking account balances of all a bank's customers",
+      "Average of 100 randomly chosen card transactions"
+    ],
+    "answer": 2,
+    "explanations": [
+      "Heights within one adult group are a classic, roughly symmetric bell shape.",
+      "Small random measurement errors are the textbook example of normal data.",
+      "Correct. Balances can't go much below 0 but have a long tail of very large accounts: strongly right-skewed, like income.",
+      "By the central limit theorem, averages of 100 values are close to normal even when single transactions are skewed."
+    ],
+    "approach": [
+      "Look for values with a hard floor (like 0) and a long tail on one side: those are skewed, not normal.",
+      "Averages of many values tend to be normal (CLT); single skewed values don't."
+    ]
+  },
+  {
+    "id": "stat-cov-corr-range",
+    "section": "stats",
+    "type": "mcq",
+    "topic": "Covariance and correlation",
+    "title": "Can covariance be 4,500?",
+    "prompt": "An analyst reports Cov(income, card spending) = 4,500 and correlation r = 0.62 for the same customers. A colleague says one of these numbers must be a mistake. Is the colleague right?",
+    "options": [
+      "Yes: covariance can't be larger than 1",
+      "No: covariance can be any size, and r = 0.62 is inside −1 to 1",
+      "Yes: r can't be positive when the covariance is that large",
+      "No: correlation and covariance can both be any size"
+    ],
+    "answer": 1,
+    "explanations": [
+      "That's the rule for correlation, not covariance. Covariance carries the units of both variables, so its size has no limit.",
+      "Correct. Covariance runs from minus to plus infinity and depends on units. Correlation divides that by both standard deviations, so it always lies between −1 and 1.",
+      "Covariance and correlation always have the same sign; a large positive covariance goes with a positive r.",
+      "Correlation is bounded: it can never go below −1 or above 1."
+    ],
+    "approach": [
+      "Correlation: no units, between −1 and 1. Covariance: units of X times units of Y, any size.",
+      "Their signs always agree."
+    ]
+  },
+  {
+    "id": "stat-sample-sd-by-hand",
+    "section": "stats",
+    "type": "mcq",
+    "topic": "Standard deviation and the median",
+    "title": "Sample mean, SD and median by hand",
+    "prompt": "A sample of five loan amounts, in $ thousands: 2, 4, 4, 6, 9. What are the sample mean, the sample standard deviation and the median?",
+    "options": [
+      "Mean 5, SD √5.6, median 4",
+      "Mean 5, SD 7, median 4",
+      "Mean 5, SD √7, median 5",
+      "Mean 5, SD √7, median 4"
+    ],
+    "answer": 3,
+    "explanations": [
+      "√5.6 divides the squared deviations by n = 5. A sample standard deviation divides by n − 1 = 4.",
+      "7 is the sample variance. The standard deviation is its square root.",
+      "The mean is 5, but the median is the middle sorted value, 4.",
+      "Correct. Mean = 25 / 5 = 5. Squared deviations: 9, 1, 1, 1, 16 = 28. Sample variance = 28 / 4 = 7, so SD = √7 ≈ 2.65. Sorted, the middle value is 4."
+    ],
+    "approach": [
+      "Mean first, then squared deviations from it, then divide by n − 1 for a sample, then take the square root.",
+      "Median: sort, then take the middle value."
+    ]
   }
 ]
 );

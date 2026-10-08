@@ -121,6 +121,65 @@ def substring_index(s, delim, n):
     return str(delim).join(parts[:n] if n > 0 else parts[n:])
 
 
+def mysql_group_concat(sql):
+    """MySQL's GROUP_CONCAT(expr ORDER BY ... SEPARATOR 's') -> SQLite's group_concat(expr, 's' ORDER BY ...).
+    Same rewrite as runner.js, so reference solutions can be written the MySQL way."""
+    out, i, low = [], 0, sql.lower()
+    while True:
+        j = low.find("group_concat(", i)
+        if j < 0:
+            out.append(sql[i:])
+            return "".join(out)
+        k, depth, quote = j + len("group_concat("), 1, None
+        while k < len(sql) and depth:
+            ch = sql[k]
+            if quote:
+                if ch == quote:
+                    quote = None
+            elif ch in "'\"":
+                quote = ch
+            elif ch == "(":
+                depth += 1
+            elif ch == ")":
+                depth -= 1
+            k += 1
+        body = sql[j + len("group_concat("):k - 1]
+        out.append(sql[i:j] + "group_concat(" + _rewrite_gc_body(body) + ")")
+        i = k
+
+
+def _top_level(body, word):
+    """Index of a keyword outside quotes and parentheses, or -1."""
+    depth, quote, low = 0, None, body.lower()
+    for n, ch in enumerate(body):
+        if quote:
+            if ch == quote:
+                quote = None
+            continue
+        if ch in "'\"":
+            quote = ch
+        elif ch == "(":
+            depth += 1
+        elif ch == ")":
+            depth -= 1
+        elif depth == 0 and low.startswith(word, n) and (not word[0].isalnum() or n == 0 or not (low[n - 1].isalnum() or low[n - 1] == "_")):
+            return n
+    return -1
+
+
+def _rewrite_gc_body(body):
+    sep_at = _top_level(body, "separator")
+    sep = "','"
+    if sep_at >= 0:
+        sep = body[sep_at + len("separator"):].strip()
+        body = body[:sep_at]
+    order_at = _top_level(body, "order by")
+    expr, order = (body[:order_at], body[order_at:]) if order_at >= 0 else (body, "")
+    if sep_at < 0 and (not order or _top_level(expr, ",") >= 0):
+        return body  # already SQLite style
+    return f"{expr.strip()}, {sep}" + (f" {order.strip()}" if order else "")
+
+
 def connect(question):
     db = sqlite3.connect(":memory:")
     db.create_function("YEAR", 1, lambda v: (parse_date(v) or [None])[0])
@@ -210,7 +269,7 @@ def check_sql(q):
     print(f"\n[SQL] {q['id']}: {q['title']}")
     try:
         db = connect(q)
-        cur = db.execute(text(q["solution"]))
+        cur = db.execute(mysql_group_concat(text(q["solution"])))
         columns = [d[0] for d in cur.description]
         rows = cur.fetchall()
     except sqlite3.Error as e:
@@ -340,7 +399,7 @@ def check_generated_code(node, run_tests, per_template=60):
         else:
             try:
                 db = connect(q)
-                cur = db.execute(text(q["solution"]))
+                cur = db.execute(mysql_group_concat(text(q["solution"])))
                 columns = [d[0] for d in cur.description]
                 rows = [normalize_row(list(r)) for r in cur.fetchall()]
             except sqlite3.Error as e:
