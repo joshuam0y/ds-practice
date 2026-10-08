@@ -10,6 +10,7 @@ require('../generators_more.js')
 require('../generators_ds.js')
 require('../generators_data.js')
 require('../generators_algo.js')
+require('../generators_stats.js')
 const { templates, build } = api
 
 const PER_TEMPLATE = 400
@@ -245,6 +246,82 @@ const solve = {
       rows += matches || (kind === 'LEFT JOIN' ? 1 : 0)
     })
     return rows
+  },
+
+  // ---- generators_stats.js: tables written here, simulations, and different formulas ----
+  'st-ci-mean': ({ sd, n, z }) => z * Math.sqrt((sd * sd) / n), // margin = z times the square root of Var(mean)
+  'st-ci-width': ({ W, n0, k, from, to }) => {
+    // Width = 2 z sigma / sqrt(n): recover sigma from the first interval, then rebuild the second
+    const Z = { '68%': 1, '95%': 2, '99.7%': 3 }
+    const sigma = (W * Math.sqrt(n0)) / (2 * Z[from])
+    return (2 * Z[to] * sigma) / Math.sqrt(n0 * k)
+  },
+  'st-z-percentile': ({ z, ask }) => {
+    const k = Math.abs(z)
+    const area = (test) => BANDS.reduce((s, p, i) => s + (test(EDGES[i], EDGES[i + 1]) ? p : 0), 0)
+    if (ask === 'below') return area((lo, hi) => hi <= z)
+    if (ask === 'above') return area((lo) => lo >= z)
+    if (ask === 'within') return area((lo, hi) => lo >= -k && hi <= k)
+    return area((lo, hi) => hi <= -k || lo >= k)
+  },
+  'st-sample-sd': ({ vals }) => {
+    // Sample variance = sum over pairs of (xi - xj)^2 / (n (n - 1)), with no mean needed
+    let pairs = 0
+    for (let i = 0; i < vals.length; i++) for (let j = i + 1; j < vals.length; j++) pairs += (vals[i] - vals[j]) ** 2
+    return Math.sqrt(pairs / (vals.length * (vals.length - 1)))
+  },
+  'st-pvalue-decision': ({ alpha, reported, reportedSides, testSides }) => {
+    // Area in one tail, then as many tails as the planned test uses; 1 = reject, 2 = fail to reject
+    const oneTail = reported / reportedSides
+    return oneTail * testSides < alpha ? 1 : 2
+  },
+  'st-error-type': ({ h0, actual, concluded }) => {
+    // h0 actual concluded -> 1 Type I, 2 Type II, 3 true H0 kept, 4 false H0 rejected
+    const table = { '000': 3, '001': 1, '010': 2, '011': 4, '100': 4, '101': 2, '110': 1, '111': 3 }
+    return table[`${h0}${actual}${concluded}`]
+  },
+  'st-choose-test': ({ id }) => {
+    // 1 two-sample t, 2 ANOVA, 3 chi-square, 4 paired t, 5 one-proportion z
+    const table = {
+      'two-branches': 1, 'ab-deposit': 1, 'regions-spend': 2, 'shifts-wait': 2, 'acct-age': 3,
+      'region-paperless': 3, 'teller-training': 4, 'card-upgrade': 4, 'autopay-target': 5, 'false-alarm-claim': 5,
+    }
+    return table[id]
+  },
+  'st-correlation': ({ mode, r, rs }) => {
+    // Four points with corr(x, y) = r exactly; fit least squares and read off the slope sign and R^2
+    const fit = (rr) => {
+      const x = [1, -1, 0, 0]
+      const y = x.map((v, i) => rr * v + Math.sqrt(1 - rr * rr) * [0, 0, 1, -1][i])
+      const slope = x.reduce((s, v, i) => s + v * y[i], 0) / x.reduce((s, v) => s + v * v, 0)
+      const sse = y.reduce((s, v, i) => s + (v - slope * x[i]) ** 2, 0)
+      const sst = y.reduce((s, v) => s + v * v, 0)
+      return { sign: Math.sign(slope), r2: 1 - sse / sst }
+    }
+    if (mode === 'statements') {
+      const { sign, r2 } = fit(r)
+      return (sign * Math.round(r2 * 1e6)) / 1e4
+    }
+    let best = rs[0]
+    for (const c of rs) if (fit(c).r2 > fit(best).r2) best = c
+    return best
+  },
+  'st-sampling-method': ({ id }) => {
+    // 1 simple random, 2 stratified, 3 cluster, 4 systematic, 5 convenience
+    const table = {
+      'srs-number': 1, 'srs-draw': 1, 'strat-tier': 2, 'strat-region': 2, 'cluster-branch': 3,
+      'cluster-day': 3, 'sys-list': 4, 'sys-calls': 4, 'conv-lobby': 5, 'conv-coworkers': 5,
+    }
+    return table[id]
+  },
+  'st-se-proportion': ({ ask, p, n, e }) => {
+    // Variance of one yes/no answer by enumerating its two outcomes
+    const v = [0, 1].reduce((s, x) => s + (x ? p : 1 - p) * (x - p) ** 2, 0)
+    if (ask === 'se') return Math.sqrt(v / n)
+    if (ask === 'moe') return 2 * Math.sqrt(v / n)
+    let size = 1
+    while (v / size > e * e * (1 + 1e-9)) size++ // smallest survey that reaches the target SE
+    return size
   },
 }
 

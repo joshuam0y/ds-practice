@@ -9,6 +9,7 @@ require('../generators_more.js')
 require('../generators_ds.js')
 require('../generators_data.js')
 require('../generators_algo.js')
+require('../generators_stats.js')
 
 function seeded(seed) {
   let s = seed
