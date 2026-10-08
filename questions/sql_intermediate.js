@@ -19,43 +19,189 @@ window.BANK = (window.BANK || []).concat(
     "tables": [
       {
         "name": "branches",
-        "columns": [["branch_id", "INTEGER"], ["branch_name", "TEXT"]],
-        "rows": [[1, "Back Bay"], [2, "Cambridge"], [3, "Providence"]]
+        "columns": [
+          [
+            "branch_id",
+            "INTEGER"
+          ],
+          [
+            "branch_name",
+            "TEXT"
+          ]
+        ],
+        "rows": [
+          [
+            1,
+            "Back Bay"
+          ],
+          [
+            2,
+            "Cambridge"
+          ],
+          [
+            3,
+            "Providence"
+          ]
+        ]
       },
       {
         "name": "customers",
-        "columns": [["customer_id", "INTEGER"], ["customer_name", "TEXT"], ["branch_id", "INTEGER"]],
+        "columns": [
+          [
+            "customer_id",
+            "INTEGER"
+          ],
+          [
+            "customer_name",
+            "TEXT"
+          ],
+          [
+            "branch_id",
+            "INTEGER"
+          ]
+        ],
         "rows": [
-          [1, "Ava Chen", 1],
-          [2, "Ben Ortiz", 1],
-          [3, "Chloe Park", 1],
-          [4, "Dev Patel", 2],
-          [5, "Emma Ross", 2],
-          [6, "Finn Walsh", 3]
+          [
+            1,
+            "Ava Chen",
+            1
+          ],
+          [
+            2,
+            "Ben Ortiz",
+            1
+          ],
+          [
+            3,
+            "Chloe Park",
+            1
+          ],
+          [
+            4,
+            "Dev Patel",
+            2
+          ],
+          [
+            5,
+            "Emma Ross",
+            2
+          ],
+          [
+            6,
+            "Finn Walsh",
+            3
+          ]
         ]
       },
       {
         "name": "transactions",
         "columns": [
-          ["txn_id", "INTEGER"],
-          ["customer_id", "INTEGER"],
-          ["txn_type", "TEXT"],
-          ["amount", "REAL"],
-          ["txn_date", "TEXT"]
+          [
+            "txn_id",
+            "INTEGER"
+          ],
+          [
+            "customer_id",
+            "INTEGER"
+          ],
+          [
+            "txn_type",
+            "TEXT"
+          ],
+          [
+            "amount",
+            "REAL"
+          ],
+          [
+            "txn_date",
+            "TEXT"
+          ]
         ],
         "rows": [
-          [1, 1, "deposit", 500, "2025-01-15"],
-          [2, 1, "deposit", 300, "2025-03-02"],
-          [3, 2, "deposit", 800, "2025-02-10"],
-          [4, 3, "deposit", 200, "2025-04-01"],
-          [5, 3, "withdrawal", 900, "2025-04-03"],
-          [6, 2, "deposit", null, "2025-05-20"],
-          [7, 4, "deposit", 650, "2025-06-11"],
-          [8, 5, "deposit", 400, "2025-02-14"],
-          [9, 5, "deposit", 300, "2025-07-08"],
-          [10, 4, "deposit", 1000, "2024-12-30"],
-          [11, 6, "deposit", 700, "2024-11-05"],
-          [12, 3, "deposit", 500, "2025-09-09"]
+          [
+            1,
+            1,
+            "deposit",
+            500,
+            "2025-01-15"
+          ],
+          [
+            2,
+            1,
+            "deposit",
+            300,
+            "2025-03-02"
+          ],
+          [
+            3,
+            2,
+            "deposit",
+            800,
+            "2025-02-10"
+          ],
+          [
+            4,
+            3,
+            "deposit",
+            200,
+            "2025-04-01"
+          ],
+          [
+            5,
+            3,
+            "withdrawal",
+            900,
+            "2025-04-03"
+          ],
+          [
+            6,
+            2,
+            "deposit",
+            null,
+            "2025-05-20"
+          ],
+          [
+            7,
+            4,
+            "deposit",
+            650,
+            "2025-06-11"
+          ],
+          [
+            8,
+            5,
+            "deposit",
+            400,
+            "2025-02-14"
+          ],
+          [
+            9,
+            5,
+            "deposit",
+            300,
+            "2025-07-08"
+          ],
+          [
+            10,
+            4,
+            "deposit",
+            1000,
+            "2024-12-30"
+          ],
+          [
+            11,
+            6,
+            "deposit",
+            700,
+            "2024-11-05"
+          ],
+          [
+            12,
+            3,
+            "deposit",
+            500,
+            "2025-09-09"
+          ]
         ]
       }
     ],
@@ -79,7 +225,13 @@ window.BANK = (window.BANK || []).concat(
       "WHERE r.rnk = 1",
       "ORDER BY b.branch_name, r.customer_name;"
     ],
-    "starter": ["/*", "Enter your query below.", "Please append a semicolon \";\" at the end of the query", "*/", ""],
+    "starter": [
+      "/*",
+      "Enter your query below.",
+      "Please append a semicolon \";\" at the end of the query",
+      "*/",
+      ""
+    ],
     "approach": [
       "Spot the pattern: \"top N per group\" with \"return all ties\" means a window function, and specifically RANK or DENSE_RANK, not ROW_NUMBER.",
       "Build it in layers with CTEs. First filter and aggregate (one row per customer with their 2025 deposit total), then rank inside each branch, then keep rank 1.",
@@ -120,30 +272,162 @@ window.BANK = (window.BANK || []).concat(
     "tables": [
       {
         "name": "branches",
-        "columns": [["branch_id", "INTEGER"], ["branch_name", "TEXT"]],
-        "rows": [[1, "Back Bay"], [2, "Cambridge"], [3, "Providence"], [4, "Worcester"], [5, "Hartford"]]
+        "columns": [
+          [
+            "branch_id",
+            "INTEGER"
+          ],
+          [
+            "branch_name",
+            "TEXT"
+          ]
+        ],
+        "rows": [
+          [
+            1,
+            "Back Bay"
+          ],
+          [
+            2,
+            "Cambridge"
+          ],
+          [
+            3,
+            "Providence"
+          ],
+          [
+            4,
+            "Worcester"
+          ],
+          [
+            5,
+            "Hartford"
+          ]
+        ]
       },
       {
         "name": "loans",
-        "columns": [["loan_id", "INTEGER"], ["branch_id", "INTEGER"], ["amount", "REAL"], ["status", "TEXT"]],
+        "columns": [
+          [
+            "loan_id",
+            "INTEGER"
+          ],
+          [
+            "branch_id",
+            "INTEGER"
+          ],
+          [
+            "amount",
+            "REAL"
+          ],
+          [
+            "status",
+            "TEXT"
+          ]
+        ],
         "rows": [
-          [101, 1, 12000, "default"],
-          [102, 1, 8000, "current"],
-          [103, 1, 15000, "default"],
-          [104, 1, 5000, "paid"],
-          [105, 2, 20000, "default"],
-          [106, 2, 9000, null],
-          [107, 2, 4000, "current"],
-          [108, 3, 7000, "default"],
-          [109, 3, 3000, "default"],
-          [110, 4, 11000, "default"],
-          [111, 4, 6000, "default"],
-          [112, 4, 2500, "current"],
-          [113, 4, 9500, null],
-          [114, 5, 10000, "default"],
-          [115, 5, 4000, "current"],
-          [116, 5, 6000, "current"],
-          [117, 5, 3000, "paid"]
+          [
+            101,
+            1,
+            12000,
+            "default"
+          ],
+          [
+            102,
+            1,
+            8000,
+            "current"
+          ],
+          [
+            103,
+            1,
+            15000,
+            "default"
+          ],
+          [
+            104,
+            1,
+            5000,
+            "paid"
+          ],
+          [
+            105,
+            2,
+            20000,
+            "default"
+          ],
+          [
+            106,
+            2,
+            9000,
+            null
+          ],
+          [
+            107,
+            2,
+            4000,
+            "current"
+          ],
+          [
+            108,
+            3,
+            7000,
+            "default"
+          ],
+          [
+            109,
+            3,
+            3000,
+            "default"
+          ],
+          [
+            110,
+            4,
+            11000,
+            "default"
+          ],
+          [
+            111,
+            4,
+            6000,
+            "default"
+          ],
+          [
+            112,
+            4,
+            2500,
+            "current"
+          ],
+          [
+            113,
+            4,
+            9500,
+            null
+          ],
+          [
+            114,
+            5,
+            10000,
+            "default"
+          ],
+          [
+            115,
+            5,
+            4000,
+            "current"
+          ],
+          [
+            116,
+            5,
+            6000,
+            "current"
+          ],
+          [
+            117,
+            5,
+            3000,
+            "paid"
+          ]
         ]
       }
     ],
@@ -159,7 +443,13 @@ window.BANK = (window.BANK || []).concat(
       "   AND 1.0 * SUM(CASE WHEN l.status = 'default' THEN 1 ELSE 0 END) / COUNT(l.loan_id) > 0.25",
       "ORDER BY default_rate DESC, b.branch_name;"
     ],
-    "starter": ["/*", "Enter your query below.", "Please append a semicolon \";\" at the end of the query", "*/", ""],
+    "starter": [
+      "/*",
+      "Enter your query below.",
+      "Please append a semicolon \";\" at the end of the query",
+      "*/",
+      ""
+    ],
     "approach": [
       "\"For each branch ... only branches with ...\" means GROUP BY branch, then filter groups with HAVING (WHERE can't see aggregates).",
       "Count conditionally with SUM(CASE WHEN status = 'default' THEN 1 ELSE 0 END). It treats NULL status as 0, which is what the prompt wants.",
@@ -202,16 +492,73 @@ window.BANK = (window.BANK || []).concat(
     "tables": [
       {
         "name": "transactions",
-        "columns": [["txn_id", "INTEGER"], ["account_id", "INTEGER"], ["txn_date", "TEXT"], ["amount", "REAL"]],
+        "columns": [
+          [
+            "txn_id",
+            "INTEGER"
+          ],
+          [
+            "account_id",
+            "INTEGER"
+          ],
+          [
+            "txn_date",
+            "TEXT"
+          ],
+          [
+            "amount",
+            "REAL"
+          ]
+        ],
         "rows": [
-          [1, 10, "2025-03-01", 500],
-          [2, 10, "2025-03-03", -200],
-          [3, 10, "2025-03-03", 50],
-          [4, 10, "2025-03-07", -100],
-          [8, 10, "2025-03-08", null],
-          [5, 20, "2025-03-02", 1000],
-          [6, 20, "2025-03-05", -1000],
-          [7, 20, "2025-03-05", 250]
+          [
+            1,
+            10,
+            "2025-03-01",
+            500
+          ],
+          [
+            2,
+            10,
+            "2025-03-03",
+            -200
+          ],
+          [
+            3,
+            10,
+            "2025-03-03",
+            50
+          ],
+          [
+            4,
+            10,
+            "2025-03-07",
+            -100
+          ],
+          [
+            8,
+            10,
+            "2025-03-08",
+            null
+          ],
+          [
+            5,
+            20,
+            "2025-03-02",
+            1000
+          ],
+          [
+            6,
+            20,
+            "2025-03-05",
+            -1000
+          ],
+          [
+            7,
+            20,
+            "2025-03-05",
+            250
+          ]
         ]
       }
     ],
@@ -227,7 +574,13 @@ window.BANK = (window.BANK || []).concat(
       "FROM transactions",
       "ORDER BY account_id, txn_date, txn_id;"
     ],
-    "starter": ["/*", "Enter your query below.", "Please append a semicolon \";\" at the end of the query", "*/", ""],
+    "starter": [
+      "/*",
+      "Enter your query below.",
+      "Please append a semicolon \";\" at the end of the query",
+      "*/",
+      ""
+    ],
     "approach": [
       "\"Running\" or \"cumulative\" total per something means SUM(...) OVER (PARTITION BY something ORDER BY time).",
       "Make the window's ORDER BY unique. If it orders only by date, rows on the same date are \"peers,\" and the default window frame includes all peers at once, so both same-day rows show the end-of-day total.",
@@ -264,26 +617,104 @@ window.BANK = (window.BANK || []).concat(
     "tables": [
       {
         "name": "branches",
-        "columns": [["branch_id", "INTEGER"], ["branch_name", "TEXT"]],
-        "rows": [[1, "Back Bay"], [2, "Cambridge"], [3, "Providence"], [4, "Worcester"]]
+        "columns": [
+          [
+            "branch_id",
+            "INTEGER"
+          ],
+          [
+            "branch_name",
+            "TEXT"
+          ]
+        ],
+        "rows": [
+          [
+            1,
+            "Back Bay"
+          ],
+          [
+            2,
+            "Cambridge"
+          ],
+          [
+            3,
+            "Providence"
+          ],
+          [
+            4,
+            "Worcester"
+          ]
+        ]
       },
       {
         "name": "accounts",
         "columns": [
-          ["account_id", "INTEGER"],
-          ["branch_id", "INTEGER"],
-          ["opened_date", "TEXT"],
-          ["opening_deposit", "REAL"]
+          [
+            "account_id",
+            "INTEGER"
+          ],
+          [
+            "branch_id",
+            "INTEGER"
+          ],
+          [
+            "opened_date",
+            "TEXT"
+          ],
+          [
+            "opening_deposit",
+            "REAL"
+          ]
         ],
         "rows": [
-          [1, 1, "2025-01-10", 500],
-          [2, 1, "2025-02-11", 1500],
-          [3, 1, "2024-12-31", 800],
-          [4, 2, "2025-05-05", 250],
-          [5, 2, "2025-06-30", null],
-          [6, 3, "2024-07-01", 300],
-          [7, 4, "2025-12-31", 1000],
-          [8, 4, "2026-01-01", 2000]
+          [
+            1,
+            1,
+            "2025-01-10",
+            500
+          ],
+          [
+            2,
+            1,
+            "2025-02-11",
+            1500
+          ],
+          [
+            3,
+            1,
+            "2024-12-31",
+            800
+          ],
+          [
+            4,
+            2,
+            "2025-05-05",
+            250
+          ],
+          [
+            5,
+            2,
+            "2025-06-30",
+            null
+          ],
+          [
+            6,
+            3,
+            "2024-07-01",
+            300
+          ],
+          [
+            7,
+            4,
+            "2025-12-31",
+            1000
+          ],
+          [
+            8,
+            4,
+            "2026-01-01",
+            2000
+          ]
         ]
       }
     ],
@@ -299,7 +730,13 @@ window.BANK = (window.BANK || []).concat(
       "GROUP BY b.branch_id, b.branch_name",
       "ORDER BY accounts_opened DESC, b.branch_name;"
     ],
-    "starter": ["/*", "Enter your query below.", "Please append a semicolon \";\" at the end of the query", "*/", ""],
+    "starter": [
+      "/*",
+      "Enter your query below.",
+      "Please append a semicolon \";\" at the end of the query",
+      "*/",
+      ""
+    ],
     "approach": [
       "\"Every branch must appear\" means start from branches and LEFT JOIN the accounts.",
       "Put the date filter in the ON clause. In WHERE, it would remove the NULL rows the LEFT JOIN created for Providence, turning it back into an inner join.",
@@ -341,28 +778,133 @@ window.BANK = (window.BANK || []).concat(
       {
         "name": "card_transactions",
         "columns": [
-          ["txn_id", "INTEGER"],
-          ["card_id", "TEXT"],
-          ["merchant", "TEXT"],
-          ["txn_date", "TEXT"],
-          ["status", "TEXT"]
+          [
+            "txn_id",
+            "INTEGER"
+          ],
+          [
+            "card_id",
+            "TEXT"
+          ],
+          [
+            "merchant",
+            "TEXT"
+          ],
+          [
+            "txn_date",
+            "TEXT"
+          ],
+          [
+            "status",
+            "TEXT"
+          ]
         ],
         "rows": [
-          [1, "C1", "Amazon", "2025-04-01", "approved"],
-          [2, "C1", "Target", "2025-04-01", "approved"],
-          [3, "C1", "Amazon", "2025-04-01", "approved"],
-          [4, "C1", "Shell", "2025-04-01", "declined"],
-          [5, "C2", "Amazon", "2025-04-01", "approved"],
-          [6, "C2", "Target", "2025-04-01", "approved"],
-          [7, "C2", "Shell", "2025-04-01", "approved"],
-          [8, "C3", "Uber", "2025-04-02", "approved"],
-          [9, "C3", null, "2025-04-02", "approved"],
-          [10, "C3", "Lyft", "2025-04-02", "approved"],
-          [11, "C1", "Uber", "2025-04-02", "approved"],
-          [12, "C1", "Lyft", "2025-04-02", "approved"],
-          [13, "C1", "Starbucks", "2025-04-02", "approved"],
-          [14, "C1", "Amazon", "2025-04-02", "approved"],
-          [15, "C2", "Uber", "2025-04-02", "approved"]
+          [
+            1,
+            "C1",
+            "Amazon",
+            "2025-04-01",
+            "approved"
+          ],
+          [
+            2,
+            "C1",
+            "Target",
+            "2025-04-01",
+            "approved"
+          ],
+          [
+            3,
+            "C1",
+            "Amazon",
+            "2025-04-01",
+            "approved"
+          ],
+          [
+            4,
+            "C1",
+            "Shell",
+            "2025-04-01",
+            "declined"
+          ],
+          [
+            5,
+            "C2",
+            "Amazon",
+            "2025-04-01",
+            "approved"
+          ],
+          [
+            6,
+            "C2",
+            "Target",
+            "2025-04-01",
+            "approved"
+          ],
+          [
+            7,
+            "C2",
+            "Shell",
+            "2025-04-01",
+            "approved"
+          ],
+          [
+            8,
+            "C3",
+            "Uber",
+            "2025-04-02",
+            "approved"
+          ],
+          [
+            9,
+            "C3",
+            null,
+            "2025-04-02",
+            "approved"
+          ],
+          [
+            10,
+            "C3",
+            "Lyft",
+            "2025-04-02",
+            "approved"
+          ],
+          [
+            11,
+            "C1",
+            "Uber",
+            "2025-04-02",
+            "approved"
+          ],
+          [
+            12,
+            "C1",
+            "Lyft",
+            "2025-04-02",
+            "approved"
+          ],
+          [
+            13,
+            "C1",
+            "Starbucks",
+            "2025-04-02",
+            "approved"
+          ],
+          [
+            14,
+            "C1",
+            "Amazon",
+            "2025-04-02",
+            "approved"
+          ],
+          [
+            15,
+            "C2",
+            "Uber",
+            "2025-04-02",
+            "approved"
+          ]
         ]
       }
     ],
@@ -374,7 +916,13 @@ window.BANK = (window.BANK || []).concat(
       "HAVING COUNT(DISTINCT merchant) >= 3",
       "ORDER BY txn_date, card_id;"
     ],
-    "starter": ["/*", "Enter your query below.", "Please append a semicolon \";\" at the end of the query", "*/", ""],
+    "starter": [
+      "/*",
+      "Enter your query below.",
+      "Please append a semicolon \";\" at the end of the query",
+      "*/",
+      ""
+    ],
     "approach": [
       "\"Per card per day\" means GROUP BY card_id, txn_date.",
       "\"Different merchants\" means COUNT(DISTINCT merchant). It also skips NULL merchants automatically.",
@@ -412,24 +960,107 @@ window.BANK = (window.BANK || []).concat(
     "tables": [
       {
         "name": "branches",
-        "columns": [["branch_id", "INTEGER"], ["branch_name", "TEXT"]],
-        "rows": [[1, "Back Bay"], [2, "Cambridge"], [3, "Providence"], [4, "Worcester"]]
+        "columns": [
+          [
+            "branch_id",
+            "INTEGER"
+          ],
+          [
+            "branch_name",
+            "TEXT"
+          ]
+        ],
+        "rows": [
+          [
+            1,
+            "Back Bay"
+          ],
+          [
+            2,
+            "Cambridge"
+          ],
+          [
+            3,
+            "Providence"
+          ],
+          [
+            4,
+            "Worcester"
+          ]
+        ]
       },
       {
         "name": "loans",
-        "columns": [["loan_id", "INTEGER"], ["branch_id", "INTEGER"], ["amount", "REAL"]],
+        "columns": [
+          [
+            "loan_id",
+            "INTEGER"
+          ],
+          [
+            "branch_id",
+            "INTEGER"
+          ],
+          [
+            "amount",
+            "REAL"
+          ]
+        ],
         "rows": [
-          [1, 1, 50000],
-          [2, 1, 30000],
-          [3, 1, 50000],
-          [4, 1, 20000],
-          [5, 2, 15000],
-          [6, 2, 15000],
-          [7, 3, 40000],
-          [8, 4, 10000],
-          [9, 4, 25000],
-          [10, 4, 18000],
-          [11, 4, null]
+          [
+            1,
+            1,
+            50000
+          ],
+          [
+            2,
+            1,
+            30000
+          ],
+          [
+            3,
+            1,
+            50000
+          ],
+          [
+            4,
+            1,
+            20000
+          ],
+          [
+            5,
+            2,
+            15000
+          ],
+          [
+            6,
+            2,
+            15000
+          ],
+          [
+            7,
+            3,
+            40000
+          ],
+          [
+            8,
+            4,
+            10000
+          ],
+          [
+            9,
+            4,
+            25000
+          ],
+          [
+            10,
+            4,
+            18000
+          ],
+          [
+            11,
+            4,
+            null
+          ]
         ]
       }
     ],
@@ -446,7 +1077,13 @@ window.BANK = (window.BANK || []).concat(
       "GROUP BY b.branch_id, b.branch_name",
       "ORDER BY b.branch_name;"
     ],
-    "starter": ["/*", "Enter your query below.", "Please append a semicolon \";\" at the end of the query", "*/", ""],
+    "starter": [
+      "/*",
+      "Enter your query below.",
+      "Please append a semicolon \";\" at the end of the query",
+      "*/",
+      ""
+    ],
     "approach": [
       "\"Nth highest distinct\" is DENSE_RANK: ties share a rank and the next value gets the next number.",
       "Rank within each branch with PARTITION BY branch_id, after dropping NULL amounts.",
@@ -488,13 +1125,55 @@ window.BANK = (window.BANK || []).concat(
     "tables": [
       {
         "name": "customers",
-        "columns": [["customer_id", "INTEGER"], ["first_name", "TEXT"], ["last_name", "TEXT"], ["email", "TEXT"]],
+        "columns": [
+          [
+            "customer_id",
+            "INTEGER"
+          ],
+          [
+            "first_name",
+            "TEXT"
+          ],
+          [
+            "last_name",
+            "TEXT"
+          ],
+          [
+            "email",
+            "TEXT"
+          ]
+        ],
         "rows": [
-          [1, " Ana ", "chen", "Ana.Chen@Gmail.com"],
-          [2, "Ben", "Ortiz", null],
-          [3, "Chloe", "park ", "chloe@citizensbank.com"],
-          [4, "Dev", "Patel", "dev.patel@gmail.com"],
-          [5, "Emma", "Ross", "emma@Yahoo.com"]
+          [
+            1,
+            " Ana ",
+            "chen",
+            "Ana.Chen@Gmail.com"
+          ],
+          [
+            2,
+            "Ben",
+            "Ortiz",
+            null
+          ],
+          [
+            3,
+            "Chloe",
+            "park ",
+            "chloe@citizensbank.com"
+          ],
+          [
+            4,
+            "Dev",
+            "Patel",
+            "dev.patel@gmail.com"
+          ],
+          [
+            5,
+            "Emma",
+            "Ross",
+            "emma@Yahoo.com"
+          ]
         ]
       }
     ],
@@ -505,7 +1184,13 @@ window.BANK = (window.BANK || []).concat(
       "FROM customers",
       "ORDER BY email_domain, customer_id;"
     ],
-    "starter": ["/*", "Enter your query below.", "Please append a semicolon \";\" at the end of the query", "*/", ""],
+    "starter": [
+      "/*",
+      "Enter your query below.",
+      "Please append a semicolon \";\" at the end of the query",
+      "*/",
+      ""
+    ],
     "approach": [
       "Build each output column separately, and test it on the trickiest rows: the spaces around ' Ana ' and 'park ', the mixed-case domains, and the NULL email.",
       "Trim before you change case or concatenate. In MySQL, write CONCAT(UPPER(TRIM(last_name)), ', ', TRIM(first_name)); in SQLite, || joins strings.",
@@ -545,18 +1230,69 @@ window.BANK = (window.BANK || []).concat(
     "tables": [
       {
         "name": "branches",
-        "columns": [["branch_id", "INTEGER"], ["branch_name", "TEXT"]],
-        "rows": [[1, "Back Bay"], [2, "Cambridge"]]
+        "columns": [
+          [
+            "branch_id",
+            "INTEGER"
+          ],
+          [
+            "branch_name",
+            "TEXT"
+          ]
+        ],
+        "rows": [
+          [
+            1,
+            "Back Bay"
+          ],
+          [
+            2,
+            "Cambridge"
+          ]
+        ]
       },
       {
         "name": "monthly_deposits",
-        "columns": [["branch_id", "INTEGER"], ["month", "TEXT"], ["total", "REAL"]],
+        "columns": [
+          [
+            "branch_id",
+            "INTEGER"
+          ],
+          [
+            "month",
+            "TEXT"
+          ],
+          [
+            "total",
+            "REAL"
+          ]
+        ],
         "rows": [
-          [1, "2025-02", 12000],
-          [1, "2025-01", 10000],
-          [2, "2025-01", 5000],
-          [1, "2025-03", 9000],
-          [2, "2025-02", 5000]
+          [
+            1,
+            "2025-02",
+            12000
+          ],
+          [
+            1,
+            "2025-01",
+            10000
+          ],
+          [
+            2,
+            "2025-01",
+            5000
+          ],
+          [
+            1,
+            "2025-03",
+            9000
+          ],
+          [
+            2,
+            "2025-02",
+            5000
+          ]
         ]
       }
     ],
@@ -569,7 +1305,13 @@ window.BANK = (window.BANK || []).concat(
       "JOIN branches b ON b.branch_id = m.branch_id",
       "ORDER BY b.branch_name, m.month;"
     ],
-    "starter": ["/*", "Enter your query below.", "Please append a semicolon \";\" at the end of the query", "*/", ""],
+    "starter": [
+      "/*",
+      "Enter your query below.",
+      "Please append a semicolon \";\" at the end of the query",
+      "*/",
+      ""
+    ],
     "approach": [
       "\"Compared with the previous row\" means LAG (or LEAD for the next row).",
       "PARTITION BY the group (branch) so each branch's first month has no previous value, and ORDER BY the time column inside OVER. The table's row order means nothing.",
@@ -606,17 +1348,66 @@ window.BANK = (window.BANK || []).concat(
     "tables": [
       {
         "name": "accounts",
-        "columns": [["account_id", "INTEGER"], ["customer_id", "INTEGER"], ["balance", "REAL"]],
+        "columns": [
+          [
+            "account_id",
+            "INTEGER"
+          ],
+          [
+            "customer_id",
+            "INTEGER"
+          ],
+          [
+            "balance",
+            "REAL"
+          ]
+        ],
         "rows": [
-          [1, 101, 6000],
-          [2, 101, 4500],
-          [3, 102, 10000],
-          [4, 103, 12000],
-          [5, 104, 3000],
-          [6, 104, null],
-          [7, 105, 5000],
-          [8, 105, 5000.01],
-          [9, 103, -500]
+          [
+            1,
+            101,
+            6000
+          ],
+          [
+            2,
+            101,
+            4500
+          ],
+          [
+            3,
+            102,
+            10000
+          ],
+          [
+            4,
+            103,
+            12000
+          ],
+          [
+            5,
+            104,
+            3000
+          ],
+          [
+            6,
+            104,
+            null
+          ],
+          [
+            7,
+            105,
+            5000
+          ],
+          [
+            8,
+            105,
+            5000.01
+          ],
+          [
+            9,
+            103,
+            -500
+          ]
         ]
       }
     ],
@@ -627,7 +1418,13 @@ window.BANK = (window.BANK || []).concat(
       "HAVING SUM(balance) > 10000",
       "ORDER BY customer_id;"
     ],
-    "starter": ["/*", "Enter your query below.", "Please append a semicolon \";\" at the end of the query", "*/", ""],
+    "starter": [
+      "/*",
+      "Enter your query below.",
+      "Please append a semicolon \";\" at the end of the query",
+      "*/",
+      ""
+    ],
     "approach": [
       "\"Total ... per customer\" means GROUP BY customer_id with SUM(balance).",
       "A condition on a total goes in HAVING, which runs after grouping. WHERE can't see SUM.",
@@ -675,17 +1472,66 @@ window.BANK = (window.BANK || []).concat(
     "tables": [
       {
         "name": "customers",
-        "columns": [["customer_id", "INTEGER"], ["name", "TEXT"], ["credit_score", "INTEGER"]],
+        "columns": [
+          [
+            "customer_id",
+            "INTEGER"
+          ],
+          [
+            "name",
+            "TEXT"
+          ],
+          [
+            "credit_score",
+            "INTEGER"
+          ]
+        ],
         "rows": [
-          [1, "Ana", 579],
-          [2, "Ben", 580],
-          [3, "Cy", 669],
-          [4, "Dee", 670],
-          [5, "Eve", 739],
-          [6, "Finn", 740],
-          [7, "Gus", null],
-          [8, "Hal", 812],
-          [9, "Ivy", 610]
+          [
+            1,
+            "Ana",
+            579
+          ],
+          [
+            2,
+            "Ben",
+            580
+          ],
+          [
+            3,
+            "Cy",
+            669
+          ],
+          [
+            4,
+            "Dee",
+            670
+          ],
+          [
+            5,
+            "Eve",
+            739
+          ],
+          [
+            6,
+            "Finn",
+            740
+          ],
+          [
+            7,
+            "Gus",
+            null
+          ],
+          [
+            8,
+            "Hal",
+            812
+          ],
+          [
+            9,
+            "Ivy",
+            610
+          ]
         ]
       }
     ],
@@ -702,7 +1548,13 @@ window.BANK = (window.BANK || []).concat(
       "GROUP BY band",
       "ORDER BY customers DESC, band;"
     ],
-    "starter": ["/*", "Enter your query below.", "Please append a semicolon \";\" at the end of the query", "*/", ""],
+    "starter": [
+      "/*",
+      "Enter your query below.",
+      "Please append a semicolon \";\" at the end of the query",
+      "*/",
+      ""
+    ],
     "approach": [
       "Turning ranges into labels is a CASE expression. CASE checks its WHEN branches top to bottom and stops at the first true one.",
       "Order the branches so each only needs an upper bound: after < 580, the next check < 670 automatically means 580 to 669.",
@@ -741,22 +1593,93 @@ window.BANK = (window.BANK || []).concat(
     "tables": [
       {
         "name": "branches",
-        "columns": [["branch_id", "INTEGER"], ["branch_name", "TEXT"]],
-        "rows": [[1, "Back Bay"], [2, "Cambridge"], [3, "Providence"]]
+        "columns": [
+          [
+            "branch_id",
+            "INTEGER"
+          ],
+          [
+            "branch_name",
+            "TEXT"
+          ]
+        ],
+        "rows": [
+          [
+            1,
+            "Back Bay"
+          ],
+          [
+            2,
+            "Cambridge"
+          ],
+          [
+            3,
+            "Providence"
+          ]
+        ]
       },
       {
         "name": "loans",
-        "columns": [["loan_id", "INTEGER"], ["branch_id", "INTEGER"], ["amount", "REAL"]],
+        "columns": [
+          [
+            "loan_id",
+            "INTEGER"
+          ],
+          [
+            "branch_id",
+            "INTEGER"
+          ],
+          [
+            "amount",
+            "REAL"
+          ]
+        ],
         "rows": [
-          [1, 1, 10000],
-          [2, 1, 20000],
-          [3, 1, 30000],
-          [4, 1, null],
-          [5, 2, 5000],
-          [6, 2, 5000],
-          [7, 2, 8000],
-          [8, 3, 12000],
-          [9, 1, 30000]
+          [
+            1,
+            1,
+            10000
+          ],
+          [
+            2,
+            1,
+            20000
+          ],
+          [
+            3,
+            1,
+            30000
+          ],
+          [
+            4,
+            1,
+            null
+          ],
+          [
+            5,
+            2,
+            5000
+          ],
+          [
+            6,
+            2,
+            5000
+          ],
+          [
+            7,
+            2,
+            8000
+          ],
+          [
+            8,
+            3,
+            12000
+          ],
+          [
+            9,
+            1,
+            30000
+          ]
         ]
       }
     ],
@@ -773,7 +1696,13 @@ window.BANK = (window.BANK || []).concat(
       "WHERE s.amount > s.branch_avg",
       "ORDER BY b.branch_name, s.amount DESC, s.loan_id;"
     ],
-    "starter": ["/*", "Enter your query below.", "Please append a semicolon \";\" at the end of the query", "*/", ""],
+    "starter": [
+      "/*",
+      "Enter your query below.",
+      "Please append a semicolon \";\" at the end of the query",
+      "*/",
+      ""
+    ],
     "approach": [
       "Each loan is compared with a value computed from its own group, so you need the group average next to every row: a window AVG() OVER (PARTITION BY branch_id), or a correlated subquery.",
       "Window functions can't be filtered in the same SELECT's WHERE, so compute them in a CTE first, then filter outside.",
@@ -812,20 +1741,98 @@ window.BANK = (window.BANK || []).concat(
     "tables": [
       {
         "name": "customers",
-        "columns": [["customer_id", "INTEGER"], ["customer_name", "TEXT"]],
-        "rows": [[1, "Ava Chen"], [2, "Ben Ortiz"], [3, "Chloe Park"], [4, "Dev Patel"]]
+        "columns": [
+          [
+            "customer_id",
+            "INTEGER"
+          ],
+          [
+            "customer_name",
+            "TEXT"
+          ]
+        ],
+        "rows": [
+          [
+            1,
+            "Ava Chen"
+          ],
+          [
+            2,
+            "Ben Ortiz"
+          ],
+          [
+            3,
+            "Chloe Park"
+          ],
+          [
+            4,
+            "Dev Patel"
+          ]
+        ]
       },
       {
         "name": "transactions",
-        "columns": [["txn_id", "INTEGER"], ["customer_id", "INTEGER"], ["txn_date", "TEXT"], ["amount", "REAL"]],
+        "columns": [
+          [
+            "txn_id",
+            "INTEGER"
+          ],
+          [
+            "customer_id",
+            "INTEGER"
+          ],
+          [
+            "txn_date",
+            "TEXT"
+          ],
+          [
+            "amount",
+            "REAL"
+          ]
+        ],
         "rows": [
-          [11, 1, "2025-02-01", 50],
-          [12, 1, "2025-01-15", 200],
-          [13, 2, "2025-01-10", 75],
-          [14, 2, "2025-01-10", 30],
-          [15, 3, "2025-03-03", 500],
-          [16, 2, "2025-01-09", 10],
-          [17, 3, "2025-03-03", 20]
+          [
+            11,
+            1,
+            "2025-02-01",
+            50
+          ],
+          [
+            12,
+            1,
+            "2025-01-15",
+            200
+          ],
+          [
+            13,
+            2,
+            "2025-01-10",
+            75
+          ],
+          [
+            14,
+            2,
+            "2025-01-10",
+            30
+          ],
+          [
+            15,
+            3,
+            "2025-03-03",
+            500
+          ],
+          [
+            16,
+            2,
+            "2025-01-09",
+            10
+          ],
+          [
+            17,
+            3,
+            "2025-03-03",
+            20
+          ]
         ]
       }
     ],
@@ -841,7 +1848,13 @@ window.BANK = (window.BANK || []).concat(
       "WHERE o.rn = 1",
       "ORDER BY c.customer_name;"
     ],
-    "starter": ["/*", "Enter your query below.", "Please append a semicolon \";\" at the end of the query", "*/", ""],
+    "starter": [
+      "/*",
+      "Enter your query below.",
+      "Please append a semicolon \";\" at the end of the query",
+      "*/",
+      ""
+    ],
     "approach": [
       "\"First (or latest, or top) row per group, exactly one\" is ROW_NUMBER() partitioned by the group, then keep rn = 1.",
       "Here ROW_NUMBER is right because the prompt wants exactly one row and defines the tie-break, so put the tie-break (txn_id) in the window's ORDER BY.",
@@ -1645,6 +2658,1148 @@ window.BANK = (window.BANK || []).concat(
       "SUM(verified) / COUNT(*) with whole numbers: integer division turns 2 / 3 into 0.",
       "COUNT(*) as the denominator after the LEFT JOIN with a THEN 1 ELSE NULL CASE: Dee's NULL row changes the math.",
       "Forgetting to round to 2 decimals."
+    ]
+  },
+  {
+    "id": "sqli-fee-revenue-by-type",
+    "section": "sqlint",
+    "type": "sql",
+    "difficulty": "Easy",
+    "topic": "Filtered aggregates with GROUP BY and NULLs",
+    "title": "Fee revenue by fee type",
+    "prompt": [
+      "Finance wants to know how much each kind of account fee actually brought in.",
+      "",
+      "A fee counts only if it was **not waived** (`waived` = 0) and its `amount` is not NULL. A NULL amount means the fee was reversed, so it adds nothing and is not counted. For each `fee_type` with at least one fee that counts, report how many fees counted and their total amount, rounded to 2 decimal places. Fee types where nothing counts do not appear.",
+      "",
+      "**Output columns:** `fee_type`, `fees_charged`, `total_collected`",
+      "",
+      "**Sort by:** `total_collected` descending, then `fee_type` ascending."
+    ],
+    "tables": [
+      {
+        "name": "fees",
+        "columns": [
+          [
+            "fee_id",
+            "INTEGER"
+          ],
+          [
+            "account_id",
+            "INTEGER"
+          ],
+          [
+            "fee_type",
+            "TEXT"
+          ],
+          [
+            "amount",
+            "REAL"
+          ],
+          [
+            "waived",
+            "INTEGER"
+          ]
+        ],
+        "rows": [
+          [
+            1,
+            101,
+            "overdraft",
+            35,
+            0
+          ],
+          [
+            2,
+            102,
+            "overdraft",
+            35,
+            1
+          ],
+          [
+            3,
+            103,
+            "overdraft",
+            35,
+            0
+          ],
+          [
+            4,
+            101,
+            "wire",
+            25,
+            0
+          ],
+          [
+            5,
+            104,
+            "wire",
+            45,
+            0
+          ],
+          [
+            6,
+            105,
+            "atm",
+            3,
+            0
+          ],
+          [
+            7,
+            105,
+            "atm",
+            3,
+            0
+          ],
+          [
+            8,
+            106,
+            "atm",
+            null,
+            0
+          ],
+          [
+            9,
+            107,
+            "paper_statement",
+            2,
+            1
+          ],
+          [
+            10,
+            108,
+            "maintenance",
+            12,
+            0
+          ],
+          [
+            11,
+            109,
+            "maintenance",
+            12,
+            0
+          ],
+          [
+            12,
+            110,
+            "maintenance",
+            12,
+            1
+          ],
+          [
+            13,
+            111,
+            "maintenance",
+            10.5,
+            0
+          ]
+        ]
+      }
+    ],
+    "solution": [
+      "SELECT fee_type,",
+      "       COUNT(*) AS fees_charged,",
+      "       ROUND(SUM(amount), 2) AS total_collected",
+      "FROM fees",
+      "WHERE waived = 0",
+      "  AND amount IS NOT NULL",
+      "GROUP BY fee_type",
+      "ORDER BY total_collected DESC, fee_type;"
+    ],
+    "starter": [
+      "/*",
+      "Enter your query below.",
+      "Please append a semicolon \";\" at the end of the query",
+      "*/",
+      ""
+    ],
+    "approach": [
+      "Rules about which rows count (not waived, amount known) are row filters, so they go in WHERE, before GROUP BY.",
+      "Once the bad rows are gone, COUNT(*) and SUM(amount) per fee_type give the two numbers.",
+      "A fee type whose every row is filtered out simply has no group left, which is exactly \"does not appear\".",
+      "Read the sort carefully: two fee types can tie on the total, so the second sort key matters."
+    ],
+    "walkthrough": [
+      "`WHERE waived = 0 AND amount IS NOT NULL`: drops the waived overdraft (fee 2), the reversed ATM fee (fee 8), the waived paper statement fee (fee 9) and the waived maintenance fee (fee 12).",
+      "`GROUP BY fee_type`: overdraft keeps fees 1 and 3 (70), wire keeps 4 and 5 (70), maintenance keeps 10, 11 and 13 (34.5), atm keeps 6 and 7 (6). paper_statement has no rows left, so it is gone.",
+      "`COUNT(*) AS fees_charged`, `ROUND(SUM(amount), 2) AS total_collected`: one row per surviving fee type.",
+      "`ORDER BY total_collected DESC, fee_type`: overdraft and wire tie at 70, so overdraft comes first alphabetically."
+    ],
+    "mistakes": [
+      "Leaving out `amount IS NOT NULL` and using COUNT(*): ATM shows 3 fees instead of 2. (SUM still skips the NULL, so only the count is wrong, which makes the bug easy to miss.)",
+      "Forgetting the waived filter: overdraft becomes 105 and maintenance 46.5, and paper_statement wrongly appears with 2.",
+      "Using SUM(CASE WHEN waived = 0 THEN amount END) without a filter or HAVING: paper_statement shows up with a NULL total instead of disappearing.",
+      "Sorting only by total_collected: the order of overdraft and wire is then not guaranteed."
+    ]
+  },
+  {
+    "id": "sqli-cards-per-customer",
+    "section": "sqlint",
+    "type": "sql",
+    "difficulty": "Easy",
+    "topic": "LEFT JOIN with COUNT, including zero",
+    "title": "Cards held by each customer",
+    "prompt": [
+      "The card team wants a count of cards for **every** customer, including customers who have no cards yet (show 0 for them). Some prepaid cards were never assigned to a customer and have a NULL `customer_id`; they belong to no one and should not be counted.",
+      "",
+      "**Output columns:** `customer_id`, `customer_name`, `card_count`",
+      "",
+      "**Sort by:** `card_count` descending, then `customer_name` ascending."
+    ],
+    "tables": [
+      {
+        "name": "customers",
+        "columns": [
+          [
+            "customer_id",
+            "INTEGER"
+          ],
+          [
+            "customer_name",
+            "TEXT"
+          ]
+        ],
+        "rows": [
+          [
+            1,
+            "Ava Chen"
+          ],
+          [
+            2,
+            "Ben Ortiz"
+          ],
+          [
+            3,
+            "Chloe Park"
+          ],
+          [
+            4,
+            "Dev Patel"
+          ],
+          [
+            5,
+            "Emma Ross"
+          ]
+        ]
+      },
+      {
+        "name": "cards",
+        "columns": [
+          [
+            "card_id",
+            "INTEGER"
+          ],
+          [
+            "customer_id",
+            "INTEGER"
+          ],
+          [
+            "card_type",
+            "TEXT"
+          ]
+        ],
+        "rows": [
+          [
+            1,
+            1,
+            "debit"
+          ],
+          [
+            2,
+            1,
+            "credit"
+          ],
+          [
+            3,
+            2,
+            "debit"
+          ],
+          [
+            4,
+            3,
+            "credit"
+          ],
+          [
+            5,
+            3,
+            "debit"
+          ],
+          [
+            6,
+            null,
+            "prepaid"
+          ],
+          [
+            7,
+            2,
+            "credit"
+          ],
+          [
+            8,
+            3,
+            "credit"
+          ],
+          [
+            9,
+            null,
+            "prepaid"
+          ]
+        ]
+      }
+    ],
+    "solution": [
+      "SELECT c.customer_id,",
+      "       c.customer_name,",
+      "       COUNT(k.card_id) AS card_count",
+      "FROM customers c",
+      "LEFT JOIN cards k ON k.customer_id = c.customer_id",
+      "GROUP BY c.customer_id, c.customer_name",
+      "ORDER BY card_count DESC, c.customer_name;"
+    ],
+    "starter": [
+      "/*",
+      "Enter your query below.",
+      "Please append a semicolon \";\" at the end of the query",
+      "*/",
+      ""
+    ],
+    "approach": [
+      "\"Every customer, including those with none\" means start FROM customers and LEFT JOIN the cards.",
+      "Count a column from the right-hand table, COUNT(k.card_id), not COUNT(*). A customer with no cards still gets one joined row full of NULLs, and only COUNT(column) turns that into 0.",
+      "Unassigned cards (NULL customer_id) never match any customer in the ON clause, so they drop out by themselves."
+    ],
+    "walkthrough": [
+      "`FROM customers c LEFT JOIN cards k ON k.customer_id = c.customer_id`: Ava gets 2 rows, Ben 2, Chloe 3, and Dev and Emma one row each with NULL card columns.",
+      "Cards 6 and 9 have customer_id NULL, and NULL = anything is never true, so they join to nobody.",
+      "`COUNT(k.card_id)`: skips the NULL card_id on Dev's and Emma's rows, giving 0.",
+      "`ORDER BY card_count DESC, c.customer_name`: Chloe (3), then Ava and Ben (2 each, alphabetical), then Dev and Emma (0 each)."
+    ],
+    "mistakes": [
+      "COUNT(*) instead of COUNT(k.card_id): Dev and Emma show 1 card instead of 0.",
+      "An inner JOIN: Dev and Emma disappear completely.",
+      "Starting FROM cards and grouping by cards.customer_id: you get a row for the NULL customer with 2 cards and lose the customers with none.",
+      "Forgetting the tie-breaker on customer_name, so Ava and Ben (and Dev and Emma) can come out in either order."
+    ]
+  },
+  {
+    "id": "sqli-delinquency-labels",
+    "section": "sqlint",
+    "type": "sql",
+    "difficulty": "Easy",
+    "topic": "CASE expressions: boundaries and NULLs",
+    "title": "Label loans by days past due",
+    "prompt": [
+      "Collections wants every loan labeled by how late its payment is, using `days_past_due`:",
+      "",
+      "- 0 days: `'Current'`",
+      "- 1 to 30 days: `'Late'`",
+      "- 31 to 90 days: `'Delinquent'`",
+      "- more than 90 days: `'Default'`",
+      "- NULL (no payment has come due yet): `'No payment due'`",
+      "",
+      "Both ends of each range are included.",
+      "",
+      "**Output columns:** `loan_id`, `borrower`, `days_past_due`, `status_label`",
+      "",
+      "**Sort by:** `loan_id` ascending."
+    ],
+    "tables": [
+      {
+        "name": "loans",
+        "columns": [
+          [
+            "loan_id",
+            "INTEGER"
+          ],
+          [
+            "borrower",
+            "TEXT"
+          ],
+          [
+            "days_past_due",
+            "INTEGER"
+          ]
+        ],
+        "rows": [
+          [
+            1,
+            "Ava Chen",
+            0
+          ],
+          [
+            2,
+            "Ben Ortiz",
+            15
+          ],
+          [
+            3,
+            "Chloe Park",
+            30
+          ],
+          [
+            4,
+            "Dev Patel",
+            31
+          ],
+          [
+            5,
+            "Emma Ross",
+            90
+          ],
+          [
+            6,
+            "Finn Walsh",
+            91
+          ],
+          [
+            7,
+            "Gia Moreno",
+            null
+          ],
+          [
+            8,
+            "Hal Brooks",
+            1
+          ],
+          [
+            9,
+            "Ivy Nguyen",
+            120
+          ]
+        ]
+      }
+    ],
+    "solution": [
+      "SELECT loan_id,",
+      "       borrower,",
+      "       days_past_due,",
+      "       CASE",
+      "           WHEN days_past_due IS NULL THEN 'No payment due'",
+      "           WHEN days_past_due = 0 THEN 'Current'",
+      "           WHEN days_past_due <= 30 THEN 'Late'",
+      "           WHEN days_past_due <= 90 THEN 'Delinquent'",
+      "           ELSE 'Default'",
+      "       END AS status_label",
+      "FROM loans",
+      "ORDER BY loan_id;"
+    ],
+    "starter": [
+      "/*",
+      "Enter your query below.",
+      "Please append a semicolon \";\" at the end of the query",
+      "*/",
+      ""
+    ],
+    "approach": [
+      "A label per row is a CASE expression in the SELECT list; no GROUP BY is needed.",
+      "CASE stops at the first WHEN that is true, so list the ranges from low to high and each WHEN only needs an upper bound.",
+      "Handle NULL with its own WHEN ... IS NULL. If you don't, NULL fails every comparison and falls into ELSE, which here would wrongly say 'Default'.",
+      "Check every boundary in the sample (0, 1, 30, 31, 90, 91) against your conditions before running."
+    ],
+    "walkthrough": [
+      "`WHEN days_past_due IS NULL THEN 'No payment due'`: Gia (loan 7) is caught first.",
+      "`WHEN days_past_due = 0 THEN 'Current'`: Ava.",
+      "`WHEN days_past_due <= 30 THEN 'Late'`: Hal (1), Ben (15) and Chloe (30, the boundary).",
+      "`WHEN days_past_due <= 90 THEN 'Delinquent'`: Dev (31) and Emma (90).",
+      "`ELSE 'Default'`: Finn (91) and Ivy (120). `ORDER BY loan_id` lists them 1 through 9."
+    ],
+    "mistakes": [
+      "No IS NULL branch: Gia's NULL fails every comparison and lands in ELSE as 'Default'.",
+      "Writing `days_past_due < 30` for Late: Chloe at exactly 30 becomes 'Delinquent'. Same problem with `< 90` for Emma.",
+      "Ordering the WHENs from high to low with only upper bounds (`<= 90` before `<= 30`): every loan from 1 to 90 days gets 'Delinquent'.",
+      "Using `WHEN days_past_due = NULL`: that comparison is never true, so it never fires."
+    ]
+  },
+  {
+    "id": "sqli-median-loan-by-branch",
+    "section": "sqlint",
+    "type": "sql",
+    "difficulty": "Hard",
+    "topic": "Window functions: median per group",
+    "title": "Median loan amount per branch",
+    "prompt": [
+      "Averages get pulled around by a few huge loans, so the credit team wants the **median** loan amount at each branch.",
+      "",
+      "Ignore loans whose `amount` is NULL (they are still being priced). For each branch with at least one known amount, report how many loans have a known amount and the median of those amounts, rounded to 2 decimal places. With an odd number of loans the median is the middle amount; with an even number it is the average of the two middle amounts. Branches with no known amounts do not appear.",
+      "",
+      "**Output columns:** `branch_name`, `loan_count`, `median_amount`",
+      "",
+      "**Sort by:** `median_amount` descending, then `branch_name` ascending."
+    ],
+    "tables": [
+      {
+        "name": "branches",
+        "columns": [
+          [
+            "branch_id",
+            "INTEGER"
+          ],
+          [
+            "branch_name",
+            "TEXT"
+          ]
+        ],
+        "rows": [
+          [
+            1,
+            "Back Bay"
+          ],
+          [
+            2,
+            "Cambridge"
+          ],
+          [
+            3,
+            "Providence"
+          ],
+          [
+            4,
+            "Worcester"
+          ],
+          [
+            5,
+            "Hartford"
+          ]
+        ]
+      },
+      {
+        "name": "loans",
+        "columns": [
+          [
+            "loan_id",
+            "INTEGER"
+          ],
+          [
+            "branch_id",
+            "INTEGER"
+          ],
+          [
+            "amount",
+            "REAL"
+          ]
+        ],
+        "rows": [
+          [
+            1,
+            1,
+            10000
+          ],
+          [
+            2,
+            1,
+            30000
+          ],
+          [
+            3,
+            1,
+            20000
+          ],
+          [
+            4,
+            1,
+            null
+          ],
+          [
+            5,
+            2,
+            40000
+          ],
+          [
+            6,
+            2,
+            5000
+          ],
+          [
+            7,
+            2,
+            25000
+          ],
+          [
+            8,
+            2,
+            15000
+          ],
+          [
+            9,
+            3,
+            8000
+          ],
+          [
+            10,
+            3,
+            50000
+          ],
+          [
+            11,
+            3,
+            8000
+          ],
+          [
+            12,
+            3,
+            12000
+          ],
+          [
+            13,
+            3,
+            8000
+          ],
+          [
+            14,
+            4,
+            60000
+          ],
+          [
+            15,
+            5,
+            null
+          ]
+        ]
+      }
+    ],
+    "solution": [
+      "WITH ranked AS (",
+      "    SELECT branch_id, amount,",
+      "           ROW_NUMBER() OVER (PARTITION BY branch_id ORDER BY amount) AS rn,",
+      "           COUNT(*) OVER (PARTITION BY branch_id) AS cnt",
+      "    FROM loans",
+      "    WHERE amount IS NOT NULL",
+      ")",
+      "SELECT b.branch_name,",
+      "       r.cnt AS loan_count,",
+      "       ROUND(AVG(r.amount), 2) AS median_amount",
+      "FROM ranked r",
+      "JOIN branches b ON b.branch_id = r.branch_id",
+      "WHERE r.rn IN ((r.cnt + 1) / 2, (r.cnt + 2) / 2)",
+      "GROUP BY b.branch_id, b.branch_name, r.cnt",
+      "ORDER BY median_amount DESC, b.branch_name;"
+    ],
+    "starter": [
+      "/*",
+      "Enter your query below.",
+      "Please append a semicolon \";\" at the end of the query",
+      "*/",
+      ""
+    ],
+    "approach": [
+      "Neither MySQL nor SQLite has a MEDIAN() aggregate, so build it: number the rows in order inside each group, count the group, and keep the middle row or rows.",
+      "Use ROW_NUMBER, not RANK: with duplicate amounts RANK skips positions (1, 1, 1, 4, 5), and the middle position may not exist.",
+      "With integer division, positions (cnt + 1) / 2 and (cnt + 2) / 2 are the same row when cnt is odd and the two middle rows when cnt is even. AVG of the kept rows is the median either way.",
+      "Filter out NULL amounts before numbering, otherwise they take up positions and shift the middle."
+    ],
+    "walkthrough": [
+      "`WHERE amount IS NOT NULL`: loan 4 (Back Bay) and loan 15 (Hartford) are dropped, so Hartford has nothing left and disappears.",
+      "`ROW_NUMBER() OVER (PARTITION BY branch_id ORDER BY amount)` and `COUNT(*) OVER (PARTITION BY branch_id)`: Providence becomes 8000 (1), 8000 (2), 8000 (3), 12000 (4), 50000 (5) with cnt 5.",
+      "`WHERE r.rn IN ((r.cnt + 1) / 2, (r.cnt + 2) / 2)`: cnt 5 keeps position 3 only (8000). Cambridge has cnt 4 and keeps positions 2 and 3 (15000 and 25000). Back Bay has cnt 3 and keeps position 2 (20000). Worcester has cnt 1 and keeps position 1.",
+      "`ROUND(AVG(r.amount), 2)`: Worcester 60000, Back Bay 20000, Cambridge (15000 + 25000) / 2 = 20000, Providence 8000.",
+      "`ORDER BY median_amount DESC, b.branch_name`: Back Bay and Cambridge tie at 20000, so Back Bay comes first."
+    ],
+    "mistakes": [
+      "Reporting AVG(amount) instead of the median: Providence would show 17200 because of the one 50000 loan.",
+      "Using RANK() or DENSE_RANK(): Providence's three 8000 loans all get rank 1, nothing has rank 3, and the branch drops out or gets the wrong value.",
+      "Numbering before removing NULLs (or counting them in cnt): Back Bay's NULL changes the count to 4 and the middle positions move.",
+      "Taking only position cnt / 2: right for neither case, since for Cambridge it keeps just 15000 and for Back Bay it keeps 10000.",
+      "Writing (cnt + 1) / 2.0: real division gives 2.5 for Cambridge, which matches no row number."
+    ]
+  },
+  {
+    "id": "sqli-longest-deposit-streak",
+    "section": "sqlint",
+    "type": "sql",
+    "difficulty": "Hard",
+    "topic": "Window functions: gaps and islands",
+    "title": "Longest daily deposit streak",
+    "prompt": [
+      "A savings challenge rewards customers who deposit on consecutive calendar days.",
+      "",
+      "For each customer, find their **longest run of consecutive days** with at least one deposit, and the date that run started. Several deposits on the same day count as one day. Deposits with a NULL `amount` were rejected and do not count. If a customer has two or more runs of the same longest length, report the one that started first. Every customer with at least one counted deposit appears.",
+      "",
+      "**Output columns:** `customer_id`, `longest_streak`, `streak_start`",
+      "",
+      "**Sort by:** `longest_streak` descending, then `customer_id` ascending."
+    ],
+    "tables": [
+      {
+        "name": "deposits",
+        "columns": [
+          [
+            "deposit_id",
+            "INTEGER"
+          ],
+          [
+            "customer_id",
+            "INTEGER"
+          ],
+          [
+            "deposit_date",
+            "TEXT"
+          ],
+          [
+            "amount",
+            "REAL"
+          ]
+        ],
+        "rows": [
+          [
+            1,
+            1,
+            "2025-01-30",
+            100
+          ],
+          [
+            2,
+            1,
+            "2025-01-31",
+            50
+          ],
+          [
+            3,
+            1,
+            "2025-01-31",
+            40
+          ],
+          [
+            4,
+            1,
+            "2025-02-01",
+            75
+          ],
+          [
+            5,
+            1,
+            "2025-02-03",
+            20
+          ],
+          [
+            6,
+            1,
+            "2025-02-04",
+            20
+          ],
+          [
+            7,
+            2,
+            "2025-03-10",
+            200
+          ],
+          [
+            8,
+            2,
+            "2025-03-11",
+            60
+          ],
+          [
+            9,
+            2,
+            "2025-03-15",
+            30
+          ],
+          [
+            10,
+            2,
+            "2025-03-16",
+            30
+          ],
+          [
+            11,
+            3,
+            "2025-05-05",
+            500
+          ],
+          [
+            12,
+            3,
+            "2025-05-06",
+            null
+          ],
+          [
+            13,
+            4,
+            "2025-12-31",
+            10
+          ],
+          [
+            14,
+            4,
+            "2026-01-01",
+            10
+          ],
+          [
+            15,
+            4,
+            "2026-01-02",
+            10
+          ]
+        ]
+      }
+    ],
+    "solution": [
+      "WITH days AS (",
+      "    SELECT DISTINCT customer_id, deposit_date",
+      "    FROM deposits",
+      "    WHERE amount IS NOT NULL",
+      "),",
+      "grouped AS (",
+      "    SELECT customer_id, deposit_date,",
+      "           DATEDIFF(deposit_date, '2000-01-01')",
+      "             - ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY deposit_date) AS grp",
+      "    FROM days",
+      "),",
+      "streaks AS (",
+      "    SELECT customer_id, MIN(deposit_date) AS streak_start, COUNT(*) AS streak_len",
+      "    FROM grouped",
+      "    GROUP BY customer_id, grp",
+      "),",
+      "ranked AS (",
+      "    SELECT customer_id, streak_start, streak_len,",
+      "           ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY streak_len DESC, streak_start) AS rn",
+      "    FROM streaks",
+      ")",
+      "SELECT customer_id, streak_len AS longest_streak, streak_start",
+      "FROM ranked",
+      "WHERE rn = 1",
+      "ORDER BY longest_streak DESC, customer_id;"
+    ],
+    "starter": [
+      "/*",
+      "Enter your query below.",
+      "Please append a semicolon \";\" at the end of the query",
+      "*/",
+      ""
+    ],
+    "approach": [
+      "This is the classic gaps-and-islands pattern. Turn each date into a day number, subtract the row number within the customer, and every run of consecutive days ends up with the same difference.",
+      "Clean the input first: drop the rejected deposits, then SELECT DISTINCT customer and day so repeat deposits on one day don't break the numbering.",
+      "GROUP BY customer and that difference to get each run's start (MIN date) and length (COUNT).",
+      "Pick one run per customer with ROW_NUMBER ordered by length descending, then start date ascending. ROW_NUMBER is right here because the prompt fully breaks the tie.",
+      "In MySQL you might write DATE_SUB(deposit_date, INTERVAL rn DAY) as the group key; here DATEDIFF against a fixed date does the same job."
+    ],
+    "walkthrough": [
+      "`days`: customer 1's two deposits on 01-31 become one day, and customer 3's rejected deposit on 05-06 is gone.",
+      "`DATEDIFF(deposit_date, '2000-01-01') - ROW_NUMBER() ...`: customer 1's 01-30, 01-31 and 02-01 are consecutive day numbers with row numbers 1, 2, 3, so they share one grp value. 02-03 skips a day, so 02-03 and 02-04 get a new grp.",
+      "`streaks`: customer 1 has runs of 3 (from 2025-01-30) and 2. Customer 2 has two runs of 2 (from 03-10 and 03-15). Customer 3 has one run of 1. Customer 4's run crosses the new year: 2025-12-31 to 2026-01-02, length 3.",
+      "`ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY streak_len DESC, streak_start)`: customer 2's tie goes to the run starting 2025-03-10.",
+      "`ORDER BY longest_streak DESC, customer_id`: customers 1 and 4 (3 days), then 2 (2 days), then 3 (1 day)."
+    ],
+    "mistakes": [
+      "Skipping DISTINCT on the days: customer 1's two 01-31 deposits get different row numbers on the same date, so the group keys shift: 01-30, one 01-31, 02-03 and 02-04 all get the same key, and customer 1 wrongly shows a streak of 4.",
+      "Keeping the NULL-amount deposit: customer 3 gets a 2-day streak.",
+      "Subtracting row numbers from DAY(deposit_date) instead of a full date: runs that cross a month or a year (customers 1 and 4) break apart.",
+      "Using MAX(streak_len) and then joining back to find the start date: customer 2 matches both 2-day runs and appears twice.",
+      "Using RANK() for the final pick: tied runs both get rank 1, again giving two rows for customer 2."
+    ]
+  },
+  {
+    "id": "sqli-reporting-chain",
+    "section": "sqlint",
+    "type": "sql",
+    "difficulty": "Hard",
+    "topic": "Recursive CTEs: walking a hierarchy",
+    "title": "Reporting chain for every employee",
+    "prompt": [
+      "HR stores the org chart as one table: each employee's `manager_id` is the `emp_id` of their manager, and the CEO's `manager_id` is NULL.",
+      "",
+      "For every employee connected to the CEO through a chain of managers, report their `level` (the CEO is level 1, the CEO's direct reports are level 2, and so on) and their `reporting_chain`: the names from the CEO down to the employee, joined with `' > '`. For example, a direct report of the CEO has the chain `'Grace Kim > Omar Diaz'`. An employee whose `manager_id` matches no one in the table is not connected and does not appear.",
+      "",
+      "**Output columns:** `emp_id`, `name`, `level`, `reporting_chain`",
+      "",
+      "**Sort by:** `level` ascending, then `name` ascending."
+    ],
+    "tables": [
+      {
+        "name": "employees",
+        "columns": [
+          [
+            "emp_id",
+            "INTEGER"
+          ],
+          [
+            "name",
+            "TEXT"
+          ],
+          [
+            "manager_id",
+            "INTEGER"
+          ]
+        ],
+        "rows": [
+          [
+            1,
+            "Grace Kim",
+            null
+          ],
+          [
+            2,
+            "Omar Diaz",
+            1
+          ],
+          [
+            3,
+            "Lena Fox",
+            1
+          ],
+          [
+            4,
+            "Ravi Shah",
+            2
+          ],
+          [
+            5,
+            "Ana Lopez",
+            2
+          ],
+          [
+            6,
+            "Tom Byrne",
+            3
+          ],
+          [
+            7,
+            "Mia Wong",
+            4
+          ],
+          [
+            8,
+            "Zoe Hart",
+            99
+          ],
+          [
+            9,
+            "Ben Cole",
+            4
+          ]
+        ]
+      }
+    ],
+    "solution": [
+      "WITH RECURSIVE chain AS (",
+      "    SELECT emp_id, name, 1 AS level, name AS reporting_chain",
+      "    FROM employees",
+      "    WHERE manager_id IS NULL",
+      "    UNION ALL",
+      "    SELECT e.emp_id, e.name, c.level + 1, c.reporting_chain || ' > ' || e.name",
+      "    FROM employees e",
+      "    JOIN chain c ON e.manager_id = c.emp_id",
+      ")",
+      "SELECT emp_id, name, level, reporting_chain",
+      "FROM chain",
+      "ORDER BY level, name;"
+    ],
+    "starter": [
+      "/*",
+      "Enter your query below.",
+      "Please append a semicolon \";\" at the end of the query",
+      "*/",
+      ""
+    ],
+    "approach": [
+      "A hierarchy of unknown depth can't be done with a fixed number of self joins; it needs WITH RECURSIVE.",
+      "The anchor query is the starting point: the CEO, the row with manager_id IS NULL, at level 1 with a chain of just their name.",
+      "The recursive query joins employees to rows already found (e.manager_id = c.emp_id), adding 1 to the level and appending ' > ' and the new name to the chain.",
+      "Because the walk starts from the CEO, anyone whose manager doesn't exist is never reached, which is exactly the rule in the prompt.",
+      "The site runs SQLite, so strings join with ||. In MySQL you would write CONCAT(c.reporting_chain, ' > ', e.name), and you may need CAST(name AS CHAR(500)) in the anchor so the column is wide enough for long chains."
+    ],
+    "walkthrough": [
+      "Anchor: `WHERE manager_id IS NULL` gives Grace Kim, level 1, chain 'Grace Kim'.",
+      "First pass of `JOIN chain c ON e.manager_id = c.emp_id`: Omar and Lena report to Grace, so they become level 2 with chains 'Grace Kim > Omar Diaz' and 'Grace Kim > Lena Fox'.",
+      "Second pass: Ravi and Ana (under Omar) and Tom (under Lena) are level 3.",
+      "Third pass: Mia and Ben (under Ravi) are level 4, with chain 'Grace Kim > Omar Diaz > Ravi Shah > Mia Wong'. The next pass finds nobody, so the recursion stops.",
+      "Zoe's manager_id is 99, which matches no one, so she is never added. `ORDER BY level, name` gives the final order."
+    ],
+    "mistakes": [
+      "Using a couple of self joins: that stops at a fixed depth and misses Mia and Ben at level 4.",
+      "Starting the recursion from every employee instead of from the CEO: every partial chain becomes its own row, and Zoe appears.",
+      "Building the chain as e.name || ' > ' || c.reporting_chain: the names come out from the employee up to the CEO, the reverse of what was asked.",
+      "Joining the wrong way round (e.emp_id = c.manager_id): the recursion walks up instead of down and finds nothing new.",
+      "Writing WHERE manager_id = NULL in the anchor: it matches nothing, so the result is empty."
+    ]
+  },
+  {
+    "id": "sqli-monthly-retention",
+    "section": "sqlint",
+    "type": "sql",
+    "difficulty": "Hard",
+    "topic": "Self joins on month keys: month-over-month retention",
+    "title": "Month-over-month customer retention",
+    "prompt": [
+      "A customer is **active** in a calendar month if they made at least one transaction that month. Rows with a NULL `customer_id` are unattributed and must be ignored.",
+      "",
+      "For each month that has at least one active customer, report:",
+      "",
+      "- `month`: the month as `'YYYY-MM'`",
+      "- `active_customers`: the number of distinct active customers that month",
+      "- `retained_customers`: how many of them were also active in the **previous calendar month** (0 if none)",
+      "- `retention_rate`: `retained_customers` divided by the number of customers active in the previous calendar month, rounded to 2 decimal places. It is NULL when the previous calendar month had no active customers (including the very first month).",
+      "",
+      "Note that the previous calendar month of `'2026-01'` is `'2025-12'`, and a month with no activity is still the previous month of the month after it.",
+      "",
+      "**Output columns:** `month`, `active_customers`, `retained_customers`, `retention_rate`",
+      "",
+      "**Sort by:** `month` ascending."
+    ],
+    "tables": [
+      {
+        "name": "transactions",
+        "columns": [
+          [
+            "txn_id",
+            "INTEGER"
+          ],
+          [
+            "customer_id",
+            "INTEGER"
+          ],
+          [
+            "txn_date",
+            "TEXT"
+          ],
+          [
+            "amount",
+            "REAL"
+          ]
+        ],
+        "rows": [
+          [
+            1,
+            1,
+            "2025-11-03",
+            120
+          ],
+          [
+            2,
+            2,
+            "2025-11-07",
+            45
+          ],
+          [
+            3,
+            1,
+            "2025-11-21",
+            60
+          ],
+          [
+            4,
+            3,
+            "2025-11-28",
+            300
+          ],
+          [
+            5,
+            1,
+            "2025-12-02",
+            80
+          ],
+          [
+            6,
+            2,
+            "2025-12-15",
+            25
+          ],
+          [
+            7,
+            4,
+            "2025-12-19",
+            90
+          ],
+          [
+            8,
+            6,
+            "2025-12-30",
+            15
+          ],
+          [
+            9,
+            1,
+            "2026-01-05",
+            70
+          ],
+          [
+            10,
+            4,
+            "2026-01-11",
+            40
+          ],
+          [
+            11,
+            5,
+            "2026-01-20",
+            210
+          ],
+          [
+            12,
+            null,
+            "2026-01-22",
+            500
+          ],
+          [
+            13,
+            1,
+            "2026-03-04",
+            55
+          ],
+          [
+            14,
+            5,
+            "2026-03-09",
+            65
+          ]
+        ]
+      }
+    ],
+    "solution": [
+      "WITH active AS (",
+      "    SELECT DISTINCT customer_id,",
+      "           DATE_FORMAT(txn_date, '%Y-%m') AS month,",
+      "           YEAR(txn_date) * 12 + MONTH(txn_date) AS month_num",
+      "    FROM transactions",
+      "    WHERE customer_id IS NOT NULL",
+      "),",
+      "monthly AS (",
+      "    SELECT a.month, a.month_num,",
+      "           COUNT(*) AS active_customers,",
+      "           COUNT(p.customer_id) AS retained_customers",
+      "    FROM active a",
+      "    LEFT JOIN active p",
+      "      ON p.customer_id = a.customer_id",
+      "     AND p.month_num = a.month_num - 1",
+      "    GROUP BY a.month, a.month_num",
+      ")",
+      "SELECT cur.month,",
+      "       cur.active_customers,",
+      "       cur.retained_customers,",
+      "       ROUND(1.0 * cur.retained_customers / prev.active_customers, 2) AS retention_rate",
+      "FROM monthly cur",
+      "LEFT JOIN monthly prev ON prev.month_num = cur.month_num - 1",
+      "ORDER BY cur.month;"
+    ],
+    "starter": [
+      "/*",
+      "Enter your query below.",
+      "Please append a semicolon \";\" at the end of the query",
+      "*/",
+      ""
+    ],
+    "approach": [
+      "Reduce the data to one row per customer per active month first (SELECT DISTINCT), dropping NULL customers. Every count after that is a plain COUNT.",
+      "Give each month a number you can do arithmetic on: YEAR * 12 + MONTH. Then \"previous calendar month\" is simply month_num - 1, and December to January works with no special case.",
+      "Retained customers: LEFT JOIN the active table to itself on the same customer and month_num - 1, and count the matches.",
+      "The rate's denominator is the previous month's active count, so join the monthly summary to itself on month_num - 1. A missing previous month leaves prev NULL, and dividing by NULL gives the NULL the prompt asks for.",
+      "Avoid LAG for \"previous month\": LAG looks at the previous row, which is the previous active month, not the previous calendar month."
+    ],
+    "walkthrough": [
+      "`active`: customer 1's two November transactions become one row, and transaction 12 (NULL customer) is dropped. November has customers 1, 2, 3; December 1, 2, 4, 6; January 1, 4, 5; March 1, 5.",
+      "`LEFT JOIN active p ON p.customer_id = a.customer_id AND p.month_num = a.month_num - 1`: in December, customers 1 and 2 match November; in January, customers 1 and 4 match December; in March nothing matches because February has no rows.",
+      "`COUNT(*) AS active_customers, COUNT(p.customer_id) AS retained_customers`: 3 and 0, 4 and 2, 3 and 2, 2 and 0.",
+      "`LEFT JOIN monthly prev ON prev.month_num = cur.month_num - 1`: December divides by November's 3 (0.67), January by December's 4 (0.5). November and March have no previous month row, so their rate is NULL.",
+      "`ORDER BY cur.month`: the 'YYYY-MM' strings sort in calendar order."
+    ],
+    "mistakes": [
+      "Using LAG over the active months: March is compared with January, giving 2 retained and a rate of 0.67 instead of 0 and NULL.",
+      "Dividing by this month's active customers: January becomes 2 / 3 = 0.67 instead of 2 / 4 = 0.5.",
+      "Keeping the NULL customer_id row: after SELECT DISTINCT it is still a row, so COUNT(*) shows 4 active customers in January instead of 3.",
+      "Matching previous months with MONTH(txn_date) - 1: January 2026 looks for month 0 and finds no December retention.",
+      "Integer division (retained / active with whole numbers): 2 / 3 becomes 0.",
+      "Forgetting DISTINCT, so customer 1 counts twice in November."
     ]
   }
 ]

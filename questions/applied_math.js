@@ -4,10 +4,16 @@ window.BANK = (window.BANK || []).concat(
     "id": "math-bayes-fraud-flag",
     "section": "math",
     "type": "mcq",
+    "difficulty": "Hard",
     "topic": "Conditional probability and Bayes",
     "title": "How often a flag means fraud",
     "prompt": "1% of card transactions are fraudulent. A fraud detector flags 90% of fraudulent transactions, and it also flags 5% of legitimate ones. A transaction gets flagged. What is the probability that it is actually fraudulent?",
-    "options": ["9/10", "9/50", "1/100", "2/13"],
+    "options": [
+      "9/10",
+      "9/50",
+      "1/100",
+      "2/13"
+    ],
     "answer": 3,
     "explanations": [
       "This is P(flagged | fraud), the detector's hit rate. The question asks the reverse, P(fraud | flagged). Confusing the two is the classic Bayes mistake.",
@@ -21,16 +27,30 @@ window.BANK = (window.BANK || []).concat(
       "P(fraud | flagged) = fraud flags / all flags = 90 / (90 + 495) = 90/585 = 2/13.",
       "Sanity check: when the base rate is tiny, most flags are false alarms even for a good detector."
     ],
-    "check": {"compute": "0.01*0.9 / (0.01*0.9 + 0.99*0.05)", "values": ["9/10", "9/50", "1/100", "2/13"]}
+    "check": {
+      "compute": "0.01*0.9 / (0.01*0.9 + 0.99*0.05)",
+      "values": [
+        "9/10",
+        "9/50",
+        "1/100",
+        "2/13"
+      ]
+    }
   },
   {
     "id": "math-poisson-at-least-one",
     "section": "math",
     "type": "mcq",
+    "difficulty": "Easy",
     "topic": "Poisson distribution",
     "title": "At least one fraud alert in an hour",
     "prompt": "Fraud alerts arrive at a monitoring desk at an average rate of 3 per hour, following a Poisson distribution. What is the probability of at least one alert in a given hour?",
-    "options": ["e^−3", "3e^−3", "1 − e^−3", "1 − 4e^−3"],
+    "options": [
+      "e^−3",
+      "3e^−3",
+      "1 − e^−3",
+      "1 − 4e^−3"
+    ],
     "answer": 2,
     "explanations": [
       "This is P(X = 0), the chance of no alerts at all: λ^0 e^−λ / 0! = e^−3.",
@@ -45,17 +65,28 @@ window.BANK = (window.BANK || []).concat(
     ],
     "check": {
       "compute": "1 - math.exp(-3)",
-      "values": ["math.exp(-3)", "3*math.exp(-3)", "1 - math.exp(-3)", "1 - 4*math.exp(-3)"]
+      "values": [
+        "math.exp(-3)",
+        "3*math.exp(-3)",
+        "1 - math.exp(-3)",
+        "1 - 4*math.exp(-3)"
+      ]
     }
   },
   {
     "id": "math-choose-audit-team",
     "section": "math",
     "type": "mcq",
+    "difficulty": "Easy",
     "topic": "Combinations",
     "title": "Choosing an audit team",
     "prompt": "A branch has 8 loan officers. In how many ways can it choose 3 of them to form an audit team, if the team members have no distinct roles?",
-    "options": ["24", "56", "336", "512"],
+    "options": [
+      "24",
+      "56",
+      "336",
+      "512"
+    ],
     "answer": 1,
     "explanations": [
       "This multiplies 8 × 3, which doesn't count anything meaningful here.",
@@ -68,16 +99,30 @@ window.BANK = (window.BANK || []).concat(
       "Without repetition, C(n, k) = n! / (k!(n − k)!). Compute it as the top k factors of n! divided by k!: 8 × 7 × 6 / 6.",
       "If the members had roles (chair, secretary, reviewer), the answer would be the permutation 8 × 7 × 6 = 336."
     ],
-    "check": {"compute": "math.comb(8, 3)", "values": ["24", "56", "336", "512"]}
+    "check": {
+      "compute": "math.comb(8, 3)",
+      "values": [
+        "24",
+        "56",
+        "336",
+        "512"
+      ]
+    }
   },
   {
     "id": "math-normal-credit-score",
     "section": "math",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "Normal distribution: empirical rule",
     "title": "Credit scores above 800",
     "prompt": "Credit scores in a bank's applicant pool are approximately normal with mean 700 and standard deviation 50. Using the 68-95-99.7 rule, approximately what percentage of applicants score above 800?",
-    "options": ["2.5%", "5%", "16%", "0.15%"],
+    "options": [
+      "2.5%",
+      "5%",
+      "16%",
+      "0.15%"
+    ],
     "answer": 0,
     "explanations": [
       "Correct. 800 is (800 − 700) / 50 = 2 standard deviations above the mean. About 95% lie within ±2 SD, so 5% lie outside, split evenly: 2.5% above.",
@@ -91,16 +136,30 @@ window.BANK = (window.BANK || []).concat(
       "For one tail, take what is outside and halve it: (100% − 95%) / 2 = 2.5%.",
       "Before answering, check you used the right tail and the right number of SDs."
     ],
-    "check": {"compute": "(1 - 0.95) / 2", "values": ["0.025", "0.05", "0.16", "0.0015"]}
+    "check": {
+      "compute": "(1 - 0.95) / 2",
+      "values": [
+        "0.025",
+        "0.05",
+        "0.16",
+        "0.0015"
+      ]
+    }
   },
   {
     "id": "math-expected-loan-profit",
     "section": "math",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "Expected value",
     "title": "Expected profit on a small loan",
     "prompt": "A bank lends $1,000 for one year and charges $100 in interest. The probability the borrower defaults is 5%. If the borrower defaults, the bank recovers nothing and loses the $1,000. Otherwise the bank earns the $100. What is the bank's expected profit on this loan?",
-    "options": ["$45", "$95", "$100", "$40"],
+    "options": [
+      "$45",
+      "$95",
+      "$100",
+      "$40"
+    ],
     "answer": 0,
     "explanations": [
       "Correct. E = 0.95 × 100 + 0.05 × (−1,000) = 95 − 50 = 45.",
@@ -113,16 +172,30 @@ window.BANK = (window.BANK || []).concat(
       "Multiply each profit by its probability and add: E = Σ p × value.",
       "Check that the probabilities add to 1 and that you didn't double-count a loss."
     ],
-    "check": {"compute": "0.95*100 + 0.05*(-1000)", "values": ["45", "95", "100", "40"]}
+    "check": {
+      "compute": "0.95*100 + 0.05*(-1000)",
+      "values": [
+        "45",
+        "95",
+        "100",
+        "40"
+      ]
+    }
   },
   {
     "id": "math-pin-no-repeats",
     "section": "math",
     "type": "mcq",
+    "difficulty": "Easy",
     "topic": "Permutations and counting",
     "title": "PINs with no repeated digit",
     "prompt": "A debit card PIN is 4 digits, each 0 through 9, and a leading 0 is allowed. How many PINs have no repeated digit?",
-    "options": ["10,000", "5,040", "4,536", "210"],
+    "options": [
+      "10,000",
+      "5,040",
+      "4,536",
+      "210"
+    ],
     "answer": 1,
     "explanations": [
       "This is 10^4, every PIN including those with repeated digits.",
@@ -135,16 +208,30 @@ window.BANK = (window.BANK || []).concat(
       "Order matters for codes and PINs, so use permutations, not combinations.",
       "Re-read the constraints (repeats allowed? leading zero allowed?) before multiplying."
     ],
-    "check": {"compute": "10*9*8*7", "values": ["10000", "5040", "4536", "210"]}
+    "check": {
+      "compute": "10*9*8*7",
+      "values": [
+        "10000",
+        "5040",
+        "4536",
+        "210"
+      ]
+    }
   },
   {
     "id": "math-audit-includes-flagged",
     "section": "math",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "Combinations with a constraint",
     "title": "An audit sample that must include one file",
     "prompt": "An auditor picks 4 of 10 loan files to review. One specific file has been flagged and must be included. How many different samples are possible?",
-    "options": ["210", "126", "84", "36"],
+    "options": [
+      "210",
+      "126",
+      "84",
+      "36"
+    ],
     "answer": 2,
     "explanations": [
       "This is C(10, 4), all 4-file samples, ignoring the requirement to include the flagged file.",
@@ -157,16 +244,30 @@ window.BANK = (window.BANK || []).concat(
       "Here: 1 fixed, choose 3 of the remaining 9.",
       "Check with complements: C(10, 4) − C(9, 4) = 210 − 126 = 84, the samples that do include it."
     ],
-    "check": {"compute": "comb(9, 3)", "values": ["210", "126", "84", "36"]}
+    "check": {
+      "compute": "comb(9, 3)",
+      "values": [
+        "210",
+        "126",
+        "84",
+        "36"
+      ]
+    }
   },
   {
     "id": "math-conditional-two-way",
     "section": "math",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "Conditional probability",
     "title": "Mortgage holders with a credit card",
     "prompt": "Of 200 customers, 120 have a credit card, 80 have a mortgage, and 50 have both. A customer is chosen at random and turns out to have a mortgage. What is the probability that they also have a credit card?",
-    "options": ["5/12", "3/5", "1/4", "5/8"],
+    "options": [
+      "5/12",
+      "3/5",
+      "1/4",
+      "5/8"
+    ],
     "answer": 3,
     "explanations": [
       "This is 50/120, P(mortgage | credit card). The condition is reversed: we know they have a mortgage.",
@@ -179,16 +280,30 @@ window.BANK = (window.BANK || []).concat(
       "Identify which event is known (here, the mortgage) and put it in the denominator.",
       "Watch for the reversed option, P(B | A), which divides by the wrong group."
     ],
-    "check": {"compute": "50/80", "values": ["50/120", "120/200", "50/200", "50/80"]}
+    "check": {
+      "compute": "50/80",
+      "values": [
+        "50/120",
+        "120/200",
+        "50/200",
+        "50/80"
+      ]
+    }
   },
   {
     "id": "math-independent-at-least-one",
     "section": "math",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "Independent events",
     "title": "Flagged by at least one rule",
     "prompt": "Two independent fraud rules check every transaction. Rule A flags 10% of transactions and rule B flags 20%. What is the probability that a transaction is flagged by at least one rule?",
-    "options": ["0.30", "0.28", "0.02", "0.26"],
+    "options": [
+      "0.30",
+      "0.28",
+      "0.02",
+      "0.26"
+    ],
     "answer": 1,
     "explanations": [
       "This adds the probabilities and forgets that some transactions are flagged by both, which are then counted twice.",
@@ -201,16 +316,30 @@ window.BANK = (window.BANK || []).concat(
       "For independent events, multiply: P(neither) = P(not A) × P(not B).",
       "Or use inclusion-exclusion: P(A or B) = P(A) + P(B) − P(A and B)."
     ],
-    "check": {"compute": "1 - 0.9*0.8", "values": ["0.30", "0.28", "0.02", "0.26"]}
+    "check": {
+      "compute": "1 - 0.9*0.8",
+      "values": [
+        "0.30",
+        "0.28",
+        "0.02",
+        "0.26"
+      ]
+    }
   },
   {
     "id": "math-expected-bonus",
     "section": "math",
     "type": "mcq",
+    "difficulty": "Easy",
     "topic": "Expected value",
     "title": "Expected sign-up bonus",
     "prompt": "A promotion gives each new customer a $50 bonus with probability 1/10, a $10 bonus with probability 3/10, and nothing otherwise. What is the expected bonus per new customer?",
-    "options": ["$30", "$20", "$8", "$60"],
+    "options": [
+      "$30",
+      "$20",
+      "$8",
+      "$60"
+    ],
     "answer": 2,
     "explanations": [
       "This averages only the two nonzero amounts and ignores the probabilities.",
@@ -223,16 +352,30 @@ window.BANK = (window.BANK || []).concat(
       "Include the zero outcome so the probabilities add to 1 (1/10 + 3/10 + 6/10).",
       "A plain average is only right when every outcome is equally likely."
     ],
-    "check": {"compute": "50*Fraction(1,10) + 10*Fraction(3,10)", "values": ["30", "20", "8", "60"]}
+    "check": {
+      "compute": "50*Fraction(1,10) + 10*Fraction(3,10)",
+      "values": [
+        "30",
+        "20",
+        "8",
+        "60"
+      ]
+    }
   },
   {
     "id": "math-arrange-balance",
     "section": "math",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "Permutations with repeated items",
     "title": "Rearranging the letters of BALANCE",
     "prompt": "How many distinct arrangements are there of the letters in the word BALANCE?",
-    "options": ["2,520", "5,040", "1,260", "720"],
+    "options": [
+      "2,520",
+      "5,040",
+      "1,260",
+      "720"
+    ],
     "answer": 0,
     "explanations": [
       "Correct. BALANCE has 7 letters with A appearing twice. Divide 7! by 2! for the repeated A's: 5,040 / 2 = 2,520.",
@@ -245,16 +388,30 @@ window.BANK = (window.BANK || []).concat(
       "Arrangements = n! / (k1! × k2! × ...), one factorial for each repeated letter.",
       "Double-check the repeats by writing out the letters; it's easy to imagine a repeat that isn't there."
     ],
-    "check": {"compute": "factorial(7) // factorial(2)", "values": ["2520", "5040", "1260", "720"]}
+    "check": {
+      "compute": "factorial(7) // factorial(2)",
+      "values": [
+        "2520",
+        "5040",
+        "1260",
+        "720"
+      ]
+    }
   },
   {
     "id": "math-poisson-exactly-three",
     "section": "math",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "Poisson distribution",
     "title": "Exactly three applications in an hour",
     "prompt": "Loan applications arrive at an average rate of 2 per hour, following a Poisson distribution. What is the probability of exactly 3 applications in a given hour?",
-    "options": ["1 − e^−2", "8e^−2", "(9/2)e^−3", "(4/3)e^−2"],
+    "options": [
+      "1 − e^−2",
+      "8e^−2",
+      "(9/2)e^−3",
+      "(4/3)e^−2"
+    ],
     "answer": 3,
     "explanations": [
       "This is P(at least one), not P(exactly three).",
@@ -269,17 +426,28 @@ window.BANK = (window.BANK || []).concat(
     ],
     "check": {
       "compute": "2**3 * math.exp(-2) / factorial(3)",
-      "values": ["1 - math.exp(-2)", "8*math.exp(-2)", "4.5*math.exp(-3)", "Fraction(4,3)*math.exp(-2)"]
+      "values": [
+        "1 - math.exp(-2)",
+        "8*math.exp(-2)",
+        "4.5*math.exp(-3)",
+        "Fraction(4,3)*math.exp(-2)"
+      ]
     }
   },
   {
     "id": "math-poisson-rescale",
     "section": "math",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "Poisson distribution: changing the interval",
     "title": "No disputes in five minutes",
     "prompt": "A call center receives card disputes at an average of 12 per hour, following a Poisson distribution. What is the probability of receiving no disputes in a 5-minute window?",
-    "options": ["e^−1", "e^−12", "1 − e^−1", "e^−5"],
+    "options": [
+      "e^−1",
+      "e^−12",
+      "1 − e^−1",
+      "e^−5"
+    ],
     "answer": 0,
     "explanations": [
       "Correct. 5 minutes is 1/12 of an hour, so λ = 12 × 1/12 = 1. P(X = 0) = e^−λ = e^−1, about 0.37.",
@@ -294,17 +462,28 @@ window.BANK = (window.BANK || []).concat(
     ],
     "check": {
       "compute": "math.exp(-12 * 5 / 60)",
-      "values": ["math.exp(-1)", "math.exp(-12)", "1 - math.exp(-1)", "math.exp(-5)"]
+      "values": [
+        "math.exp(-1)",
+        "math.exp(-12)",
+        "1 - math.exp(-1)",
+        "math.exp(-5)"
+      ]
     }
   },
   {
     "id": "math-normal-between",
     "section": "math",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "Normal distribution: empirical rule",
     "title": "Processing times between two values",
     "prompt": "Loan processing times are approximately normal with mean 40 minutes and standard deviation 8 minutes. Using the 68-95-99.7 rule, about what percentage of loans take between 32 and 56 minutes?",
-    "options": ["68%", "47.5%", "95%", "81.5%"],
+    "options": [
+      "68%",
+      "47.5%",
+      "95%",
+      "81.5%"
+    ],
     "answer": 3,
     "explanations": [
       "68% covers ±1 SD, from 32 to 48. The interval here reaches 56, which is +2 SD.",
@@ -317,16 +496,30 @@ window.BANK = (window.BANK || []).concat(
       "Split the interval at the mean and use half of each empirical-rule percentage on each side.",
       "Add the pieces: 34% + 47.5%."
     ],
-    "check": {"compute": "0.68/2 + 0.95/2", "values": ["0.68", "0.475", "0.95", "0.815"]}
+    "check": {
+      "compute": "0.68/2 + 0.95/2",
+      "values": [
+        "0.68",
+        "0.475",
+        "0.95",
+        "0.815"
+      ]
+    }
   },
   {
     "id": "math-bayes-not-flagged",
     "section": "math",
     "type": "mcq",
+    "difficulty": "Hard",
     "topic": "Conditional probability and Bayes",
     "title": "High risk even though not flagged",
     "prompt": "20% of loan applicants are high risk. A screening model flags 80% of high-risk applicants and 10% of low-risk applicants. An applicant is **not** flagged. What is the probability that they are high risk?",
-    "options": ["1/5", "1/19", "1/25", "2/3"],
+    "options": [
+      "1/5",
+      "1/19",
+      "1/25",
+      "2/3"
+    ],
     "answer": 1,
     "explanations": [
       "This is the base rate. Not being flagged is evidence of lower risk, so the probability should drop below 1/5.",
@@ -340,16 +533,30 @@ window.BANK = (window.BANK || []).concat(
       "P(high | not flagged) = 4 / (4 + 72) = 4/76 = 1/19.",
       "Read carefully whether the condition is \"flagged\" or \"not flagged.\""
     ],
-    "check": {"compute": "(0.2*0.2) / (0.2*0.2 + 0.8*0.9)", "values": ["1/5", "1/19", "1/25", "2/3"]}
+    "check": {
+      "compute": "(0.2*0.2) / (0.2*0.2 + 0.8*0.9)",
+      "values": [
+        "1/5",
+        "1/19",
+        "1/25",
+        "2/3"
+      ]
+    }
   },
   {
     "id": "math-tellers-not-adjacent",
     "section": "math",
     "type": "mcq",
+    "difficulty": "Hard",
     "topic": "Counting with a restriction",
     "title": "Two tellers who can't sit together",
     "prompt": "Five tellers are assigned to five windows in a row, one teller per window. Two particular tellers must not be at neighboring windows. How many assignments are possible?",
-    "options": ["120", "96", "72", "48"],
+    "options": [
+      "120",
+      "96",
+      "72",
+      "48"
+    ],
     "answer": 2,
     "explanations": [
       "This is 5!, every assignment, ignoring the restriction.",
@@ -362,16 +569,30 @@ window.BANK = (window.BANK || []).concat(
       "Count \"together\" cases by treating the pair as one block, then multiply by the ways to order inside the block.",
       "Subtract from the total, and check which of the two counts the question actually wants."
     ],
-    "check": {"compute": "factorial(5) - factorial(4)*2", "values": ["120", "96", "72", "48"]}
+    "check": {
+      "compute": "factorial(5) - factorial(4)*2",
+      "values": [
+        "120",
+        "96",
+        "72",
+        "48"
+      ]
+    }
   },
   {
     "id": "math-at-least-one-manager",
     "section": "math",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "Combinations: at least one",
     "title": "A review panel with at least one manager",
     "prompt": "A review panel of 3 is chosen from 5 analysts and 4 managers. How many panels include at least one manager?",
-    "options": ["84", "40", "112", "74"],
+    "options": [
+      "84",
+      "40",
+      "112",
+      "74"
+    ],
     "answer": 3,
     "explanations": [
       "This is C(9, 3), every panel, including the 10 with no manager.",
@@ -384,16 +605,30 @@ window.BANK = (window.BANK || []).concat(
       "Total: C(9, 3). None: all three from the 5 analysts, C(5, 3).",
       "Avoid \"pick one, then pick the rest\" for at-least-one problems: it double counts."
     ],
-    "check": {"compute": "comb(9, 3) - comb(5, 3)", "values": ["84", "40", "112", "74"]}
+    "check": {
+      "compute": "comb(9, 3) - comb(5, 3)",
+      "values": [
+        "84",
+        "40",
+        "112",
+        "74"
+      ]
+    }
   },
   {
     "id": "math-expected-disputes",
     "section": "math",
     "type": "mcq",
+    "difficulty": "Easy",
     "topic": "Expected value of a count",
     "title": "Expected number of disputes",
     "prompt": "Each of 200 card accounts files a dispute in a given month with probability 0.01, independently of the others. What is the expected number of disputes this month?",
-    "options": ["0.01", "0.2", "2", "20"],
+    "options": [
+      "0.01",
+      "0.2",
+      "2",
+      "20"
+    ],
     "answer": 2,
     "explanations": [
       "This is the probability for a single account, not the expected count across all 200.",
@@ -406,16 +641,30 @@ window.BANK = (window.BANK || []).concat(
       "This works by linearity of expectation, even without knowing the full distribution.",
       "With large n and small p, the count is close to Poisson with λ = n × p = 2."
     ],
-    "check": {"compute": "200 * 0.01", "values": ["0.01", "0.2", "2", "20"]}
+    "check": {
+      "compute": "200 * 0.01",
+      "values": [
+        "0.01",
+        "0.2",
+        "2",
+        "20"
+      ]
+    }
   },
   {
     "id": "math-normal-symmetry",
     "section": "math",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "Normal distribution: symmetry",
     "title": "Using symmetry around the mean",
     "prompt": "Personal loan amounts are normally distributed with mean $20,000. The probability that a loan is above $26,000 is 0.10. What is the probability that a loan is between $14,000 and $26,000?",
-    "options": ["0.90", "0.80", "0.20", "0.40"],
+    "options": [
+      "0.90",
+      "0.80",
+      "0.20",
+      "0.40"
+    ],
     "answer": 1,
     "explanations": [
       "This removes only the upper tail. By symmetry, the lower tail below $14,000 is also 0.10.",
@@ -428,16 +677,30 @@ window.BANK = (window.BANK || []).concat(
       "A normal curve is symmetric, so equal-distance tails have equal probability.",
       "Middle = 1 − both tails. Draw the curve and shade it if unsure."
     ],
-    "check": {"compute": "1 - 2*0.10", "values": ["0.90", "0.80", "0.20", "0.40"]}
+    "check": {
+      "compute": "1 - 2*0.10",
+      "values": [
+        "0.90",
+        "0.80",
+        "0.20",
+        "0.40"
+      ]
+    }
   },
   {
     "id": "math-ordering-tellers",
     "section": "math",
     "type": "mcq",
+    "difficulty": "Easy",
     "topic": "Analytical reasoning: ordering",
     "title": "Who processed the second fewest",
     "prompt": "Four tellers processed different numbers of transactions yesterday. Ana processed more than Bo. Cy processed fewer than Bo but more than Dee. Who processed the second fewest?",
-    "options": ["Cy", "Bo", "Ana", "Dee"],
+    "options": [
+      "Cy",
+      "Bo",
+      "Ana",
+      "Dee"
+    ],
     "answer": 0,
     "explanations": [
       "Correct. The order from most to fewest is Ana, Bo, Cy, Dee, so Cy is second fewest.",
@@ -455,10 +718,16 @@ window.BANK = (window.BANK || []).concat(
     "id": "math-without-replacement",
     "section": "math",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "Probability without replacement",
     "title": "Two files that both have errors",
     "prompt": "A batch of 10 loan files contains 3 with errors. An auditor picks 2 files at random, without replacement. What is the probability that both have errors?",
-    "options": ["1/15", "9/100", "3/5", "2/9"],
+    "options": [
+      "1/15",
+      "9/100",
+      "3/5",
+      "2/9"
+    ],
     "answer": 0,
     "explanations": [
       "Correct. P(first has an error) = 3/10. Given that, 2 of the remaining 9 have errors: 2/9. Multiply: 3/10 × 2/9 = 6/90 = 1/15. Or C(3, 2) / C(10, 2) = 3/45 = 1/15.",
@@ -471,16 +740,30 @@ window.BANK = (window.BANK || []).concat(
       "Multiply along the sequence: P(A) × P(B | A).",
       "Check with combinations: favorable pairs / all pairs = C(3, 2) / C(10, 2)."
     ],
-    "check": {"compute": "Fraction(3, 10) * Fraction(2, 9)", "values": ["1/15", "9/100", "3/5", "2/9"]}
+    "check": {
+      "compute": "Fraction(3, 10) * Fraction(2, 9)",
+      "values": [
+        "1/15",
+        "9/100",
+        "3/5",
+        "2/9"
+      ]
+    }
   },
   {
     "id": "math-podium-branches",
     "section": "math",
     "type": "mcq",
+    "difficulty": "Easy",
     "topic": "Permutations",
     "title": "First, second and third place",
     "prompt": "A regional contest awards first, second and third place among 8 branches. How many different results are possible?",
-    "options": ["56", "336", "512", "24"],
+    "options": [
+      "56",
+      "336",
+      "512",
+      "24"
+    ],
     "answer": 1,
     "explanations": [
       "This is C(8, 3), which ignores order. Here first and second place are different outcomes.",
@@ -493,16 +776,30 @@ window.BANK = (window.BANK || []).concat(
       "Count choices position by position: 8 for first, 7 left for second, 6 for third.",
       "Compare with the committee version: dividing by 3! = 6 gives C(8, 3) = 56."
     ],
-    "check": {"compute": "perm(8, 3)", "values": ["56", "336", "512", "24"]}
+    "check": {
+      "compute": "perm(8, 3)",
+      "values": [
+        "56",
+        "336",
+        "512",
+        "24"
+      ]
+    }
   },
   {
     "id": "math-multiplication-rule",
     "section": "math",
     "type": "mcq",
+    "difficulty": "Easy",
     "topic": "Conditional probability: multiplication rule",
     "title": "Checking and savings together",
     "prompt": "70% of a bank's customers have a checking account. Among customers with a checking account, 40% also have a savings account. What percentage of all customers have both?",
-    "options": ["40%", "57%", "70%", "28%"],
+    "options": [
+      "40%",
+      "57%",
+      "70%",
+      "28%"
+    ],
     "answer": 3,
     "explanations": [
       "40% is P(savings | checking), the share among checking customers only, not among all customers.",
@@ -515,12 +812,21 @@ window.BANK = (window.BANK || []).concat(
       "Both: P(A and B) = P(A) × P(B | A).",
       "Check the size: \"both\" can't be larger than either group on its own."
     ],
-    "check": {"compute": "0.7 * 0.4", "values": ["0.40", "0.4/0.7", "0.70", "0.28"]}
+    "check": {
+      "compute": "0.7 * 0.4",
+      "values": [
+        "0.40",
+        "0.4/0.7",
+        "0.70",
+        "0.28"
+      ]
+    }
   },
   {
     "id": "math-compare-z-scores",
     "section": "math",
     "type": "mcq",
+    "difficulty": "Easy",
     "topic": "Normal distribution: z-scores",
     "title": "Who stands out more",
     "prompt": "Ana's credit score is 760 in an applicant pool with mean 700 and standard deviation 40. Bo's score is 690 in a different pool with mean 600 and standard deviation 60. Relative to their own pools, how do they compare?",
@@ -547,10 +853,16 @@ window.BANK = (window.BANK || []).concat(
     "id": "math-poisson-at-most-one",
     "section": "math",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "Poisson distribution",
     "title": "At most one chargeback",
     "prompt": "A merchant gets chargebacks at an average rate of 1 per day, following a Poisson distribution. What is the probability of at most one chargeback tomorrow?",
-    "options": ["e^−1", "2e^−1", "1 − e^−1", "1 − 2e^−1"],
+    "options": [
+      "e^−1",
+      "2e^−1",
+      "1 − e^−1",
+      "1 − 2e^−1"
+    ],
     "answer": 1,
     "explanations": [
       "This is P(X = 0) only. \"At most one\" also includes exactly one.",
@@ -565,18 +877,38 @@ window.BANK = (window.BANK || []).concat(
     ],
     "check": {
       "compute": "math.exp(-1) + math.exp(-1)",
-      "values": ["math.exp(-1)", "2*math.exp(-1)", "1 - math.exp(-1)", "1 - 2*math.exp(-1)"]
+      "values": [
+        "math.exp(-1)",
+        "2*math.exp(-1)",
+        "1 - math.exp(-1)",
+        "1 - 2*math.exp(-1)"
+      ]
     }
   },
   {
     "id": "math-multi-combination-identities",
     "section": "math",
     "type": "multi",
+    "difficulty": "Hard",
     "topic": "Combinations",
     "title": "Expressions equal to C(8, 3)",
     "prompt": "Which of these are equal to C(8, 3), the number of ways to choose 3 of 8 items?",
-    "options": ["C(8, 5)", "8! / (3! × 5!)", "P(8, 3) / 3!", "8 × 7 × 6", "56", "8³ / 3!", "C(7, 2) + C(7, 3)"],
-    "answers": [0, 1, 2, 4, 6],
+    "options": [
+      "C(8, 5)",
+      "8! / (3! × 5!)",
+      "P(8, 3) / 3!",
+      "8 × 7 × 6",
+      "56",
+      "8³ / 3!",
+      "C(7, 2) + C(7, 3)"
+    ],
+    "answers": [
+      0,
+      1,
+      2,
+      4,
+      6
+    ],
     "explanations": [
       "Correct. Choosing 3 to include is the same as choosing 5 to leave out: C(n, k) = C(n, n − k).",
       "Correct. This is the definition of C(8, 3).",
@@ -606,6 +938,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "math-multi-independence",
     "section": "math",
     "type": "multi",
+    "difficulty": "Hard",
     "topic": "Independence and the addition rule",
     "title": "Card used abroad and flagged",
     "prompt": "For a card transaction, let A = \"used abroad\" and B = \"flagged for review\". P(A) = 0.5, P(B) = 0.2 and P(A and B) = 0.1. Which statements are true?",
@@ -617,7 +950,11 @@ window.BANK = (window.BANK || []).concat(
       "A and B are mutually exclusive",
       "P(A | B) = 0.1"
     ],
-    "answers": [0, 1, 3],
+    "answers": [
+      0,
+      1,
+      3
+    ],
     "explanations": [
       "Correct. P(A) × P(B) = 0.5 × 0.2 = 0.1 = P(A and B).",
       "Correct. P(A and B) / P(A) = 0.1 / 0.5 = 0.2, the same as P(B), as expected for independent events.",
@@ -646,6 +983,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "math-multi-poisson-facts",
     "section": "math",
     "type": "multi",
+    "difficulty": "Medium",
     "topic": "Poisson distribution",
     "title": "Facts about a Poisson count",
     "prompt": "Chargebacks per day follow a Poisson distribution with λ = 4. Let X be tomorrow's count. Which statements are true?",
@@ -658,7 +996,13 @@ window.BANK = (window.BANK || []).concat(
       "X can equal 2.5",
       "The count over two days is Poisson with λ = 8"
     ],
-    "answers": [0, 1, 3, 4, 6],
+    "answers": [
+      0,
+      1,
+      3,
+      4,
+      6
+    ],
     "explanations": [
       "Correct. For a Poisson distribution, the mean is λ.",
       "Correct. For a Poisson distribution, the variance also equals λ.",
@@ -678,6 +1022,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "math-multi-normal-facts",
     "section": "math",
     "type": "multi",
+    "difficulty": "Medium",
     "topic": "Normal distribution",
     "title": "Facts about a normal distribution",
     "prompt": "Scores on a bank's financial literacy quiz are normal with mean 100 and standard deviation 15. Which statements are true?",
@@ -690,7 +1035,13 @@ window.BANK = (window.BANK || []).concat(
       "Half of the scores are above 100",
       "About 2.5% of scores are below 55"
     ],
-    "answers": [0, 1, 2, 4, 5],
+    "answers": [
+      0,
+      1,
+      2,
+      4,
+      5
+    ],
     "explanations": [
       "Correct. That's ±1 SD.",
       "Correct. That's ±2 SD.",
@@ -710,6 +1061,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "math-poisson-read-pmf",
     "section": "math",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "Poisson distribution: reading the mean",
     "title": "Which Poisson has the largest rate",
     "prompt": "Three Poisson distributions X, Y and Z describe fraud alerts per day. X has its highest probabilities at k = 0 and k = 1 (about 0.37 each). Y peaks at k = 3 and 4 (about 0.20 each). Z peaks at k = 9 and 10 (about 0.13 each). How do their rates λ compare?",
@@ -734,6 +1086,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "math-poisson-at-least-k",
     "section": "math",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "Poisson distribution: at least k",
     "title": "At least 8 alerts in an hour",
     "prompt": "Alerts arrive at an average of 6 per hour, following a Poisson distribution. Which expression gives the probability of **at least 8** alerts in an hour?",
@@ -759,6 +1112,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "math-inclusion-exclusion-reverse",
     "section": "math",
     "type": "mcq",
+    "difficulty": "Easy",
     "topic": "Independence and the addition rule",
     "title": "Working backwards from P(A or B)",
     "prompt": "35% of customers have a credit card or a car loan (or both). 25% have a credit card, and 10% have both. What percent have a car loan?",

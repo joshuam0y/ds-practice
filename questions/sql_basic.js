@@ -4,6 +4,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "sqlb-left-join-where",
     "section": "sqlbasic",
     "type": "mcq",
+    "difficulty": "Hard",
     "topic": "LEFT JOIN and WHERE",
     "title": "A LEFT JOIN that loses rows",
     "prompt": [
@@ -41,6 +42,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "sqlb-is-null",
     "section": "sqlbasic",
     "type": "mcq",
+    "difficulty": "Easy",
     "topic": "NULL comparisons",
     "title": "Finding accounts with no close date",
     "prompt": "The `accounts` table has a `closed_date` column that is NULL for accounts that are still open. Which query returns exactly the accounts that are still open?",
@@ -67,6 +69,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "sqlb-count-variants",
     "section": "sqlbasic",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "Aggregations: COUNT and NULLs",
     "title": "Three kinds of COUNT",
     "prompt": [
@@ -79,7 +82,12 @@ window.BANK = (window.BANK || []).concat(
       "",
       "What does this return?"
     ],
-    "options": ["5, 3, 2", "5, 5, 3", "3, 3, 2", "5, 3, 3"],
+    "options": [
+      "5, 3, 2",
+      "5, 5, 3",
+      "3, 3, 2",
+      "5, 3, 3"
+    ],
     "answer": 0,
     "explanations": [
       "Correct. COUNT(*) counts rows (5). COUNT(credit_score) skips NULLs (3). COUNT(DISTINCT credit_score) counts different non-NULL values: 700 and 650 (2).",
@@ -96,6 +104,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "sqlb-having-vs-where",
     "section": "sqlbasic",
     "type": "mcq",
+    "difficulty": "Easy",
     "topic": "GROUP BY and HAVING",
     "title": "Branches with more than 100 accounts",
     "prompt": "Which query lists the branches that have more than 100 accounts?",
@@ -122,6 +131,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "sqlb-limit-ties",
     "section": "sqlbasic",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "ORDER BY, LIMIT and ties",
     "title": "Top 3 balances when two tie",
     "prompt": [
@@ -159,6 +169,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "sqlb-distinct-pairs",
     "section": "sqlbasic",
     "type": "mcq",
+    "difficulty": "Easy",
     "topic": "SELECT DISTINCT",
     "title": "DISTINCT on two columns",
     "prompt": [
@@ -192,6 +203,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "sqlb-last-four-chars",
     "section": "sqlbasic",
     "type": "mcq",
+    "difficulty": "Easy",
     "topic": "String functions",
     "title": "Last four digits of a card number",
     "prompt": "`card_number` stores 16-digit card numbers as text, such as `'4111111111111234'`. In MySQL, which expression returns the last four digits (`'1234'`)?",
@@ -218,6 +230,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "sqlb-inner-join-count",
     "section": "sqlbasic",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "INNER JOIN row counts",
     "title": "How many rows does the join return",
     "prompt": [
@@ -231,7 +244,12 @@ window.BANK = (window.BANK || []).concat(
       "",
       "How many rows does this return?"
     ],
-    "options": ["5", "4", "3", "12"],
+    "options": [
+      "5",
+      "4",
+      "3",
+      "12"
+    ],
     "answer": 2,
     "explanations": [
       "This is a FULL OUTER JOIN count: the 3 matches, plus customer 3, plus the unmatched NULL account.",
@@ -244,16 +262,30 @@ window.BANK = (window.BANK || []).concat(
       "Inner join drops unmatched rows on both sides. LEFT JOIN keeps unmatched left rows, FULL OUTER keeps both.",
       "NULL keys never match, not even another NULL."
     ],
-    "check": {"compute": "2 + 1", "values": ["5", "4", "3", "12"]}
+    "check": {
+      "compute": "2 + 1",
+      "values": [
+        "5",
+        "4",
+        "3",
+        "12"
+      ]
+    }
   },
   {
     "id": "sqlb-avg-ignores-null",
     "section": "sqlbasic",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "Aggregations and NULLs",
     "title": "Average with a missing balance",
     "prompt": "A column `balance` holds 100, 200, NULL and 300. What does `SELECT AVG(balance) FROM accounts;` return?",
-    "options": ["150", "200", "NULL", "600"],
+    "options": [
+      "150",
+      "200",
+      "NULL",
+      "600"
+    ],
     "answer": 1,
     "explanations": [
       "This divides 600 by 4, treating the NULL as 0. AVG skips NULLs, so it divides by 3.",
@@ -266,16 +298,30 @@ window.BANK = (window.BANK || []).concat(
       "So AVG(col) = SUM(col) / COUNT(col), not SUM(col) / COUNT(*).",
       "Decide whether a missing value should count as zero; if so, use COALESCE."
     ],
-    "check": {"compute": "600/3", "values": ["600/4", "600/3", "float('nan')", "600"]}
+    "check": {
+      "compute": "600/3",
+      "values": [
+        "600/4",
+        "600/3",
+        "float('nan')",
+        "600"
+      ]
+    }
   },
   {
     "id": "sqlb-between-inclusive",
     "section": "sqlbasic",
     "type": "mcq",
+    "difficulty": "Easy",
     "topic": "WHERE: BETWEEN",
     "title": "Is BETWEEN inclusive",
     "prompt": "Which of the credit scores 649, 650, 700 and 701 satisfy `WHERE credit_score BETWEEN 650 AND 700`?",
-    "options": ["650 and 700", "650 only", "None of them; BETWEEN excludes both ends", "700 and 701"],
+    "options": [
+      "650 and 700",
+      "650 only",
+      "None of them; BETWEEN excludes both ends",
+      "700 and 701"
+    ],
     "answer": 0,
     "explanations": [
       "Correct. BETWEEN a AND b means >= a AND <= b, so both endpoints are included.",
@@ -293,6 +339,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "sqlb-rank-functions",
     "section": "sqlbasic",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "Window functions: ROW_NUMBER, RANK, DENSE_RANK",
     "title": "Which ranking function gives 1, 2, 2, 4",
     "prompt": "Four accounts have balances 900, 800, 800 and 700. Ordered by balance descending, which window function assigns them 1, 2, 2, 4?",
@@ -319,6 +366,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "sqlb-union-vs-union-all",
     "section": "sqlbasic",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "UNION and UNION ALL",
     "title": "Customers with checking or savings",
     "prompt": [
@@ -332,7 +380,12 @@ window.BANK = (window.BANK || []).concat(
       "",
       "How many rows does this return?"
     ],
-    "options": ["5", "6", "1", "4"],
+    "options": [
+      "5",
+      "6",
+      "1",
+      "4"
+    ],
     "answer": 3,
     "explanations": [
       "This is what UNION ALL returns: it keeps duplicates, so customer 5 appears twice.",
@@ -345,12 +398,21 @@ window.BANK = (window.BANK || []).concat(
       "List the combined values and cross out repeats.",
       "UNION ALL is faster because it skips the duplicate check, so use it when you know there are no duplicates or want them."
     ],
-    "check": {"compute": "len({1, 2, 5} | {5, 6})", "values": ["5", "6", "1", "4"]}
+    "check": {
+      "compute": "len({1, 2, 5} | {5, 6})",
+      "values": [
+        "5",
+        "6",
+        "1",
+        "4"
+      ]
+    }
   },
   {
     "id": "sqlb-group-by-nonaggregated",
     "section": "sqlbasic",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "GROUP BY rules",
     "title": "A column that isn't grouped",
     "prompt": [
@@ -385,6 +447,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "sqlb-like-ends-with",
     "section": "sqlbasic",
     "type": "mcq",
+    "difficulty": "Easy",
     "topic": "String matching with LIKE",
     "title": "Emails at one domain",
     "prompt": "Which WHERE clause finds customers whose email ends with `@citizensbank.com`?",
@@ -411,10 +474,16 @@ window.BANK = (window.BANK || []).concat(
     "id": "sqlb-coalesce-first",
     "section": "sqlbasic",
     "type": "mcq",
+    "difficulty": "Easy",
     "topic": "NULL handling with COALESCE",
     "title": "Choosing a display name",
     "prompt": "For a customer whose `nickname` is NULL and `first_name` is `'Ana'`, what does `COALESCE(nickname, first_name, 'Customer')` return?",
-    "options": ["NULL", "'Customer'", "An error, because the arguments mix columns and text", "'Ana'"],
+    "options": [
+      "NULL",
+      "'Customer'",
+      "An error, because the arguments mix columns and text",
+      "'Ana'"
+    ],
     "answer": 3,
     "explanations": [
       "COALESCE returns NULL only if every argument is NULL.",
@@ -432,6 +501,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "sqlb-multi-customers-without-accounts",
     "section": "sqlbasic",
     "type": "multi",
+    "difficulty": "Hard",
     "topic": "Joins, NOT IN and NULLs",
     "title": "Queries that find customers with no accounts",
     "prompt": [
@@ -444,7 +514,10 @@ window.BANK = (window.BANK || []).concat(
       "`SELECT c.* FROM customers c JOIN accounts a ON a.customer_id = c.customer_id WHERE a.customer_id IS NULL;`",
       "`SELECT c.* FROM customers c LEFT JOIN accounts a ON a.customer_id = c.customer_id WHERE a.customer_id = NULL;`"
     ],
-    "answers": [0, 2],
+    "answers": [
+      0,
+      2
+    ],
     "explanations": [
       "Correct. The anti-join pattern: unmatched customers get NULLs from the LEFT JOIN, and IS NULL keeps exactly those.",
       "Not true. Because the subquery contains a NULL, x NOT IN (..., NULL) is never true, so this returns no rows at all.",
@@ -462,6 +535,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "sqlb-multi-null-facts",
     "section": "sqlbasic",
     "type": "multi",
+    "difficulty": "Hard",
     "topic": "NULL handling",
     "title": "True statements about NULL",
     "prompt": "Which statements about NULL in SQL are true?",
@@ -473,7 +547,12 @@ window.BANK = (window.BANK || []).concat(
       "`WHERE col <> 'x'` also returns rows where col is NULL",
       "`GROUP BY col` puts all NULL values of col into a single group"
     ],
-    "answers": [0, 1, 3, 5],
+    "answers": [
+      0,
+      1,
+      3,
+      5
+    ],
     "explanations": [
       "Correct. Any comparison with NULL is unknown, even with another NULL.",
       "Correct. COUNT(*) counts rows, not values.",
@@ -491,6 +570,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "sqlb-multi-ranking-facts",
     "section": "sqlbasic",
     "type": "multi",
+    "difficulty": "Medium",
     "topic": "Window functions: ROW_NUMBER, RANK, DENSE_RANK",
     "title": "Ranking four balances",
     "prompt": "Four accounts have balances 900, 800, 800 and 700, ranked with `ORDER BY balance DESC`. Which statements are true?",
@@ -502,7 +582,12 @@ window.BANK = (window.BANK || []).concat(
       "`ROW_NUMBER()` gives both 800 rows the number 2",
       "`DENSE_RANK()` gives the 700 row rank 4"
     ],
-    "answers": [0, 1, 2, 3],
+    "answers": [
+      0,
+      1,
+      2,
+      3
+    ],
     "explanations": [
       "Correct. ROW_NUMBER numbers rows 1, 2, 3, 4 with no ties.",
       "Correct. RANK gives both 800s rank 2 and then skips to 4.",
@@ -520,6 +605,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "sqlb-multi-having-queries",
     "section": "sqlbasic",
     "type": "multi",
+    "difficulty": "Hard",
     "topic": "GROUP BY, HAVING and ORDER BY (MySQL)",
     "title": "Branches over a million, largest first",
     "prompt": "Using MySQL, which queries list branches whose total balance is over 1,000,000, largest total first?",
@@ -530,7 +616,11 @@ window.BANK = (window.BANK || []).concat(
       "`SELECT branch_id, SUM(balance) AS total FROM accounts GROUP BY branch_id HAVING SUM(balance) > 1000000 ORDER BY total;`",
       "`SELECT * FROM (SELECT branch_id, SUM(balance) AS total FROM accounts GROUP BY branch_id) t WHERE total > 1000000 ORDER BY total DESC;`"
     ],
-    "answers": [0, 2, 4],
+    "answers": [
+      0,
+      2,
+      4
+    ],
     "explanations": [
       "Correct. The standard pattern: aggregate per branch, filter groups with HAVING, then sort.",
       "Not true. WHERE runs before grouping and can't use aggregates. This is an error.",
@@ -548,6 +638,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "sqlb-ddl-drop-column",
     "section": "sqlbasic",
     "type": "mcq",
+    "difficulty": "Easy",
     "topic": "Table structure: ALTER TABLE",
     "title": "Removing a column",
     "prompt": "The `transfers` table has a `memo` column nobody uses. Which MySQL statement removes the column itself (not just its values)?",
@@ -573,6 +664,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "sqlb-truncate-vs-drop",
     "section": "sqlbasic",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "Table structure: DROP, TRUNCATE, DELETE",
     "title": "Empty a table but keep it",
     "prompt": "Every night the `staging_txns` table is loaded fresh. You need to remove all of today's rows but keep the table and its columns for tomorrow's load. Which statement does that?",
@@ -597,6 +689,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "sqlb-join-statement-false",
     "section": "sqlbasic",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "Joins: what each join returns",
     "title": "Which statement about joins is false",
     "prompt": "Which of these statements about joins is **not** correct?",
@@ -622,6 +715,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "sqlb-self-join-manager",
     "section": "sqlbasic",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "Joins: self join",
     "title": "Each employee's manager",
     "prompt": "`employees(emp_id, name, manager_id)` stores each employee's manager as another row in the same table. The CEO's `manager_id` is NULL. Which query lists every employee with their manager's name, including the CEO?",
@@ -647,6 +741,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "sqlb-ddl-add-column",
     "section": "sqlbasic",
     "type": "mcq",
+    "difficulty": "Easy",
     "topic": "Table structure: ALTER TABLE",
     "title": "Adding a column",
     "prompt": "Which statement adds a new `risk_score` integer column to the existing `loans` table?",

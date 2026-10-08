@@ -11,6 +11,13 @@ statistics, Python and applied math. It runs entirely in the browser.
 - **Skill tests:** timed tests on one subject, like HackerRank's skill tests: SQL (2 queries + 6 multiple choice, 45 min),
   Python (45 min), Statistics and Applied Math (10 questions, 25 min), Problem Solving (2 coding, 45 min), pandas
   (2 coding, 30 min) and Machine Learning (10 questions, 20 min).
+- **Role assessments:** timed tests shaped like each role's screen: Data Scientist, Data Analyst (SQL heavy, A/B
+  testing, pandas), Data Engineer (SQL, data modeling and pipelines, Python, 90 min) and Data Scientist with an ML focus.
+- **Difficulty:** every question is Easy, Medium or Hard. Pick a level for role assessments, skill tests, drills and
+  topic practice (timed tests top up from other levels if one runs short).
+- **More sections:** NumPy coding, A/B Testing & Product (metrics, power, peeking, SRM, Simpson's paradox, CUPED),
+  Data Engineering (modeling, indexes, SCDs, idempotent pipelines, plus Python tasks like parsing logs and validating
+  batches), and Problem Solving now covers trees, graphs, heaps and dynamic programming too.
 - **Practice by topic:** pick one topic (window functions, Poisson, decorators, ...) for an untimed drill with hints.
   Topics with generators never run out.
 - **Extra sections beyond the assessment**, at LeetCode/NeetCode difficulty: Python Problem Solving (the core NeetCode

@@ -38,7 +38,7 @@
   // ---------------- Applied math ----------------
 
   T.push({
-    key: 'combo-team', section: 'math', topic: 'Combinations',
+    key: 'combo-team', difficulty: 'Easy', section: 'math', topic: 'Combinations',
     make(rand) {
       const n = between(rand, 6, 12)
       const k = between(rand, 2, 4)
@@ -63,7 +63,7 @@
   })
 
   T.push({
-    key: 'combo-at-least-one', section: 'math', topic: 'Combinations: at least one',
+    key: 'combo-at-least-one', difficulty: 'Medium', section: 'math', topic: 'Combinations: at least one',
     make(rand) {
       const a = between(rand, 4, 7)
       const m = between(rand, 2, 5)
@@ -90,7 +90,7 @@
   })
 
   T.push({
-    key: 'pin-no-repeat', section: 'math', topic: 'Permutations',
+    key: 'pin-no-repeat', difficulty: 'Easy', section: 'math', topic: 'Permutations',
     make(rand) {
       const L = between(rand, 3, 5)
       return {
@@ -113,7 +113,7 @@
   })
 
   T.push({
-    key: 'bayes-flag', section: 'math', topic: 'Conditional probability and Bayes',
+    key: 'bayes-flag', difficulty: 'Hard', section: 'math', topic: 'Conditional probability and Bayes',
     make(rand) {
       const p = pick(rand, [1, 2, 5, 10, 20]) // percent with the condition
       const s = pick(rand, [80, 90, 95]) // percent of true cases flagged
@@ -143,7 +143,7 @@
   })
 
   T.push({
-    key: 'poisson-at-least-one', section: 'math', topic: 'Poisson distribution',
+    key: 'poisson-at-least-one', difficulty: 'Easy', section: 'math', topic: 'Poisson distribution',
     make(rand) {
       const lam = between(rand, 1, 5)
       const what = pick(rand, ['fraud alerts arrive at a monitoring desk', 'customers join the queue at a branch', 'chargebacks arrive for a merchant'])
@@ -168,7 +168,7 @@
   })
 
   T.push({
-    key: 'poisson-exactly', section: 'math', topic: 'Poisson distribution',
+    key: 'poisson-exactly', difficulty: 'Medium', section: 'math', topic: 'Poisson distribution',
     make(rand) {
       const lam = between(rand, 1, 4)
       const k = between(rand, 2, 4)
@@ -194,7 +194,7 @@
   })
 
   T.push({
-    key: 'poisson-rescale', section: 'math', topic: 'Poisson distribution: changing the interval',
+    key: 'poisson-rescale', difficulty: 'Medium', section: 'math', topic: 'Poisson distribution: changing the interval',
     make(rand) {
       const [rate, minutes] = pick(rand, [[12, 5], [12, 10], [6, 10], [6, 20], [30, 2], [30, 4], [60, 1], [60, 3], [4, 30], [3, 40]])
       const lam = (rate * minutes) / 60
@@ -220,7 +220,7 @@
   // Empirical rule: cumulative percent at z = -3..3
   const CUM = { '-3': 0.0015, '-2': 0.025, '-1': 0.16, 0: 0.5, 1: 0.84, 2: 0.975, 3: 0.9985 }
   T.push({
-    key: 'normal-interval', section: 'math', topic: 'Normal distribution: empirical rule',
+    key: 'normal-interval', difficulty: 'Medium', section: 'math', topic: 'Normal distribution: empirical rule',
     make(rand) {
       const mean = pick(rand, [40, 50, 600, 650, 700, 20000])
       const sd = mean >= 1000 ? pick(rand, [2000, 4000, 5000]) : mean >= 600 ? pick(rand, [25, 40, 50]) : pick(rand, [4, 5, 8])
@@ -256,7 +256,7 @@
   })
 
   T.push({
-    key: 'expected-value', section: 'math', topic: 'Expected value',
+    key: 'expected-value', difficulty: 'Easy', section: 'math', topic: 'Expected value',
     make(rand) {
       const W = pick(rand, [50, 100, 200, 500])
       const L = pick(rand, [100, 400, 1000, 2000])
@@ -283,7 +283,7 @@
   })
 
   T.push({
-    key: 'without-replacement', section: 'math', topic: 'Probability without replacement',
+    key: 'without-replacement', difficulty: 'Medium', section: 'math', topic: 'Probability without replacement',
     make(rand) {
       const N = between(rand, 6, 12)
       const D = between(rand, 2, Math.min(5, N - 2))
@@ -307,7 +307,7 @@
   })
 
   T.push({
-    key: 'independent-either', section: 'math', topic: 'Independent events',
+    key: 'independent-either', difficulty: 'Medium', section: 'math', topic: 'Independent events',
     make(rand) {
       const a = between(rand, 1, 4)
       const b = between(rand, 1, 5)
@@ -333,7 +333,7 @@
 
   const WORDS = ['BALANCE', 'LEDGER', 'ACCESS', 'ASSETS', 'PAYEE', 'TELLER', 'CREDIT', 'ESCROW', 'DEPOSIT', 'CHECKS']
   T.push({
-    key: 'arrange-letters', section: 'math', topic: 'Permutations with repeated items',
+    key: 'arrange-letters', difficulty: 'Medium', section: 'math', topic: 'Permutations with repeated items',
     make(rand) {
       const word = pick(rand, WORDS)
       const counts = {}
@@ -373,7 +373,7 @@
   })
 
   T.push({
-    key: 'conditional-counts', section: 'math', topic: 'Conditional probability',
+    key: 'conditional-counts', difficulty: 'Medium', section: 'math', topic: 'Conditional probability',
     make(rand) {
       const B = pick(rand, [40, 50, 60, 80])
       const both = pick(rand, [10, 20, 30].filter((x) => x < B))
@@ -402,7 +402,7 @@
   // ---------------- Statistics ----------------
 
   T.push({
-    key: 'standard-error', section: 'stats', topic: 'Standard deviation and standard error',
+    key: 'standard-error', difficulty: 'Easy', section: 'stats', topic: 'Standard deviation and standard error',
     make(rand) {
       const n = pick(rand, [16, 25, 36, 49, 64, 81, 100])
       const root = Math.sqrt(n)
@@ -427,7 +427,7 @@
   })
 
   T.push({
-    key: 'iqr-outlier', section: 'stats', topic: 'Box plots and the 1.5 IQR rule',
+    key: 'iqr-outlier', difficulty: 'Medium', section: 'stats', topic: 'Box plots and the 1.5 IQR rule',
     make(rand) {
       const q1 = pick(rand, [10, 20, 30, 40])
       const iqr = pick(rand, [10, 20, 30, 40])
@@ -456,7 +456,7 @@
   })
 
   T.push({
-    key: 'sd-transform', section: 'stats', topic: 'Standard deviation under a linear change',
+    key: 'sd-transform', difficulty: 'Medium', section: 'stats', topic: 'Standard deviation under a linear change',
     make(rand) {
       const sd = pick(rand, [5, 10, 20, 25, 40, 50])
       const a = pick(rand, [2, 3, 4])
@@ -482,7 +482,7 @@
   })
 
   T.push({
-    key: 'covariance-units', section: 'stats', topic: 'Covariance and correlation',
+    key: 'covariance-units', difficulty: 'Hard', section: 'stats', topic: 'Covariance and correlation',
     make(rand) {
       const k = pick(rand, [10, 100, 1000])
       const m = pick(rand, [2, 3, 5, 8])
@@ -507,7 +507,7 @@
   })
 
   T.push({
-    key: 'median-even', section: 'stats', topic: 'Median with an even number of values',
+    key: 'median-even', difficulty: 'Easy', section: 'stats', topic: 'Median with an even number of values',
     make(rand) {
       for (;;) {
         const size = pick(rand, [6, 8])
@@ -545,7 +545,7 @@
   // ---------------- SQL basics ----------------
 
   T.push({
-    key: 'count-nulls', section: 'sqlbasic', topic: 'Aggregations: COUNT and NULLs',
+    key: 'count-nulls', difficulty: 'Medium', section: 'sqlbasic', topic: 'Aggregations: COUNT and NULLs',
     make(rand) {
       for (;;) {
         const n = between(rand, 5, 8)
@@ -585,7 +585,7 @@
   })
 
   T.push({
-    key: 'avg-nulls', section: 'sqlbasic', topic: 'Aggregations and NULLs',
+    key: 'avg-nulls', difficulty: 'Medium', section: 'sqlbasic', topic: 'Aggregations and NULLs',
     make(rand) {
       for (;;) {
         const k = between(rand, 2, 4)
@@ -614,7 +614,7 @@
   })
 
   T.push({
-    key: 'union-count', section: 'sqlbasic', topic: 'UNION and UNION ALL',
+    key: 'union-count', difficulty: 'Medium', section: 'sqlbasic', topic: 'UNION and UNION ALL',
     make(rand) {
       for (;;) {
         const A = [...new Set(Array.from({ length: between(rand, 2, 4) }, () => between(rand, 1, 9)))].sort((x, y) => x - y)
@@ -653,7 +653,7 @@
   })
 
   T.push({
-    key: 'join-count', section: 'sqlbasic', topic: 'JOIN row counts',
+    key: 'join-count', difficulty: 'Medium', section: 'sqlbasic', topic: 'JOIN row counts',
     make(rand) {
       for (;;) {
         const nCust = between(rand, 3, 5)
@@ -705,7 +705,7 @@
   // make() returns options as {text, truth, why}; truth says whether the option should be selected.
 
   T.push({
-    key: 'multi-combo-identities', section: 'math', kind: 'multi', topic: 'Combinations',
+    key: 'multi-combo-identities', difficulty: 'Hard', section: 'math', kind: 'multi', topic: 'Combinations',
     make(rand) {
       const n = between(rand, 6, 10)
       const k = between(rand, 2, 4)
@@ -733,7 +733,7 @@
   })
 
   T.push({
-    key: 'multi-independence', section: 'math', kind: 'multi', topic: 'Independence and the addition rule',
+    key: 'multi-independence', difficulty: 'Hard', section: 'math', kind: 'multi', topic: 'Independence and the addition rule',
     make(rand) {
       // Keep every conditional probability exact to 2 decimals, so it all works on paper
       let a, b, ab
@@ -769,7 +769,7 @@
   })
 
   T.push({
-    key: 'multi-outliers', section: 'stats', kind: 'multi', topic: 'Box plots and the 1.5 IQR rule',
+    key: 'multi-outliers', difficulty: 'Medium', section: 'stats', kind: 'multi', topic: 'Box plots and the 1.5 IQR rule',
     make(rand) {
       const q1 = pick(rand, [20, 30, 40])
       const iqr = pick(rand, [10, 20, 30])
@@ -793,7 +793,7 @@
   })
 
   T.push({
-    key: 'multi-sql-aggregates', section: 'sqlbasic', kind: 'multi', topic: 'Aggregations and NULLs',
+    key: 'multi-sql-aggregates', difficulty: 'Medium', section: 'sqlbasic', kind: 'multi', topic: 'Aggregations and NULLs',
     make(rand) {
       for (;;) {
         const n = between(rand, 5, 7)

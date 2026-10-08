@@ -12,6 +12,9 @@ const SECTIONS = [
   { key: 'algo', name: 'Python (Problem Solving)', count: 0, kind: 'Write code', test: false },
   { key: 'pandas', name: 'pandas', count: 0, kind: 'Write code', test: false },
   { key: 'ml', name: 'Machine Learning', count: 0, kind: 'Multiple choice', test: false },
+  { key: 'numpy', name: 'NumPy', count: 0, kind: 'Write code', test: false },
+  { key: 'ab', name: 'A/B Testing & Product', count: 0, kind: 'Multiple choice', test: false },
+  { key: 'de', name: 'Data Engineering', count: 0, kind: 'Mixed', test: false },
 ]
 const SECTION = Object.fromEntries(SECTIONS.map((s) => [s.key, s]))
 const TEST_SECTIONS = SECTIONS.filter((s) => s.test)
@@ -25,12 +28,28 @@ const SKILL_TESTS = [
   { key: 'algo', name: 'Problem Solving', plan: [{ key: 'algo', count: 2 }], minutes: 45 },
   { key: 'pandas', name: 'pandas', plan: [{ key: 'pandas', count: 2 }], minutes: 30 },
   { key: 'ml', name: 'Machine Learning', plan: [{ key: 'ml', count: 10 }], minutes: 20 },
+  { key: 'numpy', name: 'NumPy', plan: [{ key: 'numpy', count: 2 }], minutes: 30 },
+  { key: 'ab', name: 'A/B Testing & Product', plan: [{ key: 'ab', count: 10 }], minutes: 20 },
+  { key: 'de', name: 'Data Engineering', plan: [{ key: 'de', type: 'mcq', count: 8 }, { key: 'de', type: 'python', count: 1 }], minutes: 35 },
 ]
-const SKILL = Object.fromEntries(SKILL_TESTS.map((t) => [t.key, t]))
+// Timed assessments shaped like each role's screening test
+const ROLE_TESTS = [
+  { key: 'role-ds', name: 'Data Scientist', focus: 'SQL, statistics, probability, Python, ML basics',
+    plan: [{ key: 'sqlint', count: 1 }, { key: 'stats', count: 4 }, { key: 'ml', count: 2 }, { key: 'python', count: 1 }, { key: 'math', count: 4 }], minutes: 75 },
+  { key: 'role-da', name: 'Data Analyst', focus: 'SQL (most of the test), A/B testing, statistics, pandas',
+    plan: [{ key: 'sqlint', count: 2 }, { key: 'sqlbasic', count: 4 }, { key: 'ab', count: 4 }, { key: 'stats', count: 3 }, { key: 'pandas', count: 1 }], minutes: 75 },
+  { key: 'role-de', name: 'Data Engineer', focus: 'SQL, data modeling and pipelines, Python problem solving',
+    plan: [{ key: 'sqlint', count: 2 }, { key: 'sqlbasic', count: 3 }, { key: 'de', type: 'mcq', count: 6 }, { key: 'de', type: 'python', count: 1 }, { key: 'algo', count: 1 }], minutes: 90 },
+  { key: 'role-ml', name: 'Data Scientist (ML focus)', focus: 'ML concepts, NumPy, statistics, problem solving',
+    plan: [{ key: 'ml', count: 6 }, { key: 'stats', count: 3 }, { key: 'numpy', count: 1 }, { key: 'algo', count: 1 }, { key: 'sqlint', count: 1 }], minutes: 75 },
+]
+for (const r of ROLE_TESTS) SKILL_TESTS.push({ ...r, role: true })
+const SKILL = new Proxy({}, { get: (_, k) => SKILL_TESTS.find((t) => t.key === k) })
 const durationOf = (a) => a?.durationMs ?? DURATION_MS
 const CODE_POINTS = 5
 const MCQ_POINTS = 1
-const KEYS = { attempt: 'dsp.attempt', seen: 'dsp.seen', history: 'dsp.history', theme: 'dsp.theme' }
+const KEYS = { attempt: 'dsp.attempt', seen: 'dsp.seen', history: 'dsp.history', theme: 'dsp.theme', level: 'dsp.level' }
+const level = () => load(KEYS.level, null)
 const HISTORY_LIMIT = 30
 
 const BANK = window.BANK || []
@@ -200,10 +219,28 @@ function sectionOf(q) {
 }
 
 // Full tests are timed; drills and missed-question retries are untimed practice
-const MODES = { test: 'Full test', skill: 'Skill test', drill: 'Section drill', topic: 'Topic practice', missed: 'Missed questions' }
+const MODES = { test: 'Full test', skill: 'Skill test', role: 'Role assessment', drill: 'Section drill', topic: 'Topic practice', missed: 'Missed questions' }
+const DIFFICULTIES = ['Easy', 'Medium', 'Hard']
 const DRILL_MCQ = 10
 const DRILL_CODE = 3
-const isTimed = (a) => ['test', 'skill'].includes(a?.mode ?? 'test')
+const DRILL_MIXED = 8
+
+// Difficulty of a template: set on the template, or read from one sample build (code generators set it there)
+const templateDifficulty = (() => {
+  const cache = new Map()
+  return (t) => {
+    if (t.difficulty) return t.difficulty
+    if (!cache.has(t.key)) {
+      let d = 'Medium'
+      try { d = GENERATORS.build(t)?.difficulty || 'Medium' } catch { /* keep Medium */ }
+      cache.set(t.key, d)
+    }
+    return cache.get(t.key)
+  }
+})()
+const difficultyOf = (q) => q.difficulty || 'Medium'
+const typeMatches = (type, want) => !want || (want === 'mcq' ? type === 'mcq' || type === 'multi' : type === want)
+const isTimed = (a) => ['test', 'skill', 'role'].includes(a?.mode ?? 'test')
 
 // Prefer the questions seen least; break ties randomly. plan is a list of {key, count}.
 // Each template counts as one item in the pool; when it's picked it makes a brand new question.
@@ -213,10 +250,14 @@ function draw(plan) {
   const extra = {}
   const usedPrompts = new Set()
   for (const sec of plan) {
-    const pool = [
-      ...BANK.filter((q) => q.section === sec.key && (!sec.topic || q.topic === sec.topic)).map((q) => ({ key: q.id })),
-      ...TEMPLATES.filter((t) => t.section === sec.key && (!sec.topic || t.topic === sec.topic)).map((t) => ({ key: `tpl:${t.key}`, template: t })),
-    ]
+    const fits = (difficulty) => !sec.difficulty || difficulty === sec.difficulty
+    const bankFor = (anyLevel) => BANK.filter((q) => q.section === sec.key && (!sec.topic || q.topic === sec.topic) && typeMatches(q.type, sec.type) && (anyLevel || fits(difficultyOf(q))))
+    const tplFor = (anyLevel) => TEMPLATES.filter((t) => t.section === sec.key && (!sec.topic || t.topic === sec.topic) && (!sec.type || sec.type === (t.kind === 'multi' || !['python', 'sql'].includes(t.type) ? 'mcq' : t.type)) && (anyLevel || fits(templateDifficulty(t))))
+    let pool = [...bankFor(false).map((q) => ({ key: q.id })), ...tplFor(false).map((t) => ({ key: `tpl:${t.key}`, template: t }))]
+    if (sec.fill && pool.length < sec.count) {
+      const have = new Set(pool.map((x) => x.key))
+      pool = [...pool, ...shuffle([...bankFor(true).map((q) => ({ key: q.id })), ...tplFor(true).map((t) => ({ key: `tpl:${t.key}`, template: t }))]).filter((x) => !have.has(x.key))]
+    }
     const picked = shuffle(pool).sort((a, b) => (seen[a.key] || 0) - (seen[b.key] || 0)).slice(0, sec.count)
     // A topic with generators never runs out: keep building fresh questions until the drill is full
     const gens = pool.filter((x) => x.template)
@@ -231,6 +272,7 @@ function draw(plan) {
       let q = GENERATORS.build(item.template)
       for (let tries = 0; tries < 8 && usedPrompts.has(JSON.stringify(q.prompt)); tries++) q = GENERATORS.build(item.template)
       usedPrompts.add(JSON.stringify(q.prompt))
+      q.difficulty ??= templateDifficulty(item.template)
       extra[q.id] = q
       QUESTIONS.set(q.id, q)
       ids.push(q.id)
@@ -254,21 +296,23 @@ function missedIds() {
 }
 
 // mode: test (full assessment), skill (timed one-subject test), drill (one section), topic (one topic), missed
-function startAttempt(mode = 'test', section = null, topic = null) {
+function startAttempt(mode = 'test', section = null, topic = null, difficulty = null) {
   let drawn
   let durationMs = DURATION_MS
-  const drillCount = (key) => (SECTION[key].kind === 'Multiple choice' ? DRILL_MCQ : DRILL_CODE)
-  if (mode === 'drill') drawn = draw([{ key: section, count: drillCount(section) }])
-  else if (mode === 'topic') drawn = draw([{ key: section, topic, count: drillCount(section) }])
-  else if (mode === 'skill') {
-    drawn = draw(SKILL[section].plan)
+  const kind = (key) => SECTION[key].kind
+  const drillCount = (key) => (kind(key) === 'Multiple choice' ? DRILL_MCQ : kind(key) === 'Mixed' ? DRILL_MIXED : DRILL_CODE)
+  if (mode === 'drill') drawn = draw([{ key: section, difficulty, count: drillCount(section) }])
+  else if (mode === 'topic') drawn = draw([{ key: section, topic, difficulty, count: drillCount(section) }])
+  else if (mode === 'skill' || mode === 'role') {
+    // timed tests always fill up: if a level runs short, the rest come from other levels
+    drawn = draw(SKILL[section].plan.map((x) => ({ ...x, difficulty, fill: true })))
     durationMs = SKILL[section].minutes * 60 * 1000
   } else if (mode === 'missed') {
     const ids = missedIds().slice(0, 14)
     drawn = { ids, extra: Object.fromEntries(ids.filter((id) => QUESTIONS.get(id)?.generated).map((id) => [id, QUESTIONS.get(id)])) }
   } else drawn = draw(TEST_SECTIONS)
   if (!drawn.ids.length) return
-  state.attempt = { id: Date.now().toString(36), mode, section, topic, durationMs, startedAt: Date.now(), questionIds: drawn.ids, extra: drawn.extra, answers: {}, selfMarks: {} }
+  state.attempt = { id: Date.now().toString(36), mode, section, topic, difficulty, durationMs, startedAt: Date.now(), questionIds: drawn.ids, extra: drawn.extra, answers: {}, selfMarks: {} }
   state.index = 0
   state.runs = {}
   state.view = 'test'
@@ -442,10 +486,10 @@ function renderStart() {
     return [s.key, templates ? `${written} + ${templates} generators` : String(written)]
   }))
   app.innerHTML = `
-    <header class="topbar"><div class="brand">DS <span>Practice</span> <small>· Data Science Intern assessment</small></div><div class="spacer"></div>${themeButton()}</header>
+    <header class="topbar"><div class="brand">DS <span>Practice</span> <small>· Data interview practice</small></div><div class="spacer"></div>${themeButton()}</header>
     <main class="page">
       <section class="card">
-        <h1>Practice test</h1>
+        <h1>Full assessment</h1>
         <p class="lede">A timed simulation of the HackerRank screen: 14 questions in 75 minutes. No calculator: every number works out with pen and paper.</p>
         <table class="plain">
           <thead><tr><th>#</th><th>Section</th><th>Format</th><th class="num">Questions</th><th class="num">Points each</th><th class="num">In bank</th></tr></thead>
@@ -462,11 +506,23 @@ function renderStart() {
         </ul>
         <div class="actions"><button class="btn btn-primary btn-lg" id="start">Start test</button></div>
       </section>
+      <section class="card level-card">
+        <h2>Difficulty</h2>
+        <p class="lede">Applies to role assessments, skill tests, drills and topic practice below. Timed tests top up from other levels if a level runs short.</p>
+        <div class="actions">${['Any', ...DIFFICULTIES].map((d) => `<button class="btn${(level() || 'Any') === d ? ' btn-primary' : ''}" data-level="${d}">${d}</button>`).join('')}</div>
+      </section>
+      <section class="card">
+        <h2>Role assessments</h2>
+        <p class="lede">Timed tests shaped like each role's screening test. Apply for analyst and engineer roles too? Practice their mix here.</p>
+        <table class="plain"><thead><tr><th>Role</th><th>Focus</th><th>Questions</th><th class="num">Time</th><th></th></tr></thead>
+        <tbody>${ROLE_TESTS.map((t) => `<tr><td>${esc(t.name)}</td><td>${esc(t.focus)}</td><td class="num">${t.plan.reduce((n, x) => n + x.count, 0)}</td>
+          <td class="num">${t.minutes} min</td><td class="num"><button class="btn" data-role="${t.key}">Start</button></td></tr>`).join('')}</tbody></table>
+      </section>
       <section class="card">
         <h2>Skill tests</h2>
         <p class="lede">Timed tests on one subject, like HackerRank's skill tests. Use them to check a subject on its own before a full test.</p>
         <table class="plain"><thead><tr><th>Test</th><th>Questions</th><th class="num">Time</th><th></th></tr></thead>
-        <tbody>${SKILL_TESTS.map((t) => `<tr><td>${esc(t.name)}</td><td>${esc(t.plan.map((x) => `${x.count} ${SECTION[x.key].name} ${SECTION[x.key].kind === 'Multiple choice' ? 'multiple choice' : 'coding'}`).join(' + '))}</td>
+        <tbody>${SKILL_TESTS.filter((t) => !t.role).map((t) => `<tr><td>${esc(t.name)}</td><td>${esc(t.plan.map((x) => `${x.count} ${SECTION[x.key].name} ${x.type === 'mcq' || SECTION[x.key].kind === 'Multiple choice' ? 'multiple choice' : 'coding'}`).join(' + '))}</td>
           <td class="num">${t.minutes} min</td><td class="num"><button class="btn" data-skill="${t.key}">Start</button></td></tr>`).join('')}</tbody></table>
       </section>
       <section class="card">
@@ -477,7 +533,7 @@ function renderStart() {
       </section>
       <section class="card">
         <h2>Untimed practice</h2>
-        <p class="lede">Drill one section (${DRILL_MCQ} multiple choice questions, or ${DRILL_CODE} coding questions) with hints available, or retry every question you've missed before.</p>
+        <p class="lede">Drill one section (${DRILL_MCQ} multiple choice questions, ${DRILL_CODE} coding questions, or ${DRILL_MIXED} for a mixed section) with hints available, or retry every question you've missed before.</p>
         <div class="actions">${SECTIONS.map((s) => `<button class="btn" data-drill="${s.key}">${esc(s.name)}</button>`).join('')}</div>
         <div class="actions" style="margin-top:0.75rem"><button class="btn" id="missed"${missed.length ? '' : ' disabled'}>Retry missed questions (${missed.length})</button></div>
       </section>
@@ -491,12 +547,17 @@ function renderStart() {
         }).join('')}</tbody></table></section>` : ''}
     </main>`
   $('#start').addEventListener('click', () => startAttempt('test'))
-  app.querySelectorAll('[data-drill]').forEach((b) => b.addEventListener('click', () => startAttempt('drill', b.dataset.drill)))
+  app.querySelectorAll('[data-drill]').forEach((b) => b.addEventListener('click', () => startAttempt('drill', b.dataset.drill, null, level())))
   $('#missed')?.addEventListener('click', () => startAttempt('missed'))
-  app.querySelectorAll('[data-skill]').forEach((b) => b.addEventListener('click', () => startAttempt('skill', b.dataset.skill)))
+  app.querySelectorAll('[data-skill]').forEach((b) => b.addEventListener('click', () => startAttempt('skill', b.dataset.skill, null, level())))
+  app.querySelectorAll('[data-role]').forEach((b) => b.addEventListener('click', () => startAttempt('role', b.dataset.role, null, level())))
+  app.querySelectorAll('[data-level]').forEach((b) => b.addEventListener('click', () => {
+    save(KEYS.level, b.dataset.level === 'Any' ? null : b.dataset.level)
+    renderStart()
+  }))
   $('#topic-go').addEventListener('click', () => {
     const [section, topic] = JSON.parse($('#topic-pick').value)
-    startAttempt('topic', section, topic)
+    startAttempt('topic', section, topic, level())
   })
   app.querySelectorAll('[data-attempt]').forEach((row) => row.addEventListener('click', () => {
     state.attempt = past.find((a) => a.id === row.dataset.attempt)
@@ -509,9 +570,10 @@ function renderStart() {
 // "Skill test: SQL", "Topic practice: Poisson distribution", ...
 function attemptLabel(a) {
   const mode = a.mode ?? 'test'
-  if (mode === 'skill') return `${MODES.skill}: ${SKILL[a.section]?.name ?? a.section}`
-  if (mode === 'topic') return `${MODES.topic}: ${a.topic}`
-  return `${MODES[mode]}${a.section ? `: ${SECTION[a.section].name}` : ''}`
+  const level = a.difficulty ? ` (${a.difficulty})` : ''
+  if (mode === 'skill' || mode === 'role') return `${MODES[mode]}: ${SKILL[a.section]?.name ?? a.section}${level}`
+  if (mode === 'topic') return `${MODES.topic}: ${a.topic}${level}`
+  return `${MODES[mode]}${a.section ? `: ${SECTION[a.section].name}` : ''}${level}`
 }
 
 // Every topic with at least one question, grouped by section, for the topic picker
@@ -1093,7 +1155,7 @@ function renderResults() {
           <div><div class="stat-label">Time used</div><div class="stat-value">${clock(used)}${isTimed(a) ? ` <span style="font-size:0.9rem;color:var(--text-soft)">of ${clock(durationOf(a))}</span>` : ''}</div></div>
         </div>
         <div class="actions"><button class="btn btn-primary" id="new">Start a new test</button><button class="btn" id="review">Review answers</button>
-          ${['drill', 'topic', 'skill'].includes(a.mode) ? `<button class="btn" id="again">${a.mode === 'skill' ? 'Take this skill test again' : 'Practice this again'}</button>` : ''}</div>
+          ${['drill', 'topic', 'skill', 'role'].includes(a.mode) ? `<button class="btn" id="again">${a.mode === 'skill' || a.mode === 'role' ? 'Take this test again' : 'Practice this again'}</button>` : ''}</div>
       </section>
       <section class="card">
         <h2>By section</h2>
@@ -1118,7 +1180,7 @@ function renderResults() {
     </main>`
   $('#home').addEventListener('click', () => { state.view = 'start'; render() })
   $('#new').addEventListener('click', () => startAttempt('test'))
-  $('#again')?.addEventListener('click', () => startAttempt(a.mode, a.section, a.topic))
+  $('#again')?.addEventListener('click', () => startAttempt(a.mode, a.section, a.topic, a.difficulty))
   $('#review').addEventListener('click', () => openReview(0))
   app.querySelectorAll('[data-review]').forEach((row) => row.addEventListener('click', () => openReview(+row.dataset.review)))
 }

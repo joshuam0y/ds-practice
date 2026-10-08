@@ -28,14 +28,17 @@ from fractions import Fraction
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-FILES = ["sql_intermediate", "statistics", "sql_basic", "python", "applied_math", "python_problems", "pandas", "machine_learning"]
+FILES = ["sql_intermediate", "statistics", "sql_basic", "python", "applied_math", "python_problems", "pandas", "machine_learning",
+         "numpy", "ab_testing", "data_engineering"]
 # Extra practice sections (not in the full test) need enough for one skill test: 2 coding or 10 multiple choice
-PER_TEST = {"sqlint": 1, "stats": 4, "sqlbasic": 3, "python": 1, "math": 5, "algo": 2, "pandas": 2, "ml": 10}
-TARGET = {"sqlint": 8, "stats": 20, "sqlbasic": 15, "python": 8, "math": 25, "algo": 12, "pandas": 8, "ml": 15}
+PER_TEST = {"sqlint": 1, "stats": 4, "sqlbasic": 3, "python": 1, "math": 5, "algo": 2, "pandas": 2, "ml": 10, "numpy": 2, "ab": 10, "de": 9}
+TARGET = {"sqlint": 8, "stats": 20, "sqlbasic": 15, "python": 8, "math": 25, "algo": 12, "pandas": 8, "ml": 15, "numpy": 8, "ab": 15, "de": 15}
 NAMES = {"sqlint": "SQL (Intermediate)", "stats": "Statistics", "sqlbasic": "SQL (Basic)", "python": "Python (Basic)", "math": "Applied Math",
-         "algo": "Python (Problem Solving)", "pandas": "pandas", "ml": "Machine Learning"}
+         "algo": "Python (Problem Solving)", "pandas": "pandas", "ml": "Machine Learning", "numpy": "NumPy", "ab": "A/B Testing & Product",
+         "de": "Data Engineering"}
 TYPE_FOR = {"sqlint": {"sql"}, "python": {"python"}, "stats": {"mcq", "multi"}, "sqlbasic": {"mcq", "multi"}, "math": {"mcq", "multi"},
-            "algo": {"python"}, "pandas": {"python"}, "ml": {"mcq", "multi"}}
+            "algo": {"python"}, "pandas": {"python"}, "ml": {"mcq", "multi"}, "numpy": {"python"}, "ab": {"mcq", "multi"},
+            "de": {"mcq", "multi", "python"}}
 PREFIX = "window.BANK = (window.BANK || []).concat("
 BAD_DASHES = {"\u2014": "em dash", "\u2013": "en dash"}
 
@@ -268,6 +271,12 @@ def check_structure(bank):
                 problem(where, "the correct option's explanation should start with 'Correct'")
 
 
+def check_difficulty(bank):
+    for q in bank:
+        if "difficulty" in q and q["difficulty"] not in ("Easy", "Medium", "Hard"):
+            problem(q.get("id", "?"), f"difficulty must be Easy, Medium or Hard, not {q['difficulty']!r}")
+
+
 def check_sql(q):
     where = q["id"]
     print(f"\n[SQL] {q['id']}: {q['title']}")
@@ -433,6 +442,7 @@ def _importable(module):
 def main():
     bank = load_bank()
     check_structure(bank)
+    check_difficulty(bank)
     by_section = {s: [q for q in bank if q.get("section") == s] for s in PER_TEST}
 
     print("=" * 70)
@@ -446,7 +456,7 @@ def main():
     print("2. Python coding questions: reference solution and starter stub")
     print("=" * 70)
     run_tests = load_harness()
-    for q in by_section["python"] + by_section["algo"] + by_section["pandas"]:
+    for q in by_section["python"] + by_section["algo"] + by_section["pandas"] + by_section["numpy"] + [q for q in by_section["de"] if q.get("type") == "python"]:
         if q.get("tests") and q.get("solution"):
             if q.get("packages") and not all(_importable(m) for m in q["packages"]):
                 SKIPPED.append(q["id"])
@@ -474,7 +484,7 @@ def main():
                 print(f"  {q['id']}: recomputed {target:.6g} -> option {q['answer'] + 1} ({q['options'][q['answer']]})")
     print(f"  {len(mcqs)} multiple choice questions, {checked} with numeric answers recomputed")
     # The correct option shouldn't sit in the same position so often that guessing it pays off
-    for s in ("stats", "sqlbasic", "math", "ml"):
+    for s in ("stats", "sqlbasic", "math", "ml", "ab", "de"):
         positions = [q["answer"] for q in by_section[s] if isinstance(q.get("answer"), int)]
         if not positions:
             continue
@@ -520,7 +530,7 @@ def main():
             print(f"  - {p}")
         sys.exit(1)
     if SKIPPED:
-        print(f"ALL CHECKS PASSED, except {len(SKIPPED)} question(s) skipped because pandas isn't installed here: pip install pandas")
+        print(f"ALL CHECKS PASSED, except {len(SKIPPED)} question(s) skipped because pandas or numpy isn't installed here: pip install pandas numpy")
     else:
         print("ALL CHECKS PASSED")
 

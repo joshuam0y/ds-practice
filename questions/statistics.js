@@ -4,6 +4,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "stat-type1-fraud",
     "section": "stats",
     "type": "mcq",
+    "difficulty": "Easy",
     "topic": "Type I and Type II errors",
     "title": "Type I error in a fraud check",
     "prompt": "A fraud model tests each card transaction with the null hypothesis H0: \"this transaction is legitimate.\" In this setting, what is a Type I error?",
@@ -30,10 +31,16 @@ window.BANK = (window.BANK || []).concat(
     "id": "stat-boxplot-outlier",
     "section": "stats",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "Box plots and the 1.5 IQR rule",
     "title": "Spotting an outlier on a box plot",
     "prompt": "A box plot of personal loan amounts (in $ thousands) has Q1 = 20 and Q3 = 50. Using the standard 1.5 × IQR rule, which of these loans is plotted as an outlier?",
-    "options": ["85", "101", "95", "60"],
+    "options": [
+      "85",
+      "101",
+      "95",
+      "60"
+    ],
     "answer": 1,
     "explanations": [
       "85 is inside the upper fence of 95. It would only count as an outlier if you used Q3 + 1 × IQR = 80, which is the wrong multiplier.",
@@ -46,12 +53,22 @@ window.BANK = (window.BANK || []).concat(
       "Fences: lower = Q1 − 1.5 × IQR, upper = Q3 + 1.5 × IQR.",
       "An outlier is strictly beyond a fence. Check each option against the fences, watching for one that sits exactly on a fence."
     ],
-    "check": {"compute": "50 + 1.5 * (50 - 20)", "rule": "only_greater", "values": ["85", "101", "95", "60"]}
+    "check": {
+      "compute": "50 + 1.5 * (50 - 20)",
+      "rule": "only_greater",
+      "values": [
+        "85",
+        "101",
+        "95",
+        "60"
+      ]
+    }
   },
   {
     "id": "stat-sample-size-power",
     "section": "stats",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "Hypothesis testing: power and sample size",
     "title": "What a bigger sample changes",
     "prompt": "An analyst tests whether a new loan offer raises the average balance. She keeps the significance level at α = 0.05 but doubles the sample size. What happens?",
@@ -78,10 +95,16 @@ window.BANK = (window.BANK || []).concat(
     "id": "stat-covariance-units",
     "section": "stats",
     "type": "mcq",
+    "difficulty": "Hard",
     "topic": "Covariance and correlation",
     "title": "Covariance after changing units",
     "prompt": "The covariance between customers' annual income and annual card spending, both in dollars, is 2,000,000. If both variables are re-expressed in thousands of dollars, what is the new covariance?",
-    "options": ["2", "2,000", "2,000,000", "0.002"],
+    "options": [
+      "2",
+      "2,000",
+      "2,000,000",
+      "0.002"
+    ],
     "answer": 0,
     "explanations": [
       "Correct. Cov(aX, bY) = ab Cov(X, Y). Dividing each variable by 1,000 multiplies the covariance by 1/1,000 × 1/1,000, so 2,000,000 / 1,000,000 = 2.",
@@ -94,16 +117,30 @@ window.BANK = (window.BANK || []).concat(
       "Correlation is covariance divided by both standard deviations, so the scale factors cancel and correlation never changes with units.",
       "Write the factor once per variable that changed."
     ],
-    "check": {"compute": "2000000 * (1/1000) * (1/1000)", "values": ["2", "2000", "2000000", "0.002"]}
+    "check": {
+      "compute": "2000000 * (1/1000) * (1/1000)",
+      "values": [
+        "2",
+        "2000",
+        "2000000",
+        "0.002"
+      ]
+    }
   },
   {
     "id": "stat-stratified-sampling",
     "section": "stats",
     "type": "mcq",
+    "difficulty": "Easy",
     "topic": "Sampling methods",
     "title": "Sampling by region",
     "prompt": "A bank surveys customer satisfaction. It splits customers into its 5 regions and then randomly selects customers from every region, in proportion to each region's size. What sampling method is this?",
-    "options": ["Cluster sampling", "Convenience sampling", "Systematic sampling", "Stratified sampling"],
+    "options": [
+      "Cluster sampling",
+      "Convenience sampling",
+      "Systematic sampling",
+      "Stratified sampling"
+    ],
     "answer": 3,
     "explanations": [
       "Cluster sampling randomly picks some whole groups (say 2 of the 5 regions) and surveys everyone in them. Here every region is sampled.",
@@ -121,6 +158,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "stat-type2-ab-test",
     "section": "stats",
     "type": "mcq",
+    "difficulty": "Easy",
     "topic": "Type I and Type II errors",
     "title": "A real effect the test missed",
     "prompt": "A bank tests H0: \"the new mobile app design does not change average monthly deposits.\" In reality the design does raise deposits, but the test fails to reject H0. What happened?",
@@ -147,6 +185,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "stat-boxplot-skew",
     "section": "stats",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "Box plots and skewness",
     "title": "Reading skew from a box plot",
     "prompt": "In a box plot of checking account balances, the median line sits close to the bottom of the box, and the upper whisker is much longer than the lower whisker. What is the shape of the distribution most likely to be?",
@@ -173,6 +212,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "stat-mean-median-outlier",
     "section": "stats",
     "type": "mcq",
+    "difficulty": "Easy",
     "topic": "Mean, median and outliers",
     "title": "One very large balance",
     "prompt": "Five savings accounts have balances of $200, $300, $300, $400 and $10,000. What are the mean and the median?",
@@ -199,10 +239,16 @@ window.BANK = (window.BANK || []).concat(
     "id": "stat-sd-linear-transform",
     "section": "stats",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "Standard deviation under a linear change",
     "title": "Add, then double",
     "prompt": "Account balances have mean $500 and standard deviation $50. The bank adds $100 to every account and then doubles every balance. What is the new standard deviation?",
-    "options": ["$200", "$300", "$50", "$100"],
+    "options": [
+      "$200",
+      "$300",
+      "$50",
+      "$100"
+    ],
     "answer": 3,
     "explanations": [
       "This multiplies the SD by 4, which is what happens to the variance. Variance scales by 2² = 4; the SD scales by 2.",
@@ -215,12 +261,21 @@ window.BANK = (window.BANK || []).concat(
       "Shifts (adding b) change only the mean. Scaling (multiplying by a) changes both.",
       "Check whether the question asks for the SD or the variance before squaring anything."
     ],
-    "check": {"compute": "abs(2) * 50", "values": ["200", "300", "50", "100"]}
+    "check": {
+      "compute": "abs(2) * 50",
+      "values": [
+        "200",
+        "300",
+        "50",
+        "100"
+      ]
+    }
   },
   {
     "id": "stat-correlation-meaning",
     "section": "stats",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "Correlation",
     "title": "What r = −0.8 tells you",
     "prompt": "Across a bank's loan portfolio, the correlation between borrowers' credit scores and their default rates is r = −0.8. Which statement is correct?",
@@ -247,6 +302,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "stat-p-value-meaning",
     "section": "stats",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "Hypothesis testing: p-values",
     "title": "What p = 0.03 means",
     "prompt": "A test of whether a new overdraft notice reduces overdraft fees gives p = 0.03. Which statement correctly interprets this p-value?",
@@ -273,6 +329,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "stat-two-sided-decision",
     "section": "stats",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "Hypothesis testing: one- and two-sided tests",
     "title": "z = 1.8 in a two-sided test",
     "prompt": "An analyst runs a two-sided z-test at α = 0.05 and gets z = 1.8. The critical values are ±1.96 for a two-sided test and 1.645 for a one-sided test. What should she conclude?",
@@ -299,6 +356,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "stat-boxplot-five-numbers",
     "section": "stats",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "Box plots: the five-number summary",
     "title": "Reading a box plot's numbers",
     "prompt": "A box plot of daily ATM withdrawals at one machine (in $ hundreds) shows: minimum 2, Q1 5, median 7, Q3 12, maximum 20. Which statement is true?",
@@ -325,10 +383,16 @@ window.BANK = (window.BANK || []).concat(
     "id": "stat-undercoverage-bias",
     "section": "stats",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "Sampling methods and bias",
     "title": "A survey only in the mobile app",
     "prompt": "To measure satisfaction among all customers, a bank shows a survey only inside its mobile app. Many older customers bank only at branches. What is the main problem with this sample?",
-    "options": ["Nonresponse bias", "Random sampling error", "Response bias", "Undercoverage (selection) bias"],
+    "options": [
+      "Nonresponse bias",
+      "Random sampling error",
+      "Response bias",
+      "Undercoverage (selection) bias"
+    ],
     "answer": 3,
     "explanations": [
       "Nonresponse bias happens when people who are invited don't answer. Here, branch-only customers are never invited at all.",
@@ -346,10 +410,16 @@ window.BANK = (window.BANK || []).concat(
     "id": "stat-standard-error",
     "section": "stats",
     "type": "mcq",
+    "difficulty": "Easy",
     "topic": "Standard deviation and standard error",
     "title": "Standard error of a sample mean",
     "prompt": "Card transaction amounts have a standard deviation of $60. An analyst takes a random sample of 36 transactions. What is the standard error of the sample mean?",
-    "options": ["$10", "about $1.67", "$60", "$100"],
+    "options": [
+      "$10",
+      "about $1.67",
+      "$60",
+      "$100"
+    ],
     "answer": 0,
     "explanations": [
       "Correct. SE = σ / √n = 60 / √36 = 60 / 6 = 10.",
@@ -362,16 +432,30 @@ window.BANK = (window.BANK || []).concat(
       "SE = σ / √n. Variance of the mean = σ² / n.",
       "Pick n values with clean square roots (36, 49, 100) and check that you took the root."
     ],
-    "check": {"compute": "60 / sqrt(36)", "values": ["10", "60/36", "60", "100"]}
+    "check": {
+      "compute": "60 / sqrt(36)",
+      "values": [
+        "10",
+        "60/36",
+        "60",
+        "100"
+      ]
+    }
   },
   {
     "id": "stat-correlation-unit-free",
     "section": "stats",
     "type": "mcq",
+    "difficulty": "Easy",
     "topic": "Covariance and correlation",
     "title": "The measure without units",
     "prompt": "An analyst wants to compare how strongly balance relates to tenure at two banks, one reporting in dollars and one in euros. Which measure has no units and always lies between −1 and 1?",
-    "options": ["Covariance", "Variance", "Correlation", "Standard deviation"],
+    "options": [
+      "Covariance",
+      "Variance",
+      "Correlation",
+      "Standard deviation"
+    ],
     "answer": 2,
     "explanations": [
       "Covariance carries the units of both variables (dollar-years here) and has no fixed range, so it can't be compared across currencies.",
@@ -389,6 +473,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "stat-lower-alpha-tradeoff",
     "section": "stats",
     "type": "mcq",
+    "difficulty": "Hard",
     "topic": "Type I and Type II errors: the trade-off",
     "title": "Making the fraud test stricter",
     "prompt": "A fraud test uses H0: \"the transaction is legitimate.\" The bank lowers the significance level from 0.05 to 0.01 and changes nothing else. What is the likely effect?",
@@ -415,10 +500,16 @@ window.BANK = (window.BANK || []).concat(
     "id": "stat-median-even-count",
     "section": "stats",
     "type": "mcq",
+    "difficulty": "Easy",
     "topic": "Median with an even number of values",
     "title": "Median of six loan amounts",
     "prompt": "Six recent loans, in $ thousands, are 8, 3, 12, 5, 10 and 6. What is the median?",
-    "options": ["8.5", "7", "about 7.33", "6"],
+    "options": [
+      "8.5",
+      "7",
+      "about 7.33",
+      "6"
+    ],
     "answer": 1,
     "explanations": [
       "This averages the two middle values of the unsorted list (12 and 5). Always sort first.",
@@ -431,12 +522,21 @@ window.BANK = (window.BANK || []).concat(
       "Odd count: the middle value. Even count: the average of the two middle values.",
       "Compare with the mean to see which way the data lean."
     ],
-    "check": {"compute": "(6 + 8) / 2", "values": ["8.5", "7", "44/6", "6"]}
+    "check": {
+      "compute": "(6 + 8) / 2",
+      "values": [
+        "8.5",
+        "7",
+        "44/6",
+        "6"
+      ]
+    }
   },
   {
     "id": "stat-compare-boxplots",
     "section": "stats",
     "type": "mcq",
+    "difficulty": "Easy",
     "topic": "Box plots: comparing groups",
     "title": "Two branches' wait times",
     "prompt": "Box plots of customer wait times at two branches show: Branch A has median 8 minutes and IQR 4 minutes. Branch B has median 8 minutes and IQR 12 minutes. Which statement is supported?",
@@ -463,6 +563,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "stat-clt-skewed",
     "section": "stats",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "Sampling distributions and the central limit theorem",
     "title": "Averages of skewed transactions",
     "prompt": "Individual card transaction amounts are strongly right-skewed. An analyst repeatedly takes random samples of 100 transactions and records each sample's mean. What shape will the distribution of these sample means have?",
@@ -489,6 +590,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "stat-multi-hypothesis-facts",
     "section": "stats",
     "type": "multi",
+    "difficulty": "Hard",
     "topic": "Hypothesis testing: errors and power",
     "title": "True statements about a significance test",
     "prompt": "A bank tests H0: \"the new fraud rule does not change the false-alarm rate\" at α = 0.05. Which statements are true?",
@@ -500,7 +602,12 @@ window.BANK = (window.BANK || []).concat(
       "A p-value of 0.03 means there is a 3% chance H0 is true",
       "With α fixed, a larger sample increases power"
     ],
-    "answers": [0, 1, 3, 5],
+    "answers": [
+      0,
+      1,
+      3,
+      5
+    ],
     "explanations": [
       "Correct. That is the definition of the Type I error rate.",
       "Correct. Type I error probability is α itself.",
@@ -519,6 +626,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "stat-multi-boxplot-facts",
     "section": "stats",
     "type": "multi",
+    "difficulty": "Hard",
     "topic": "Box plots and the 1.5 IQR rule",
     "title": "Reading a box plot's numbers",
     "prompt": "A box plot of loan amounts (in $ thousands) shows: minimum 5, Q1 20, median 35, Q3 50, maximum 120. Which statements are true?",
@@ -531,7 +639,13 @@ window.BANK = (window.BANK || []).concat(
       "The distribution is most likely left-skewed",
       "The range is 115"
     ],
-    "answers": [0, 1, 2, 3, 6],
+    "answers": [
+      0,
+      1,
+      2,
+      3,
+      6
+    ],
     "explanations": [
       "Correct. IQR = Q3 − Q1 = 50 − 20 = 30.",
       "Correct. Q3 + 1.5 × IQR = 50 + 45 = 95.",
@@ -551,6 +665,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "stat-multi-probability-sampling",
     "section": "stats",
     "type": "multi",
+    "difficulty": "Medium",
     "topic": "Sampling methods",
     "title": "Which methods are random sampling",
     "prompt": "A bank wants a sample of customers that supports valid statistical inference. Which of these are probability (random) sampling methods?",
@@ -563,7 +678,12 @@ window.BANK = (window.BANK || []).concat(
       "Voluntary response: an optional survey link on the website",
       "Quota sampling: interviewers fill age quotas with whoever they find"
     ],
-    "answers": [0, 1, 2, 3],
+    "answers": [
+      0,
+      1,
+      2,
+      3
+    ],
     "explanations": [
       "Correct. Every customer has the same known chance of selection.",
       "Correct. Randomness within each stratum makes it a probability method.",
@@ -582,6 +702,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "stat-multi-correlation-facts",
     "section": "stats",
     "type": "multi",
+    "difficulty": "Hard",
     "topic": "Correlation and covariance",
     "title": "What r = 0.6 does and doesn't mean",
     "prompt": "Across a bank's customers, the correlation between age and account balance is r = 0.6. Which statements are true?",
@@ -593,7 +714,11 @@ window.BANK = (window.BANK || []).concat(
       "The covariance between age and balance is positive",
       "r = 0.6 means 60% of customers follow the pattern"
     ],
-    "answers": [0, 1, 4],
+    "answers": [
+      0,
+      1,
+      4
+    ],
     "explanations": [
       "Correct. r² = 0.6² = 0.36.",
       "Correct. A positive r means the variables tend to rise together.",
@@ -606,12 +731,22 @@ window.BANK = (window.BANK || []).concat(
       "Sign gives direction, size gives strength, r² gives the share of variation explained.",
       "Correlation is unit-free and says nothing about cause."
     ],
-    "check": {"truth": ["abs(0.6**2 - 0.36) < 1e-12", "0.6 > 0", "False", "False", "0.6 > 0", "False"]}
+    "check": {
+      "truth": [
+        "abs(0.6**2 - 0.36) < 1e-12",
+        "0.6 > 0",
+        "False",
+        "False",
+        "0.6 > 0",
+        "False"
+      ]
+    }
   },
   {
     "id": "stat-multi-error-types",
     "section": "stats",
     "type": "multi",
+    "difficulty": "Medium",
     "topic": "Type I and Type II errors",
     "title": "Pick every true statement about error types",
     "prompt": "A fraud screen tests each payment with H0: \"this payment is legitimate.\" Which statements are true? Pick all that apply.",
@@ -645,6 +780,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "stat-stratified-allocation",
     "section": "stats",
     "type": "mcq",
+    "difficulty": "Easy",
     "topic": "Sampling methods",
     "title": "Proportional stratified sample",
     "prompt": "A bank has 1,000 customers: 600 retail, 300 small business and 100 private banking. It draws a stratified sample of 50, with each segment represented in proportion to its size. How many customers come from each segment?",
@@ -670,6 +806,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "stat-normal-fit",
     "section": "stats",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "Normal distribution: when it fits",
     "title": "Which is least likely to be normal",
     "prompt": "Which of these is **least** likely to be well described by a normal distribution?",
@@ -695,6 +832,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "stat-cov-corr-range",
     "section": "stats",
     "type": "mcq",
+    "difficulty": "Medium",
     "topic": "Covariance and correlation",
     "title": "Can covariance be 4,500?",
     "prompt": "An analyst reports Cov(income, card spending) = 4,500 and correlation r = 0.62 for the same customers. A colleague says one of these numbers must be a mistake. Is the colleague right?",
@@ -720,6 +858,7 @@ window.BANK = (window.BANK || []).concat(
     "id": "stat-sample-sd-by-hand",
     "section": "stats",
     "type": "mcq",
+    "difficulty": "Hard",
     "topic": "Standard deviation and the median",
     "title": "Sample mean, SD and median by hand",
     "prompt": "A sample of five loan amounts, in $ thousands: 2, 4, 4, 6, 9. What are the sample mean, the sample standard deviation and the median?",

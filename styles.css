@@ -373,3 +373,4 @@ table.data.md td { white-space: normal; }
 .paused-card .actions { justify-content: center; }
 
 .topic-pick { min-width: 18rem; max-width: 100%; padding: 0.5rem 0.6rem; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); color: inherit; font: inherit; }
+.level-card .actions .btn { min-width: 5.5rem; }
