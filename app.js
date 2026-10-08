@@ -48,7 +48,7 @@ const SKILL = new Proxy({}, { get: (_, k) => SKILL_TESTS.find((t) => t.key === k
 const durationOf = (a) => a?.durationMs ?? DURATION_MS
 const CODE_POINTS = 5
 const MCQ_POINTS = 1
-const KEYS = { attempt: 'dsp.attempt', seen: 'dsp.seen', history: 'dsp.history', theme: 'dsp.theme', level: 'dsp.level' }
+const KEYS = { attempt: 'dsp.attempt', seen: 'dsp.seen', history: 'dsp.history', theme: 'dsp.theme', level: 'dsp.level', homeTab: 'dsp.homeTab', subject: 'dsp.subject' }
 const level = () => load(KEYS.level, null)
 const HISTORY_LIMIT = 30
 
@@ -303,8 +303,9 @@ function startAttempt(mode = 'test', section = null, topic = null, difficulty = 
   let durationMs = DURATION_MS
   const kind = (key) => SECTION[key].kind
   const drillCount = (key) => (kind(key) === 'Multiple choice' ? DRILL_MCQ : kind(key) === 'Mixed' ? DRILL_MIXED : DRILL_CODE)
-  if (mode === 'drill') drawn = draw([{ key: section, difficulty, count: drillCount(section) }])
-  else if (mode === 'topic') drawn = draw([{ key: section, topic, difficulty, count: drillCount(section) }])
+  // A level that runs short tops up from the other levels, so a button never does nothing
+  if (mode === 'drill') drawn = draw([{ key: section, difficulty, count: drillCount(section), fill: true }])
+  else if (mode === 'topic') drawn = draw([{ key: section, topic, difficulty, count: drillCount(section), fill: true }])
   else if (mode === 'skill' || mode === 'role') {
     // timed tests always fill up: if a level runs short, the rest come from other levels
     drawn = draw(SKILL[section].plan.map((x) => ({ ...x, difficulty, fill: true })))
@@ -479,88 +480,151 @@ function render() {
   if (themeBtn) themeBtn.addEventListener('click', toggleTheme)
 }
 
-function renderStart() {
-  const past = history()
+// Subjects on the home page: each groups one or more sections with its timed skill test
+const SUBJECTS = [
+  { key: 'sql', name: 'SQL', blurb: 'Queries, joins, GROUP BY, window functions', sections: ['sqlint', 'sqlbasic'], skill: 'sql' },
+  { key: 'python', name: 'Python', blurb: 'Functions, classes, strings, errors', sections: ['python'], skill: 'python' },
+  { key: 'algo', name: 'Problem Solving', blurb: 'NeetCode patterns, hashing to dynamic programming', sections: ['algo'], skill: 'algo' },
+  { key: 'stats', name: 'Statistics', blurb: 'Hypothesis tests, box plots, sampling', sections: ['stats'], skill: 'stats' },
+  { key: 'math', name: 'Probability & Math', blurb: 'Bayes, Poisson, normal, counting', sections: ['math'], skill: 'math' },
+  { key: 'ab', name: 'A/B Testing', blurb: 'Metrics, sample size, pitfalls', sections: ['ab'], skill: 'ab' },
+  { key: 'pandas', name: 'pandas', blurb: 'Filter, groupby, merge, pivot', sections: ['pandas'], skill: 'pandas' },
+  { key: 'numpy', name: 'NumPy', blurb: 'Masks, broadcasting, vectorizing', sections: ['numpy'], skill: 'numpy' },
+  { key: 'ml', name: 'Machine Learning', blurb: 'Overfitting, metrics, workflow', sections: ['ml'], skill: 'ml' },
+  { key: 'de', name: 'Data Engineering', blurb: 'Modeling, pipelines, Python tasks', sections: ['de'], skill: 'de' },
+]
+const TOPICS_SHOWN = 10
+const HOME_TABS = [['subjects', 'Practice by subject'], ['tests', 'Full tests'], ['progress', 'Progress']]
+
+function sectionCount(key) {
+  const written = BANK.filter((q) => q.section === key).length
+  const gens = TEMPLATES.filter((t) => t.section === key).length
+  return { written, gens }
+}
+
+function topicsOf(sectionKey) {
+  const counts = new Map()
+  for (const q of BANK) if (q.section === sectionKey) counts.set(q.topic, (counts.get(q.topic) || 0) + 1)
+  const gen = new Set()
+  for (const t of TEMPLATES) if (t.section === sectionKey && templateTopic(t)) { counts.set(templateTopic(t), (counts.get(templateTopic(t)) || 0) + 1); gen.add(templateTopic(t)) }
+  return [...counts].sort((a, b) => a[0].localeCompare(b[0])).map(([topic, n]) => ({ topic, n, endless: gen.has(topic) }))
+}
+
+function drillLabel(key) {
+  const kind = SECTION[key].kind
+  const n = kind === 'Multiple choice' ? DRILL_MCQ : kind === 'Mixed' ? DRILL_MIXED : DRILL_CODE
+  const what = key === 'sqlint' ? 'write queries' : key === 'sqlbasic' ? 'multiple choice' : kind === 'Multiple choice' ? 'questions' : kind === 'Mixed' ? 'mixed questions' : 'coding problems'
+  return `${n} ${what}`
+}
+
+function subjectsTab() {
+  const pickedKey = load(KEYS.subject, 'sql')
+  const subj = SUBJECTS.find((x) => x.key === pickedKey) || SUBJECTS[0]
+  const skill = SKILL[subj.skill]
+  const lvl = level() || 'Any'
+  const tiles = SUBJECTS.map((x) => {
+    const c = x.sections.map(sectionCount).reduce((a, b) => ({ written: a.written + b.written, gens: a.gens + b.gens }), { written: 0, gens: 0 })
+    return `<button class="subject${x.key === subj.key ? ' on' : ''}" data-subject="${x.key}" aria-pressed="${x.key === subj.key}">
+      <span class="subject-name">${esc(x.name)}</span><span class="subject-blurb">${esc(x.blurb)}</span>
+      <span class="subject-count">${c.written} questions${c.gens ? ' · endless' : ''}</span></button>`
+  }).join('')
+  const topicBlocks = subj.sections.map((key) => {
+    const topics = topicsOf(key)
+    return `<div class="topic-block">${subj.sections.length > 1 ? `<div class="topic-head">${esc(SECTION[key].name)}</div>` : ''}
+      <div class="chips">${topics.map((t, i) => `<button class="chip${i >= TOPICS_SHOWN ? ' extra' : ''}" data-topic="${esc(JSON.stringify([key, t.topic]))}" title="${t.n} question${t.n === 1 ? '' : 's'}${t.endless ? ', plus endless generated ones' : ''}">${esc(t.topic)}${t.endless ? ' <span class="chip-plus">+</span>' : ''}</button>`).join('')}${topics.length > TOPICS_SHOWN ? `<button class="chip chip-more" data-more>+ ${topics.length - TOPICS_SHOWN} more</button>` : ''}</div></div>`
+  }).join('')
+  return `
+    <section class="card">
+      <div class="subject-grid">${tiles}</div>
+    </section>
+    <section class="card subject-panel">
+      <div class="home-head">
+        <div><h2>${esc(subj.name)}</h2><p class="lede">${esc(subj.blurb)}</p></div>
+        <div class="seg" role="group" aria-label="Difficulty">${['Any', ...DIFFICULTIES].map((d) => `<button class="seg-btn${lvl === d ? ' on' : ''}" data-level="${d}" aria-pressed="${lvl === d}">${d}</button>`).join('')}</div>
+      </div>
+      <div class="mode-row">
+        <button class="mode" data-skill="${skill.key}"><span class="mode-title">Timed test</span><span class="mode-sub">${esc(skill.plan.map((x) => `${x.count} ${x.type === 'mcq' || SECTION[x.key].kind === 'Multiple choice' ? 'multiple choice' : 'coding'}`).join(' + '))} · ${skill.minutes} min</span></button>
+        ${subj.sections.map((key) => `<button class="mode" data-drill="${key}"><span class="mode-title">Untimed drill${subj.sections.length > 1 ? `: ${key === 'sqlint' ? 'queries' : 'multiple choice'}` : ''}</span><span class="mode-sub">${drillLabel(key)}, with hints</span></button>`).join('')}
+      </div>
+      <h3 class="topics-title">Or pick one topic <span class="muted">(+ = never runs out)</span></h3>
+      ${topicBlocks}
+    </section>`
+}
+
+function testsTab() {
   const missed = missedIds()
-  const bankCounts = Object.fromEntries(SECTIONS.map((s) => {
-    const written = BANK.filter((q) => q.section === s.key).length
-    const templates = TEMPLATES.filter((t) => t.section === s.key).length
-    return [s.key, templates ? `${written} + ${templates} generators` : String(written)]
-  }))
-  app.innerHTML = `
-    <header class="topbar"><div class="brand">DS <span>Practice</span> <small>· Data interview practice</small></div><div class="spacer"></div>${themeButton()}</header>
-    <main class="page">
-      <section class="card">
-        <h1>Full assessment</h1>
-        <p class="lede">A timed simulation of the HackerRank screen: 14 questions in 75 minutes. No calculator: every number works out with pen and paper.</p>
-        <table class="plain">
-          <thead><tr><th>#</th><th>Section</th><th>Format</th><th class="num">Questions</th><th class="num">Points each</th><th class="num">In bank</th></tr></thead>
-          <tbody>${TEST_SECTIONS.map((s, i) => `<tr><td>${i + 1}</td><td>${esc(s.name)}</td><td>${s.kind}</td><td class="num">${s.count}</td>
-            <td class="num">${s.kind === 'Multiple choice' ? MCQ_POINTS : CODE_POINTS}</td><td class="num">${bankCounts[s.key]}</td></tr>`).join('')}</tbody>
-        </table>
+  return `
+    <section class="card">
+      <div class="home-head"><div><h2>Full assessment</h2>
+        <p class="lede">The Citizens-style HackerRank screen: 14 questions in 75 minutes (1 SQL query, 4 statistics, 3 SQL multiple choice, 1 Python, 5 applied math). No calculator.</p></div>
+        <button class="btn btn-primary btn-lg" id="start">Start test</button></div>
+      <details class="rules-more"><summary>How it works</summary>
         <ul class="rules">
           <li>One timer for the whole test. It submits on its own when time runs out.</li>
           <li>Move between questions freely with the numbers on the left. Answers save as you go, so a refresh won't lose them.</li>
           <li>Coding questions have <strong>Run code</strong> (or Ctrl/Cmd + Enter) to check your answer against the sample data.</li>
           <li>Total: 22 points. Each coding question is worth 5, each multiple choice 1.</li>
-          <li>Every section mixes written questions with generators that build a fresh question (new numbers, new tables, new test cases) every time, so practice never runs out.</li>
-          <li>Some multiple choice questions say <strong>Pick ONE or MORE options</strong>. Those are all or nothing: you need exactly the right set.</li>
-        </ul>
-        <div class="actions"><button class="btn btn-primary btn-lg" id="start">Start test</button></div>
-      </section>
-      <section class="card level-card">
-        <h2>Difficulty</h2>
-        <p class="lede">Applies to role assessments, skill tests, drills and topic practice below. Timed tests top up from other levels if a level runs short.</p>
-        <div class="actions">${['Any', ...DIFFICULTIES].map((d) => `<button class="btn${(level() || 'Any') === d ? ' btn-primary' : ''}" data-level="${d}">${d}</button>`).join('')}</div>
-      </section>
-      <section class="card">
-        <h2>Role assessments</h2>
-        <p class="lede">Timed tests shaped like each role's screening test. Apply for analyst and engineer roles too? Practice their mix here.</p>
-        <table class="plain"><thead><tr><th>Role</th><th>Focus</th><th>Questions</th><th class="num">Time</th><th></th></tr></thead>
-        <tbody>${ROLE_TESTS.map((t) => `<tr><td>${esc(t.name)}</td><td>${esc(t.focus)}</td><td class="num">${t.plan.reduce((n, x) => n + x.count, 0)}</td>
-          <td class="num">${t.minutes} min</td><td class="num"><button class="btn" data-role="${t.key}">Start</button></td></tr>`).join('')}</tbody></table>
-      </section>
-      <section class="card">
-        <h2>Skill tests</h2>
-        <p class="lede">Timed tests on one subject, like HackerRank's skill tests. Use them to check a subject on its own before a full test.</p>
-        <table class="plain"><thead><tr><th>Test</th><th>Questions</th><th class="num">Time</th><th></th></tr></thead>
-        <tbody>${SKILL_TESTS.filter((t) => !t.role).map((t) => `<tr><td>${esc(t.name)}</td><td>${esc(t.plan.map((x) => `${x.count} ${SECTION[x.key].name} ${x.type === 'mcq' || SECTION[x.key].kind === 'Multiple choice' ? 'multiple choice' : 'coding'}`).join(' + '))}</td>
-          <td class="num">${t.minutes} min</td><td class="num"><button class="btn" data-skill="${t.key}">Start</button></td></tr>`).join('')}</tbody></table>
-      </section>
-      <section class="card">
-        <h2>Practice by topic</h2>
-        <p class="lede">Untimed, with hints. Pick one topic, like window functions or the Poisson distribution, and get only that.</p>
-        <div class="actions"><select id="topic-pick" class="topic-pick" aria-label="Topic">${topicOptions()}</select>
-          <button class="btn btn-primary" id="topic-go">Practice this topic</button></div>
-      </section>
-      <section class="card">
-        <h2>Untimed practice</h2>
-        <p class="lede">Drill one section (${DRILL_MCQ} multiple choice questions, ${DRILL_CODE} coding questions, or ${DRILL_MIXED} for a mixed section) with hints available, or retry every question you've missed before.</p>
-        <div class="actions">${SECTIONS.map((s) => `<button class="btn" data-drill="${s.key}">${esc(s.name)}</button>`).join('')}</div>
-        <div class="actions" style="margin-top:0.75rem"><button class="btn" id="missed"${missed.length ? '' : ' disabled'}>Retry missed questions (${missed.length})</button></div>
-      </section>
-      ${weakAreasHtml(past)}
-      ${past.length ? `<section class="card"><h2>Past attempts</h2>
-        <table class="plain"><thead><tr><th>Date</th><th>Type</th><th class="num">Score</th><th class="num">Time used</th><th></th></tr></thead>
-        <tbody>${past.map((a) => {
-          const t = totals(a)
-          return `<tr class="clickable" data-attempt="${esc(a.id)}"><td>${new Date(a.startedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</td>
-            <td>${esc(attemptLabel(a))}</td><td class="num">${fmtPoints(t.score)} / ${t.max}</td><td class="num">${clock(timeUsed(a))}</td><td class="num"><button class="btn-link">Review</button></td></tr>`
-        }).join('')}</tbody></table></section>` : ''}
+          <li>Some multiple choice questions say <strong>Pick ONE or MORE options</strong>. Those are all or nothing.</li>
+        </ul></details>
+    </section>
+    <section class="card">
+      <div class="home-head"><div><h2>Role assessments</h2><p class="lede">Timed tests shaped like each role's screen.</p></div>
+        <div class="seg" role="group" aria-label="Difficulty">${['Any', ...DIFFICULTIES].map((d) => `<button class="seg-btn${(level() || 'Any') === d ? ' on' : ''}" data-level="${d}" aria-pressed="${(level() || 'Any') === d}">${d}</button>`).join('')}</div></div>
+      <div class="mode-row">${ROLE_TESTS.map((t) => `<button class="mode" data-role="${t.key}"><span class="mode-title">${esc(t.name)}</span>
+        <span class="mode-sub">${esc(t.focus)}</span><span class="mode-sub">${t.plan.reduce((n, x) => n + x.count, 0)} questions · ${t.minutes} min</span></button>`).join('')}</div>
+    </section>
+    <section class="card">
+      <div class="home-head"><div><h2>Retry missed questions</h2><p class="lede">Every question you haven't gotten full marks on yet, untimed.</p></div>
+        <button class="btn" id="missed"${missed.length ? '' : ' disabled'}>Retry ${missed.length}</button></div>
+    </section>`
+}
+
+function progressTab(past) {
+  if (!past.length) return `<section class="card"><h2>Progress</h2><p class="lede">Nothing yet. Take a test or a drill and your scores, weak areas and past attempts show up here.</p></section>`
+  return `${weakAreasHtml(past)}
+    <section class="card"><h2>Past attempts</h2>
+      <table class="plain"><thead><tr><th>Date</th><th>Type</th><th class="num">Score</th><th class="num">Time used</th><th></th></tr></thead>
+      <tbody>${past.map((a) => {
+        const t = totals(a)
+        return `<tr class="clickable" data-attempt="${esc(a.id)}"><td>${new Date(a.startedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</td>
+          <td>${esc(attemptLabel(a))}</td><td class="num">${fmtPoints(t.score)} / ${t.max}</td><td class="num">${clock(timeUsed(a))}</td><td class="num"><button class="btn-link">Review</button></td></tr>`
+      }).join('')}</tbody></table></section>`
+}
+
+function renderStart() {
+  const past = history()
+  const tab = load(KEYS.homeTab, 'subjects')
+  const body = tab === 'tests' ? testsTab() : tab === 'progress' ? progressTab(past) : subjectsTab()
+  app.innerHTML = `
+    <header class="topbar"><div class="brand">DS <span>Practice</span> <small>· Data interview practice</small></div><div class="spacer"></div>${themeButton()}</header>
+    <main class="page">
+      <nav class="home-tabs" role="tablist" aria-label="Home">${HOME_TABS.map(([k, label]) => `<button role="tab" class="home-tab${tab === k ? ' on' : ''}" aria-selected="${tab === k}" data-home-tab="${k}">${label}${k === 'progress' && past.length ? ` <span class="badge">${past.length}</span>` : ''}</button>`).join('')}</nav>
+      ${body}
     </main>`
-  $('#start').addEventListener('click', () => startAttempt('test'))
-  app.querySelectorAll('[data-drill]').forEach((b) => b.addEventListener('click', () => startAttempt('drill', b.dataset.drill, null, level())))
-  $('#missed')?.addEventListener('click', () => startAttempt('missed'))
-  app.querySelectorAll('[data-skill]').forEach((b) => b.addEventListener('click', () => startAttempt('skill', b.dataset.skill, null, level())))
-  app.querySelectorAll('[data-role]').forEach((b) => b.addEventListener('click', () => startAttempt('role', b.dataset.role, null, level())))
+  app.querySelectorAll('[data-home-tab]').forEach((b) => b.addEventListener('click', () => { save(KEYS.homeTab, b.dataset.homeTab); renderStart() }))
+  app.querySelectorAll('[data-subject]').forEach((b) => b.addEventListener('click', () => {
+    save(KEYS.subject, b.dataset.subject)
+    renderStart()
+    // on a phone the options are below the tiles: bring them into view
+    if (window.innerWidth < 700) $('.subject-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }))
   app.querySelectorAll('[data-level]').forEach((b) => b.addEventListener('click', () => {
     save(KEYS.level, b.dataset.level === 'Any' ? null : b.dataset.level)
     renderStart()
   }))
-  $('#topic-go').addEventListener('click', () => {
-    const [section, topic] = JSON.parse($('#topic-pick').value)
+  $('#start')?.addEventListener('click', () => startAttempt('test'))
+  $('#missed')?.addEventListener('click', () => startAttempt('missed'))
+  app.querySelectorAll('[data-drill]').forEach((b) => b.addEventListener('click', () => startAttempt('drill', b.dataset.drill, null, level())))
+  app.querySelectorAll('[data-skill]').forEach((b) => b.addEventListener('click', () => startAttempt('skill', b.dataset.skill, null, level())))
+  app.querySelectorAll('[data-role]').forEach((b) => b.addEventListener('click', () => startAttempt('role', b.dataset.role, null, level())))
+  app.querySelectorAll('[data-more]').forEach((b) => b.addEventListener('click', () => {
+    b.parentElement.classList.add('show-all')
+    b.remove()
+  }))
+  app.querySelectorAll('[data-topic]').forEach((b) => b.addEventListener('click', () => {
+    const [section, topic] = JSON.parse(b.dataset.topic)
     startAttempt('topic', section, topic, level())
-  })
+  }))
   app.querySelectorAll('[data-attempt]').forEach((row) => row.addEventListener('click', () => {
     state.attempt = past.find((a) => a.id === row.dataset.attempt)
     state.runs = {}
@@ -576,18 +640,6 @@ function attemptLabel(a) {
   if (mode === 'skill' || mode === 'role') return `${MODES[mode]}: ${SKILL[a.section]?.name ?? a.section}${level}`
   if (mode === 'topic') return `${MODES.topic}: ${a.topic}${level}`
   return `${MODES[mode]}${a.section ? `: ${SECTION[a.section].name}` : ''}${level}`
-}
-
-// Every topic with at least one question, grouped by section, for the topic picker
-function topicOptions() {
-  return SECTIONS.map((s) => {
-    const counts = new Map()
-    for (const q of BANK) if (q.section === s.key) counts.set(q.topic, (counts.get(q.topic) || 0) + 1)
-    for (const t of TEMPLATES) if (t.section === s.key && templateTopic(t)) counts.set(templateTopic(t), (counts.get(templateTopic(t)) || 0) + 1)
-    const topics = [...counts].sort((a, b) => a[0].localeCompare(b[0]))
-    if (!topics.length) return ''
-    return `<optgroup label="${esc(s.name)}">${topics.map(([t, n]) => `<option value="${esc(JSON.stringify([s.key, t]))}">${esc(t)} (${n}${TEMPLATES.some((x) => x.section === s.key && templateTopic(x) === t) ? '+' : ''})</option>`).join('')}</optgroup>`
-  }).join('')
 }
 
 // Accuracy by section and by topic across every past attempt, weakest first

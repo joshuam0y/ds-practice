@@ -372,5 +372,50 @@ table.data.md td { white-space: normal; }
 .paused-card { max-width: 32rem; text-align: center; }
 .paused-card .actions { justify-content: center; }
 
-.topic-pick { min-width: 18rem; max-width: 100%; padding: 0.5rem 0.6rem; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); color: inherit; font: inherit; }
-.level-card .actions .btn { min-width: 5.5rem; }
+
+/* ---------- Home: tabs, subject tiles, practice modes, topic chips */
+.home-tabs { display: flex; gap: 0.25rem; border-bottom: 1px solid var(--line); margin-bottom: 1.25rem; overflow-x: auto; }
+.home-tab { background: none; border: 0; border-bottom: 3px solid transparent; padding: 0.7rem 1rem; font: 600 0.98rem var(--font); color: var(--text-soft); cursor: pointer; white-space: nowrap; }
+.home-tab:hover { color: var(--heading); }
+.home-tab.on { color: var(--heading); border-bottom-color: var(--green); }
+.badge { display: inline-block; min-width: 1.4rem; padding: 0 0.4rem; border-radius: 999px; background: var(--green-soft); color: var(--green); font-size: 0.8rem; text-align: center; }
+.subject-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 0.6rem; }
+.subject { display: flex; flex-direction: column; gap: 0.2rem; text-align: left; padding: 0.8rem 0.9rem; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--text); cursor: pointer; font: inherit; transition: border-color .12s, box-shadow .12s; }
+.subject:hover { border-color: var(--text-soft); }
+.subject.on { border-color: var(--green); box-shadow: 0 0 0 2px var(--green-soft); }
+.subject-name { font-weight: 700; color: var(--heading); font-size: 1rem; }
+.subject-blurb { font-size: 0.82rem; color: var(--text-soft); line-height: 1.35; }
+.subject-count { font-size: 0.78rem; color: var(--green); font-weight: 600; margin-top: 0.2rem; }
+.home-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.home-head h2 { margin: 0 0 0.2rem; }
+.home-head .lede { margin: 0 0 0.6rem; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg-btn { background: var(--panel); border: 0; border-right: 1px solid var(--line); padding: 0.45rem 0.85rem; font: 600 0.88rem var(--font); color: var(--text-soft); cursor: pointer; }
+.seg-btn:last-child { border-right: 0; }
+.seg-btn.on { background: var(--green); color: #fff; }
+.mode-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 0.6rem; margin: 0.6rem 0 0.4rem; }
+.mode { display: flex; flex-direction: column; gap: 0.15rem; text-align: left; padding: 0.85rem 1rem; border: 1px solid var(--line); border-radius: 8px; background: var(--panel-2); color: var(--text); cursor: pointer; font: inherit; }
+.mode:hover { border-color: var(--green); }
+.mode-title { font-weight: 700; color: var(--heading); }
+.mode-sub { font-size: 0.84rem; color: var(--text-soft); }
+.topics-title { font-size: 0.98rem; margin: 1.1rem 0 0.5rem; }
+.topics-title .muted { font-weight: 400; color: var(--text-soft); font-size: 0.85rem; }
+.topic-head { font-size: 0.82rem; font-weight: 700; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.04em; margin: 0.6rem 0 0.35rem; }
+.chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.chips .chip.extra { display: none; }
+.chips.show-all .chip.extra { display: inline-block; }
+.chip-more { background: var(--panel-2); color: var(--blue); font-weight: 600; }
+.chip { border: 1px solid var(--line); background: var(--panel); color: var(--text); border-radius: 999px; padding: 0.3rem 0.75rem; font: 0.85rem var(--font); cursor: pointer; }
+.chip:hover { border-color: var(--green); color: var(--heading); }
+.chip-plus { color: var(--green); font-weight: 700; }
+.rules-more summary { cursor: pointer; color: var(--blue); font-weight: 600; margin-top: 0.4rem; }
+@media (max-width: 600px) { .card { padding: 1.1rem 1rem; } .seg-btn { padding: 0.45rem 0.6rem; } }
+.chip { text-align: left; }
+@media (max-width: 600px) {
+  .home-tab { padding: 0.6rem 0.7rem; font-size: 0.92rem; }
+  .subject-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.45rem; }
+  .subject { padding: 0.6rem 0.7rem; }
+  .subject-blurb { display: none; }
+  .subject-name { font-size: 0.95rem; }
+  .mode-row { grid-template-columns: 1fr; }
+}
