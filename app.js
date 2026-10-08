@@ -225,19 +225,21 @@ const DRILL_MCQ = 10
 const DRILL_CODE = 3
 const DRILL_MIXED = 8
 
-// Difficulty of a template: set on the template, or read from one sample build (code generators set it there)
-const templateDifficulty = (() => {
+// A template's topic and difficulty: set on the template, or read from one sample build (code generators set
+// them on the question they build)
+const templateInfo = (() => {
   const cache = new Map()
   return (t) => {
-    if (t.difficulty) return t.difficulty
     if (!cache.has(t.key)) {
-      let d = 'Medium'
-      try { d = GENERATORS.build(t)?.difficulty || 'Medium' } catch { /* keep Medium */ }
-      cache.set(t.key, d)
+      let q = null
+      if (!t.topic || !t.difficulty) try { q = GENERATORS.build(t) } catch { /* fall back below */ }
+      cache.set(t.key, { topic: t.topic || q?.topic || '', difficulty: t.difficulty || q?.difficulty || 'Medium' })
     }
     return cache.get(t.key)
   }
 })()
+const templateDifficulty = (t) => templateInfo(t).difficulty
+const templateTopic = (t) => templateInfo(t).topic
 const difficultyOf = (q) => q.difficulty || 'Medium'
 const typeMatches = (type, want) => !want || (want === 'mcq' ? type === 'mcq' || type === 'multi' : type === want)
 const isTimed = (a) => ['test', 'skill', 'role'].includes(a?.mode ?? 'test')
@@ -252,7 +254,7 @@ function draw(plan) {
   for (const sec of plan) {
     const fits = (difficulty) => !sec.difficulty || difficulty === sec.difficulty
     const bankFor = (anyLevel) => BANK.filter((q) => q.section === sec.key && (!sec.topic || q.topic === sec.topic) && typeMatches(q.type, sec.type) && (anyLevel || fits(difficultyOf(q))))
-    const tplFor = (anyLevel) => TEMPLATES.filter((t) => t.section === sec.key && (!sec.topic || t.topic === sec.topic) && (!sec.type || sec.type === (t.kind === 'multi' || !['python', 'sql'].includes(t.type) ? 'mcq' : t.type)) && (anyLevel || fits(templateDifficulty(t))))
+    const tplFor = (anyLevel) => TEMPLATES.filter((t) => t.section === sec.key && (!sec.topic || templateTopic(t) === sec.topic) && (!sec.type || sec.type === (t.kind === 'multi' || !['python', 'sql'].includes(t.type) ? 'mcq' : t.type)) && (anyLevel || fits(templateDifficulty(t))))
     let pool = [...bankFor(false).map((q) => ({ key: q.id })), ...tplFor(false).map((t) => ({ key: `tpl:${t.key}`, template: t }))]
     if (sec.fill && pool.length < sec.count) {
       const have = new Set(pool.map((x) => x.key))
@@ -581,10 +583,10 @@ function topicOptions() {
   return SECTIONS.map((s) => {
     const counts = new Map()
     for (const q of BANK) if (q.section === s.key) counts.set(q.topic, (counts.get(q.topic) || 0) + 1)
-    for (const t of TEMPLATES) if (t.section === s.key && t.topic) counts.set(t.topic, (counts.get(t.topic) || 0) + 1)
+    for (const t of TEMPLATES) if (t.section === s.key && templateTopic(t)) counts.set(templateTopic(t), (counts.get(templateTopic(t)) || 0) + 1)
     const topics = [...counts].sort((a, b) => a[0].localeCompare(b[0]))
     if (!topics.length) return ''
-    return `<optgroup label="${esc(s.name)}">${topics.map(([t, n]) => `<option value="${esc(JSON.stringify([s.key, t]))}">${esc(t)} (${n}${TEMPLATES.some((x) => x.section === s.key && x.topic === t) ? '+' : ''})</option>`).join('')}</optgroup>`
+    return `<optgroup label="${esc(s.name)}">${topics.map(([t, n]) => `<option value="${esc(JSON.stringify([s.key, t]))}">${esc(t)} (${n}${TEMPLATES.some((x) => x.section === s.key && templateTopic(x) === t) ? '+' : ''})</option>`).join('')}</optgroup>`
   }).join('')
 }
 

@@ -399,6 +399,10 @@ def check_generated_code(node, run_tests, per_template=60):
         for ch, label in BAD_DASHES.items():
             if ch in json.dumps(q, ensure_ascii=False):
                 problem(where, f"contains an {label}")
+        if q["type"] == "python" and q.get("packages") and not all(_importable(m) for m in q["packages"]):
+            if key not in SKIPPED:
+                SKIPPED.append(key)
+            continue
         if q["type"] == "python":
             if len(q["tests"]) not in (5, 6):
                 problem(where, f"has {len(q['tests'])} tests")
@@ -530,7 +534,7 @@ def main():
             print(f"  - {p}")
         sys.exit(1)
     if SKIPPED:
-        print(f"ALL CHECKS PASSED, except {len(SKIPPED)} question(s) skipped because pandas or numpy isn't installed here: pip install pandas numpy")
+        print(f"ALL CHECKS PASSED, except {len(SKIPPED)} question(s) or generator(s) skipped because pandas or numpy isn't installed here: pip install pandas numpy")
     else:
         print("ALL CHECKS PASSED")
 

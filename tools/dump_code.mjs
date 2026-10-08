@@ -6,6 +6,9 @@ const require = createRequire(import.meta.url)
 const api = require('../generators.js')
 require('../generators_code.js')
 require('../generators_more.js')
+require('../generators_ds.js')
+require('../generators_data.js')
+require('../generators_algo.js')
 
 function seeded(seed) {
   let s = seed

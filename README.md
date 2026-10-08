@@ -26,7 +26,8 @@ statistics, Python and applied math. It runs entirely in the browser.
   Learning concepts (overfitting, cross-validation, leakage, scaling, precision/recall, ROC AUC, scikit-learn workflow).
   These are an extension of HackerRank, LeetCode and NeetCode practice, not a replacement.
 
-- **Unlimited questions in every section:** besides the written bank, 52 generators build a fresh question every time.
+- **Unlimited questions in every section** (84 generators, including Problem Solving, pandas, NumPy, Machine Learning,
+  A/B Testing and Data Engineering in generators_algo.js, generators_data.js and generators_ds.js): besides the written bank, 52 generators build a fresh question every time.
   - `generators.js`: 22 single-answer and 4 multi-select templates for statistics, applied math and SQL basics.
     `tools/check_generators.mjs` builds 10,400 and re-derives every answer independently (brute force where possible).
   - `generators_code.js` and `generators_more.js`: 14 Python and 12 SQL coding templates with new rules, tables and test cases each time. Each

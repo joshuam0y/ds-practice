@@ -7,6 +7,9 @@ const require = createRequire(import.meta.url)
 const api = require('../generators.js')
 require('../generators_code.js')
 require('../generators_more.js')
+require('../generators_ds.js')
+require('../generators_data.js')
+require('../generators_algo.js')
 const { templates, build } = api
 
 const PER_TEMPLATE = 400
@@ -50,6 +53,115 @@ const BANDS = [0.0015, 0.0235, 0.135, 0.34, 0.34, 0.135, 0.0235, 0.0015]
 const EDGES = [-Infinity, -3, -2, -1, 0, 1, 2, 3, Infinity]
 
 const solve = {
+  // ---- generators_ds.js: rebuilt from explicit rows, simulations and a different formula ----
+  'ml-confusion-metric': ({ tp, fp, fn, tn, ask }) => {
+    // One [actual, predicted] pair per transaction, then count
+    const rows = [...Array(tp).fill([1, 1]), ...Array(fp).fill([0, 1]), ...Array(fn).fill([1, 0]), ...Array(tn).fill([0, 0])]
+    const hit = rows.filter(([y, p]) => y === 1 && p === 1).length
+    const precision = hit / rows.filter(([, p]) => p === 1).length
+    const recall = hit / rows.filter(([y]) => y === 1).length
+    return { precision, recall, F1: (2 * precision * recall) / (precision + recall) }[ask]
+  },
+  'ml-majority-baseline': ({ N, d }) => {
+    const actual = Array.from({ length: N }, (_, i) => (i < d ? 1 : 0))
+    const predicted = actual.map(() => 0)
+    const correct = actual.filter((y, i) => y === predicted[i]).length
+    const caught = actual.filter((y, i) => y === 1 && predicted[i] === 1).length
+    return Math.round((100 * correct) / N) * 1000 + Math.round((100 * caught) / d)
+  },
+  'ml-r-squared': ({ sse, sst }) => {
+    // Two points with mean 0: y = +-s, predictions pulled in by e, so SST = 2s^2 and SSE = 2e^2
+    const s = Math.sqrt(sst / 2)
+    const e = Math.sqrt(sse / 2)
+    const y = [s, -s]
+    const yhat = [s - e, -s + e]
+    const mean = (y[0] + y[1]) / 2
+    const res = y.reduce((t, v, i) => t + (v - yhat[i]) ** 2, 0)
+    const tot = y.reduce((t, v) => t + (v - mean) ** 2, 0)
+    return 1 - res / tot
+  },
+  'ml-grid-cv-fits': ({ a, b, k }) => {
+    let fits = 0
+    for (let i = 0; i < a; i++) for (let j = 0; j < b; j++) for (let fold = 0; fold < k; fold++) fits++
+    return fits + 1
+  },
+  'ab-mde-sample-size': ({ n, oldM, newM }) => {
+    // n = C / MDE^2: recover the constant C from the first calculation, then reuse it
+    const C = n * oldM * oldM
+    return C / (newM * newM)
+  },
+  'ab-many-metrics': ({ alpha, m }) => {
+    // Sum the probability of every pattern of false positives that has at least one
+    let total = 0
+    for (let mask = 1; mask < 1 << m; mask++) {
+      let p = 1
+      for (let i = 0; i < m; i++) p *= mask & (1 << i) ? alpha : 1 - alpha
+      total += p
+    }
+    return total
+  },
+  'ab-srm-sd': ({ n, control }) => {
+    // Variance of one fair Bernoulli assignment, by enumerating its two outcomes, times n
+    const one = [0, 1].reduce((v, x) => v + 0.5 * (x - 0.5) ** 2, 0)
+    return Math.abs(control - n / 2) / Math.sqrt(n * one)
+  },
+  'ab-cuped': ({ base, rho }) => {
+    // Var(Y - theta X) with unit variances is theta^2 - 2 rho theta + 1. Its minimum over theta is c - b^2 / 4a.
+    const [qa, qb, qc] = [1, -2 * rho, 1]
+    return base * (qc - (qb * qb) / (4 * qa))
+  },
+  'de-partition-scan': ({ start, end, op }) => {
+    let count = 0
+    for (let t = Date.UTC(2024, 0, 1); t < Date.UTC(2026, 0, 1); t += 86400000) {
+      const day = new Date(t).toISOString().slice(0, 10)
+      if (op === 'between' ? day >= start && day <= end : day >= start && day < end) count++
+    }
+    return count
+  },
+  'de-dedup-row-number': ({ once, twice, thrice, ties, fn }) => {
+    // Build the raw rows; the first `ties` repeated ids get two newest versions with the same loaded_at
+    const rows = []
+    let id = 0
+    const add = (copies) => {
+      id++
+      const tied = copies > 1 && ties > 0 && id > once && id <= once + ties
+      for (let v = 0; v < copies; v++) rows.push({ id, loaded: tied && v === copies - 1 ? copies - 1 : v + 1 })
+    }
+    for (let i = 0; i < once; i++) add(1)
+    for (let i = 0; i < twice; i++) add(2)
+    for (let i = 0; i < thrice; i++) add(3)
+    let kept = 0
+    for (const r of rows) {
+      const group = rows.filter((x) => x.id === r.id).sort((x, y) => y.loaded - x.loaded)
+      const rank = fn === 'RANK' ? 1 + group.filter((x) => x.loaded > r.loaded).length : group.indexOf(r) + 1
+      if (rank === 1) kept++
+    }
+    return kept
+  },
+  'de-scd2-rows': ({ N, a, b, c }) => {
+    const rows = Array.from({ length: N }, (_, i) => ({ cust: i, current: true }))
+    const move = (cust) => {
+      rows.find((r) => r.cust === cust && r.current).current = false
+      rows.push({ cust, current: true })
+    }
+    for (let i = 0; i < a; i++) move(i)
+    for (let i = a; i < a + b; i++) { move(i); move(i) }
+    for (let i = a + b; i < a + b + c; i++) rows.find((r) => r.cust === i && r.current).phone = 'new'
+    return rows.length
+  },
+  'de-rerun-insert-merge': ({ E, B, p, k, mode }) => {
+    const batch = Array.from({ length: B }, (_, i) => `new-${i}`)
+    const table = mode === 'INSERT' ? [] : new Map()
+    const load = (keys) => {
+      for (const key of keys) {
+        if (mode === 'INSERT') table.push(key)
+        else table.set(key, true)
+      }
+    }
+    load(batch.slice(0, p)) // the crashed attempt
+    for (let run = 0; run < k; run++) load(batch)
+    return E + (mode === 'INSERT' ? table.length : table.size)
+  },
   'combo-team': ({ n, k }) => subsets(n, k),
   'combo-at-least-one': ({ a, m, k }) => subsets(a + m, k, (mask) => mask >> a !== 0),
   'pin-no-repeat': ({ L }) => {
